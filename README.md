@@ -6,9 +6,8 @@ flek/re/tutti doubling and settlement in Kč.
 
 The remake follows the original program closely: its rules, scoring,
 computer-player logic, screen layout, dialogs and PC-speaker sounds were
-reconstructed by studying the 1992 executable. All artwork, fonts, sounds and
-texts in this repository are new and original. Nothing from the old program is
-included or needed at runtime.
+reconstructed by studying the 1992 executable. EGA rendering of Czech
+mariáš cards is mostly borrowed from the original game.
 
 ![The deck](docs/card_sheet.png)
 

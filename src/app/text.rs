@@ -9,7 +9,7 @@ pub fn pick(rng: &mut Rng, s: &'static str) -> &'static str {
     s.split('|').nth(rng.below(n) as usize).unwrap_or(s)
 }
 
-pub const TITLE_BY: &str = "Svobodný software";
+pub const TITLE_BY: &str = "AI Slop software";
 pub const TITLE_PRESENTS: &str = "uvádí";
 pub const TITLE: &str = "FLEK!";
 pub const VERSION: &str = "verze 1.0";
@@ -83,7 +83,8 @@ pub const DURCH_LOST: &str = "Durch padl !|Konec !|Hotovo !";
 pub const BETL_WON: &str = "Už nic neberu|Betl je doma|Nic víc mě nechytí";
 pub const CLAIM: &str = "Zbytek je můj|Ostatní beru|Karty na stůl|Zbytek sedí";
 
-pub const REBUKE: &str = "To nejde|Tahle ne|Pozor, renonc|Tudy cesta nevede|Ale ale|Kdepak";
+pub const REBUKE: &str =
+    "To nejde|Tahle ne|Pozor, to by byl renonc|Tudy cesta nevede|Ale ale|Kdepak";
 pub const REBUKE_KING: &str = "Nejdřív svrška|Hláška se hlásí svrškem";
 pub const SHARP_TO_TALON: &str = "desítku ani eso do talonu!";
 pub const NOT_ALLOWED: &str = "to se nesmí|to nepovolím";
