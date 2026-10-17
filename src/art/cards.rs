@@ -1,10 +1,7 @@
-//! Procedurally drawn card faces and backs, in the spirit of the classic
-//! Czech "William Tell" Mariáš deck at EGA resolution.
+//! Card sprites: faces from a bundled 16-colour bitmap of the deck, backs and
+//! the octagonal frame drawn at runtime.
 
-use super::aces::draw_ace;
-use super::court::draw_court;
-use super::numbers::draw_number;
-use crate::game::cards::{Card, Rank};
+use crate::game::cards::Card;
 use crate::gfx::font::draw_text_shadowed;
 use crate::gfx::{Canvas, Fill, color};
 
@@ -51,14 +48,6 @@ const SHADOW: [(i32, i32); 8] = [
     (66, 102),
     (66, 5),
 ];
-
-/// White face with a thin grey border one pixel in, matching the inner frame.
-fn blank() -> Canvas {
-    let mut c = Canvas::new(FACE_W, FACE_H);
-    c.clear(color::WHITE);
-    c.rect(1, 1, FACE_W - 2, FACE_H - 2, color::DARK_GRAY);
-    c
-}
 
 /// Paints the white ring between the outer and inner octagon plus both outlines.
 fn draw_frame(c: &mut Canvas) {
@@ -123,15 +112,22 @@ fn inside_outer(x: i32, y: i32) -> bool {
         && (CARD_W - x) + (CARD_H - y) >= 3
 }
 
+/// The 32 faces in card-id order, row-major, two pixels per byte (high nibble first).
+const DECK_BYTES: &[u8] = include_bytes!("deck_data.bin");
+const FACE_BYTES: usize = (FACE_W * FACE_H) as usize / 2;
+const _: () = assert!(DECK_BYTES.len() == 32 * FACE_BYTES);
+
 /// The bare 61x100 face artwork of a card.
 pub fn render_face(card: Card) -> Canvas {
-    let mut c = blank();
-    match card.rank() {
-        Rank::Seven | Rank::Eight | Rank::Nine | Rank::Ten => {
-            draw_number(&mut c, card.suit(), card.rank())
+    let mut c = Canvas::new(FACE_W, FACE_H);
+    let offset = card.id() as usize * FACE_BYTES;
+    for y in 0..FACE_H {
+        for x in 0..FACE_W {
+            let idx = (y * FACE_W + x) as usize;
+            let byte = DECK_BYTES[offset + idx / 2];
+            let col = if (idx & 1) == 0 { byte >> 4 } else { byte & 0x0f };
+            c.put_pixel(x, y, col);
         }
-        Rank::Under | Rank::Over | Rank::King => draw_court(&mut c, card.suit(), card.rank()),
-        Rank::Ace => draw_ace(&mut c, card.suit()),
     }
     c
 }

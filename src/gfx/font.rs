@@ -110,11 +110,6 @@ pub fn draw_text(canvas: &mut Canvas, x: i32, y: i32, text: &str, color: u8) {
     }
 }
 
-/// Draws `text` horizontally centred on `center_x`.
-pub fn draw_text_centered(canvas: &mut Canvas, center_x: i32, y: i32, text: &str, color: u8) {
-    draw_text(canvas, center_x - text_width(text) / 2, y, text, color);
-}
-
 /// Text with a one-pixel drop shadow down and right; `levels` > 0 draws the
 /// large smooth letters of [`draw_text_smooth`].
 pub fn draw_text_shadowed(

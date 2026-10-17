@@ -54,7 +54,6 @@ impl Pattern {
     pub const BACKSLASH: Pattern = Pattern([0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01]);
     pub const HATCH: Pattern = Pattern([0xFF, 0x88, 0x88, 0x88, 0xFF, 0x88, 0x88, 0x88]);
     pub const CROSS_HATCH: Pattern = Pattern([0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81]);
-    pub const CHECKER: Pattern = Pattern([0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55]);
     pub const INTERLEAVE: Pattern = Pattern([0xCC, 0x33, 0xCC, 0x33, 0xCC, 0x33, 0xCC, 0x33]);
     pub const WIDE_DOTS: Pattern = Pattern([0x80, 0x00, 0x08, 0x00, 0x80, 0x00, 0x08, 0x00]);
     pub const CLOSE_DOTS: Pattern = Pattern([0x88, 0x00, 0x22, 0x00, 0x88, 0x00, 0x22, 0x00]);
@@ -229,16 +228,6 @@ impl Canvas {
     pub fn bar(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, fill: Fill) {
         for y in y1.min(y2)..=y1.max(y2) {
             self.fill_span(x1, x2, y, &fill);
-        }
-    }
-
-    /// Ellipse outline using the midpoint algorithm.
-    pub fn ellipse(&mut self, cx: i32, cy: i32, rx: i32, ry: i32, c: u8) {
-        for (x, y) in ellipse_quadrant(rx, ry) {
-            self.put_pixel(cx + x, cy + y, c);
-            self.put_pixel(cx - x, cy + y, c);
-            self.put_pixel(cx + x, cy - y, c);
-            self.put_pixel(cx - x, cy - y, c);
         }
     }
 
@@ -428,9 +417,9 @@ mod tests {
     #[test]
     fn pattern_fill_uses_background_for_clear_bits() {
         let mut c = Canvas::new(8, 2);
-        c.bar(0, 0, 7, 1, Fill::pattern(Pattern::CHECKER, 1, 2));
+        c.bar(0, 0, 7, 1, Fill::pattern(Pattern::INTERLEAVE, 1, 2));
         assert_eq!(c.pixel(0, 0), Some(1));
-        assert_eq!(c.pixel(1, 0), Some(2));
+        assert_eq!(c.pixel(2, 0), Some(2));
         assert_eq!(c.pixel(0, 1), Some(2));
     }
 

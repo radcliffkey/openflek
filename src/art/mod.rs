@@ -1,10 +1,3 @@
-//! Original artwork drawn at runtime: suit symbols, card faces and backs.
+//! Card faces (a bundled bitmap), drawn card backs and the card frame.
 
-pub mod aces;
 pub mod cards;
-pub mod court;
-pub mod figure;
-pub mod numbers;
-pub mod paint;
-pub mod scenery;
-pub mod symbols;
