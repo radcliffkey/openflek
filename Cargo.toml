@@ -1,0 +1,23 @@
+[package]
+name = "openflek"
+version = "0.1.0"
+edition = "2024"
+description = "Open-source remake of the 1992 Czech DOS card game Flek!"
+license = "MIT"
+
+[dependencies]
+macroquad = "0.4"
+font8x8 = "0.3"
+log = "0.4"
+env_logger = { version = "0.11", default-features = false, features = ["auto-color"] }
+
+[features]
+default = ["sound"]
+# PC-speaker style sound; on Linux it needs the ALSA development package.
+sound = ["macroquad/audio"]
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 2
