@@ -125,7 +125,11 @@ pub fn render_face(card: Card) -> Canvas {
         for x in 0..FACE_W {
             let idx = (y * FACE_W + x) as usize;
             let byte = DECK_BYTES[offset + idx / 2];
-            let col = if (idx & 1) == 0 { byte >> 4 } else { byte & 0x0f };
+            let col = if (idx & 1) == 0 {
+                byte >> 4
+            } else {
+                byte & 0x0f
+            };
             c.put_pixel(x, y, col);
         }
     }
