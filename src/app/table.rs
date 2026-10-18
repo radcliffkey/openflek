@@ -151,15 +151,42 @@ fn label_origin(p: Player) -> (i32, i32) {
     }
 }
 
+/// The texts of the contract box and the seven box under it. Once a seven
+/// contract is flekked the game part and the seven are doubled apart, so the
+/// contract box names the game part alone ("hra 2x" over "7 2x", not "7 2x"
+/// twice).
+fn label_texts(l: &Label) -> (String, Option<String>) {
+    let times = |n: u32| format!(" {}x", 1u32 << n.min(12));
+    let flekked = l.flek_game > 0 || l.flek_seven > 0;
+    let (name, seven) = match l.contract {
+        None => (text::TRUMPS, false),
+        Some(c) if c.has_seven() && flekked => {
+            let game = if c.has_hundred() {
+                Contract::Hundred
+            } else {
+                Contract::Game
+            };
+            (text::contract_label(game), true)
+        }
+        Some(c) => (text::contract_label(c), false),
+    };
+    let mut title = name.to_string();
+    if l.flek_game > 0 {
+        title += &times(l.flek_game);
+    }
+    let seven = seven.then(|| {
+        let mut t = text::contract_label(Contract::Seven).to_string();
+        if l.flek_seven > 0 {
+            t += &times(l.flek_seven);
+        }
+        t
+    });
+    (title, seven)
+}
+
 fn draw_label(ctx: &mut Ctx, l: &Label) {
     let (x, y) = label_origin(l.player);
-    let mut title = l
-        .contract
-        .map_or(text::TRUMPS, text::contract_label)
-        .to_string();
-    if l.flek_game > 0 {
-        title = format!("{title} {}x", 1u32 << l.flek_game.min(12));
-    }
+    let (title, seven) = label_texts(l);
     let r = Rect {
         x1: x,
         y1: y,
@@ -168,19 +195,14 @@ fn draw_label(ctx: &mut Ctx, l: &Label) {
     };
     let col = ctx.cfg.menu_color;
     draw_button(&mut ctx.scr.canvas, r, &title, col);
-    if l.flek_seven > 0 {
+    if let Some(seven) = seven {
         let r2 = Rect {
             x1: x,
             y1: y + 32,
             x2: x + 72,
             y2: y + 52,
         };
-        draw_button(
-            &mut ctx.scr.canvas,
-            r2,
-            &format!("7 {}x", 1u32 << l.flek_seven.min(12)),
-            col,
-        );
+        draw_button(&mut ctx.scr.canvas, r2, &seven, col);
     }
     if let Some(tc) = l
         .trump_card
@@ -434,5 +456,36 @@ mod tests {
                 assert!(pos[n / 2].1 < pos[0].1, "middle card is higher");
             }
         }
+    }
+
+    fn label(contract: Contract, flek_game: u32, flek_seven: u32) -> Label {
+        Label {
+            player: 0,
+            contract: Some(contract),
+            trump_card: None,
+            trump_face_down: false,
+            flek_game,
+            flek_seven,
+        }
+    }
+
+    fn texts(contract: Contract, flek_game: u32, flek_seven: u32) -> (String, Option<String>) {
+        label_texts(&label(contract, flek_game, flek_seven))
+    }
+
+    #[test]
+    fn flekked_seven_names_game_part_apart() {
+        let s = |x: &str| Some(x.to_string());
+        assert_eq!(texts(Contract::Seven, 0, 0), ("7".into(), None));
+        assert_eq!(texts(Contract::Seven, 1, 1), ("hra 2x".into(), s("7 2x")));
+        assert_eq!(texts(Contract::Seven, 2, 0), ("hra 4x".into(), s("7")));
+        assert_eq!(texts(Contract::Seven, 0, 1), ("hra".into(), s("7 2x")));
+        assert_eq!(texts(Contract::HundredSeven, 0, 0), ("107".into(), None));
+        assert_eq!(
+            texts(Contract::HundredSeven, 1, 3),
+            ("100 2x".into(), s("7 8x"))
+        );
+        assert_eq!(texts(Contract::Game, 1, 0), ("hra 2x".into(), None));
+        assert_eq!(texts(Contract::Betl, 0, 0), ("BETL".into(), None));
     }
 }
