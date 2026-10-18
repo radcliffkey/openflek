@@ -775,13 +775,14 @@ impl Deal<'_> {
                 String::new(),
             ));
         }
+        let side = |amount: i64| text::money(for_viewer(amount, d));
         if s.game != 0 {
-            lines.push((game_line(&s), text::money(s.game.abs())));
+            lines.push((game_line(&s), side(s.game)));
         }
         if s.seven_money != 0
             && let Some(l) = seven_line(&s)
         {
-            lines.push((l, text::money(s.seven_money.abs())));
+            lines.push((l, side(s.seven_money)));
         }
         if s.seven_money != 0 || s.hearts {
             let total = if s.hearts {
@@ -789,7 +790,7 @@ impl Deal<'_> {
             } else {
                 text::TOTAL
             };
-            lines.push((total.to_string(), text::money(s.per_defender.abs())));
+            lines.push((total.to_string(), side(s.per_defender)));
         }
         let net = s.net(VIEWER, d);
         if s.per_defender == 0 {
@@ -919,6 +920,12 @@ fn rebuke(r: &Round, ctx: &mut Ctx, p: Player, card: Card) -> (String, String) {
     (l1, l2)
 }
 
+/// A settlement amount, signed from the declarer's side, turned to the
+/// viewer's: what the viewer loses shows with a minus.
+fn for_viewer(amount: i64, declarer: Player) -> i64 {
+    if declarer == VIEWER { amount } else { -amount }
+}
+
 /// The settlement line of the game part, e.g. "Hra, 2x flek:".
 fn game_line(s: &Settlement) -> String {
     let name = match s.game_item {
@@ -1008,5 +1015,18 @@ pub async fn play_deal(ctx: &mut Ctx, dealer: Player, seats: [Seat; 3]) -> DealS
         flek_seven: r.flek_seven,
         raises: deal.raised_by,
         not_played: r.not_played,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn amounts_are_signed_from_the_viewers_side() {
+        assert_eq!(for_viewer(-4, VIEWER), -4);
+        assert_eq!(for_viewer(2, VIEWER), 2);
+        assert_eq!(for_viewer(-4, 1), 4);
+        assert_eq!(for_viewer(2, 2), -2);
     }
 }
