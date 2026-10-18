@@ -98,7 +98,7 @@ impl Deal<'_> {
         } else {
             text::pick(&mut self.ctx.rng, line2)
         };
-        say(self.ctx, who, l1, l2, 4.0).await;
+        say(self.ctx, who, l1, l2, 0.5).await;
     }
 
     // ------------------------------------------------------------ decisions
@@ -416,14 +416,14 @@ impl Deal<'_> {
         };
         self.ctx.brain.start_move(&mut self.r);
         let card = ai::choose_card(&self.r, &mut self.ctx.rng, &mut self.ctx.brain);
-        let min = if self.ctx.brain.iq <= 100 { 1.0 } else { 2.0 };
+        let min = if self.ctx.brain.iq <= 100 { 0.5 } else { 1.0 };
         if !self.ctx.quick && (thinking || (self.r.trick_no() < 6 && self.ctx.rng.below(3) > 1)) {
             let left = min - (self.ctx.scr.now() - start);
             if left > 0.0 {
                 self.ctx.scr.pause(left).await;
             }
         } else if !self.ctx.quick {
-            self.ctx.scr.pause(0.4).await;
+            self.ctx.scr.pause(0.2).await;
         }
         if let Some(b) = bubble {
             b.close(self.ctx);
@@ -444,7 +444,7 @@ impl Deal<'_> {
             self.show_trump(fh);
             if blind {
                 let name = text::card_name(card);
-                say(self.ctx, fh, text::FROM_THE_PEOPLE, &name, 4.0).await;
+                say(self.ctx, fh, text::FROM_THE_PEOPLE, &name, 0.5).await;
             }
         } else {
             self.show_hand();

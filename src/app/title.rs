@@ -75,7 +75,7 @@ pub async fn title_screen(ctx: &mut Ctx) {
             b.line(c, 5, text::VERSION, super::ui::Justify::Center);
         }
         ctx.deck.cut(10, &mut ctx.rng);
-        ctx.scr.wait(10.0).await;
+        ctx.scr.wait(5.0).await;
         if ctx.scr.has_key() {
             break;
         }
@@ -120,5 +120,5 @@ pub async fn credits(ctx: &mut Ctx) {
         "Původní hra: J. Pivoňka, 1991-1992",
         super::ui::Justify::Center,
     );
-    ctx.scr.wait_for_key(10.0).await;
+    ctx.scr.wait_for_key(5.0).await;
 }

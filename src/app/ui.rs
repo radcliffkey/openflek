@@ -557,7 +557,7 @@ pub async fn bubble(ctx: &mut Ctx, who: usize, line1: &str, line2: &str, silent:
         text_centered(canvas, x, y - 7, &format!("{line1},"), col);
         text_centered(canvas, x, y + 7, line2, col);
     }
-    ctx.scr.wait(1.0).await;
+    ctx.scr.wait(0.5).await;
     Bubble { saved }
 }
 
