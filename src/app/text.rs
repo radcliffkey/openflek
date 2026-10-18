@@ -12,7 +12,7 @@ pub fn pick(rng: &mut Rng, s: &'static str) -> &'static str {
 pub const TITLE_BY: &str = "AI Slop software";
 pub const TITLE_PRESENTS: &str = "uvádí";
 pub const TITLE: &str = "FLEK!";
-pub const VERSION: &str = "verze 1.0";
+pub const VERSION: &str = "verze 0.1.0";
 pub const PRESS_ANY_KEY: &str = "Stiskni libovolnou klávesu";
 pub const PRESS_ANYTHING: &str = "Stiskni cokoli";
 pub const NOT_UNDERSTOOD: &str = "Nerozumím";
