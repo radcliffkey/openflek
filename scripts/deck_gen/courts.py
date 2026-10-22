@@ -179,9 +179,12 @@ def _quarters(col):
 OBER_COAT = dict(hem=61, flare=10)
 
 
-def _standing(c, flip, look, arms, legs, back_props=None, front_props=None, pose=None):
+def _standing(c, suit, flip, look, arms, legs, back_props=None, front_props=None, pose=None):
+    """Draws a standing court figure and grounds it: grass (or a shadow on cobbles) under each boot sole."""
     r = Rig(c, flip=flip)
     F.draw_standing(r, look, arms, legs, back_props=back_props, front_props=front_props, pose=pose)
+    # The middle of each sole, halfway from ankle to toe, wherever mirroring put it.
+    _tufts(c, suit, [round(r.tx((ankle[0] + toe[0]) / 2, 0)[0]) for _, _, ankle, toe in legs])
     return r
 
 
@@ -210,8 +213,7 @@ def draw_unter(c, suit):
         def blade(r):
             F.sword(r, (22, 9), (5, 24))
 
-        _standing(c, False, look, arms, legs, back_props=blade)
-        _tufts(c, suit, [16, 45])
+        _standing(c, suit, False, look, arms, legs, back_props=blade)
         draw_suit(c, 0, 50, 72, 'v')
 
     elif suit == 1:  # Leaf: playing a transverse flute, facing left
@@ -244,8 +246,7 @@ def draw_unter(c, suit):
             F.draw_hand(r, 40, 20, grip=True)
             F.draw_hand(r, 49, 21, grip=True)
 
-        _standing(c, True, look, arms, legs, front_props=flute)
-        _tufts(c, suit, [21, 33])
+        _standing(c, suit, True, look, arms, legs, front_props=flute)
         draw_suit(c, 1, 48, 72, 'v')
 
     elif suit == 2:  # Bell: hand on hip, the other resting on a sword planted point-down
@@ -271,8 +272,7 @@ def draw_unter(c, suit):
         def planted(r):
             F.sword(r, (45, 47), (47, 85))
 
-        _standing(c, False, look, arms, legs, front_props=planted)
-        _tufts(c, suit, [22, 43])
+        _standing(c, suit, False, look, arms, legs, front_props=planted)
         draw_suit(c, 2, 13, 72)
 
     else:  # Heart: halberd over the shoulder, walking left
@@ -299,8 +299,7 @@ def draw_unter(c, suit):
             r.part().poly([(46, 6), (50, 4), (55, 10), (52, 13)]).paint(LIGHT_CYAN, None, outline=BLUE)
             r.part().poly([(50, 3), (53, 0), (52, 6)]).paint(LIGHT_CYAN, None, outline=BLUE)
 
-        _standing(c, True, look, arms, legs, back_props=halberd)
-        _tufts(c, suit, [17, 40])
+        _standing(c, suit, True, look, arms, legs, back_props=halberd)
         draw_suit(c, 3, 50, 72)
 
 
@@ -332,8 +331,7 @@ def draw_ober(c, suit):
         def blade(r):
             F.sword(r, (49, 14), (37, 1))
 
-        _standing(c, True, look, arms, legs, front_props=blade, pose=OBER_COAT)
-        _tufts(c, suit, [19, 42])
+        _standing(c, suit, True, look, arms, legs, front_props=blade, pose=OBER_COAT)
         draw_suit(c, 0, 47, 12, 'v')
 
     elif suit == 1:  # Leaf: drummer with the drum slung at his hip
@@ -365,8 +363,7 @@ def draw_ober(c, suit):
             F.pole(r, (34, 41), (39, 49))
             F.pole(r, (50, 30), (45, 48))
 
-        _standing(c, False, look, arms, legs, front_props=drum, pose=OBER_COAT)
-        _tufts(c, suit, [21, 43])
+        _standing(c, suit, False, look, arms, legs, front_props=drum, pose=OBER_COAT)
         draw_suit(c, 1, 12, 12, 'v')
 
     elif suit == 2:  # Bell: hand on sword hilt at his side, the other open in greeting, facing left
@@ -397,8 +394,7 @@ def draw_ober(c, suit):
             r.part().capsule(22, 47, 23, 42, 0.7).fill(BROWN)
             r.part().capsule(19, 48, 25, 46, 0.7).fill(YELLOW)
 
-        _standing(c, True, look, arms, legs, back_props=scabbard, pose=OBER_COAT)
-        _tufts(c, suit, [22, 41])
+        _standing(c, suit, True, look, arms, legs, back_props=scabbard, pose=OBER_COAT)
         draw_suit(c, 2, 47, 12)
 
     else:  # Heart: spear upright in one hand, the other on his hip
@@ -425,8 +421,7 @@ def draw_ober(c, suit):
             F.pole(r, (47, 86), (47, 5))
             r.part().poly([(47, -1), (49, 5), (47, 8), (45, 5)]).paint(LIGHT_CYAN, None, outline=BLUE)
 
-        _standing(c, False, look, arms, legs, back_props=spear, pose=OBER_COAT)
-        _tufts(c, suit, [21, 44])
+        _standing(c, suit, False, look, arms, legs, back_props=spear, pose=OBER_COAT)
         draw_suit(c, 3, 12, 12)
 
 
