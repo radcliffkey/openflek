@@ -23,15 +23,17 @@ from scripts.deck_gen.rig import Rig, darker
 from scripts.deck_gen.symbols import draw_suit
 
 
-# Small gold bell (7x7) charged on the Bell Ace shield.
+# Small round hawk-bell (7x8) charged on the Bell Ace shield: a loop on top,
+# a red band round the middle and the slot underneath, like the suit sign.
 MINI_BELL = [
     '...8...',
-    '..8e8..',
+    '..888..',
     '.8efe8.',
-    '.8eee8.',
     '8eeeee8',
     '8444448',
-    '.88688.',
+    '8eeeee8',
+    '.8e8e8.',
+    '..888..',
 ]
 
 
