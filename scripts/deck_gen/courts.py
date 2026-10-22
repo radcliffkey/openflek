@@ -79,8 +79,52 @@ def _ground_colour(suit, x, y, hill_y):
     return GREEN if dither else LIGHT_GREEN
 
 
+def _floor_colour(suit, x, y):
+    """The throne-room floor in front of the dais, one kind per suit.
+
+    Acorns get oak parquet, Leaves green and gold lozenges, Bells a black and
+    white marble chequer, Hearts a red carpet runner on stone.
+    """
+    d = y - 90
+    if suit == 0:
+        plank = (x + (d // 2) * 3) // 6
+        if d % 2 == 1 and (x + (d // 2) * 3) % 6 == 0:
+            return DARK_GRAY
+        return YELLOW if plank % 2 else BROWN
+    if suit == 1:
+        # Lozenges eight wide and four tall, each row offset by half a lozenge.
+        lx = (x + 4 * ((d // 4) % 2)) % 8 - 3.5
+        ly = d % 4 - 1.5
+        return YELLOW if abs(lx) / 4 + abs(ly) / 2 <= 1 else GREEN
+    if suit == 2:
+        return DARK_GRAY if ((x - 2) // 5 + d // 3) % 2 else WHITE
+    if abs(x - 30) <= 9:
+        return YELLOW if y == 97 and x % 2 else (LIGHT_RED if (x + y) % 4 else RED)
+    if abs(x - 30) <= 11:
+        return YELLOW
+    return LIGHT_GRAY if ((x // 4) + (d // 3)) % 2 else WHITE
+
+
+def _draw_throne_floor(c, suit):
+    """A stone dais under the throne, its top at the king's feet, and the suit's floor below."""
+    for y in range(80, 98):
+        for x in range(2, 59):
+            if not c.in_interior(x, y) or y < 85:
+                continue
+            if y in (85, 89):
+                col = DARK_GRAY
+            elif y < 89:
+                col = LIGHT_GRAY if y == 86 else (WHITE if y == 87 else LIGHT_GRAY)
+            else:
+                col = _floor_colour(suit, x, y)
+            c.put(x, y, col)
+
+
 def draw_pedestal(c, suit, is_king=False):
-    """Draws the ground under a standing figure, or a tiled floor under a throne."""
+    """Draws the ground under a standing figure, or a dais and floor under a throne."""
+    if is_king:
+        _draw_throne_floor(c, suit)
+        return
     for y in range(80, 98):
         for x in range(2, 59):
             if not c.in_interior(x, y):
