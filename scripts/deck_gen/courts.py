@@ -143,10 +143,8 @@ def draw_pedestal(c, suit, is_king=False):
 
 def _ground_details(c, suit):
     """Small things growing or lying at the edges of each suit's ground."""
-    if suit == 0:  # a toadstool and a fern on the forest floor
-        c.blit_sprite(['.8888.', '84c4c48', '8f4f4f8', '8888888', '..8f8..', '..8f8..', '.8fff8.'], 4, 77)
-        for k in range(4):
-            c.line(53, 83, 50 + k * 2, 76 + k, GREEN if k & 1 else LIGHT_GREEN)
+    if suit == 0:  # a toadstool at the right edge, clear of the Unter's suit sign
+        c.blit_sprite(['.8888.', '84c4c48', '8f4f4f8', '8888888', '..8f8..', '..8f8..', '.8fff8.'], 51, 77)
     elif suit == 1:  # tall grass blades along the meadow's edge
         for x in range(3, 58, 3):
             y = 82 + int(round(math.sin((x + 9) * 0.22) * 2.0))
@@ -197,7 +195,8 @@ def _standing(c, suit, flip, look, arms, legs, back_props=None, front_props=None
 def draw_unter(c, suit):
     """Spodek: young huntsmen and musicians in caps, the suit sign low beside the legs."""
     draw_pedestal(c, suit)
-    if suit == 0:  # Acorn: swinging a sword up over his head, striding right
+    # The suit sign sits on the left, where it still shows when the hand fans the cards.
+    if suit == 0:  # Acorn: swinging a sword up over his head, striding left
         look = dict(
             cape=GREEN,
             swing=-9,
@@ -219,8 +218,8 @@ def draw_unter(c, suit):
         def blade(r):
             F.sword(r, (22, 9), (5, 24))
 
-        _standing(c, suit, False, look, arms, legs, back_props=blade)
-        draw_suit(c, 0, 50, 72, 'v')
+        _standing(c, suit, True, look, arms, legs, back_props=blade)
+        draw_suit(c, 0, 10, 72, 'v')
 
     elif suit == 1:  # Leaf: playing a transverse flute, facing left
         look = dict(
@@ -253,7 +252,7 @@ def draw_unter(c, suit):
             F.draw_hand(r, 49, 21, grip=True)
 
         _standing(c, suit, True, look, arms, legs, front_props=flute)
-        draw_suit(c, 1, 48, 72, 'v')
+        draw_suit(c, 1, 10, 72, 'v')
 
     elif suit == 2:  # Bell: hand on hip, the other resting on a sword planted point-down
         look = dict(
@@ -306,13 +305,14 @@ def draw_unter(c, suit):
             r.part().poly([(50, 3), (53, 0), (52, 6)]).paint(LIGHT_CYAN, None, outline=BLUE)
 
         _standing(c, suit, True, look, arms, legs, back_props=halberd)
-        draw_suit(c, 3, 50, 72)
+        draw_suit(c, 3, 9, 67)
 
 
 def draw_ober(c, suit):
     """Svršek: bearded men in broad plumed hats, the suit sign high in a corner."""
     draw_pedestal(c, suit)
-    if suit == 0:  # Acorn: raising a sword forward, fist on hip, facing left
+    # The suit sign sits top left, where it still shows when the hand fans the cards.
+    if suit == 0:  # Acorn: raising a sword forward, fist on hip, facing right
         look = dict(
             cape=GREEN,
             swing=-9,
@@ -337,8 +337,8 @@ def draw_ober(c, suit):
         def blade(r):
             F.sword(r, (49, 14), (37, 1))
 
-        _standing(c, suit, True, look, arms, legs, front_props=blade, pose=OBER_COAT)
-        draw_suit(c, 0, 47, 12, 'v')
+        _standing(c, suit, False, look, arms, legs, front_props=blade, pose=OBER_COAT)
+        draw_suit(c, 0, 12, 12, 'v')
 
     elif suit == 1:  # Leaf: drummer with the drum slung at his hip
         look = dict(
@@ -401,7 +401,7 @@ def draw_ober(c, suit):
             r.part().capsule(19, 48, 25, 46, 0.7).fill(YELLOW)
 
         _standing(c, suit, True, look, arms, legs, back_props=scabbard, pose=OBER_COAT)
-        draw_suit(c, 2, 47, 12)
+        draw_suit(c, 2, 12, 12)
 
     else:  # Heart: spear upright in one hand, the other on his hip
         look = dict(
