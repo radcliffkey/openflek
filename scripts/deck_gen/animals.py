@@ -253,3 +253,59 @@ def draw_peacock(c, flip=False, dx=0, scale=1.0):
     r.line(29, 84, 28, 87, BROWN)
     r.line(32, 84, 33, 87, BROWN)
     return r
+
+
+def draw_lion_rampant(c, flip=True, dx=0, dy=3, scale=1.0):
+    """The silver double-tailed lion of Bohemia, rampant and crowned, for the Leaf Ace shield.
+
+    Posed facing right and mirrored by default, as heraldic beasts face the
+    shield's dexter side (the viewer's left). It fills roughly x=8..50,
+    y=24..82 of a card before the `dy` shift.
+    """
+    r = Rig(c, flip=flip, dx=dx, dy=dy, scale=scale)
+    hide, claw = WHITE, YELLOW
+
+    def paw(x, y):
+        for k in (-1, 0, 1):
+            r.put(x + 2, y + k * 1.5, claw)
+
+    # Forked double tail rising behind the back, each end in a flame-shaped tuft.
+    tail = r.part().chain([(20, 62), (14, 56), (12, 48), (15, 42)], [2.2, 2.0, 1.8, 1.6])
+    tail.chain([(12, 49), (7, 45), (7, 38)], [1.8, 1.6, 1.5])
+    for tx, ty, ang in ((16, 37, 20), (8, 33, -15)):
+        tail.ellipse(tx, ty, 2.4, 4.0, angle=ang)
+    tail.paint(hide, outline=DARK_GRAY, pattern=lambda x, y: LIGHT_GRAY if (x + y) % 3 == 0 and y < 40 + dy else None)
+    # Far legs, shaded.
+    _legs(r, [[(30, 64), (38, 66), (35, 72), (40, 74)]], LIGHT_GRAY, upper=3.4, lower=2.0, outline=DARK_GRAY)
+    _legs(r, [[(33, 46), (40, 51), (46, 48)]], LIGHT_GRAY, upper=2.8, lower=2.0, outline=DARK_GRAY)
+    paw(40, 74)
+    paw(46, 48)
+    # Body: haunch, a narrow waist and a deep chest, rearing on the hind leg.
+    body = r.part().ellipse(24, 62, 6.5, 7.5, angle=-20).capsule(25, 58, 31, 47, 4.6, 5.2).ellipse(33, 43, 7, 7.5)
+    body.paint(hide, outline=DARK_GRAY)
+    # Mane in jagged locks around the neck.
+    mane = r.part().ellipse(34, 35, 7, 7.5)
+    for k in range(9):
+        a = math.radians(100 + k * 30)
+        mane.ellipse(34 + math.cos(a) * 7, 35 + math.sin(a) * 7.5, 2, 2)
+    mane.paint(hide, outline=DARK_GRAY, pattern=lambda x, y: LIGHT_GRAY if (x + 2 * y) % 5 == 0 else None)
+    # Head with open jaws and a lolling red tongue.
+    head = r.part().ellipse(38, 32, 5.2, 4.6).capsule(41, 31, 46, 32, 2.6, 2.2).capsule(40, 36, 45, 38, 1.8, 1.2)
+    head.paint(hide, outline=DARK_GRAY)
+    r.part().chain([(43, 35), (47, 37), (48, 40)], [0.9, 0.9, 0.8]).fill(RED)
+    r.put(41, 30, BLACK)
+    r.put(40, 29, DARK_GRAY)
+    r.put(41, 29, DARK_GRAY)
+    r.put(47, 31, DARK_GRAY)
+    # Near legs: the standing hind leg and the raised foreleg, claws out.
+    _legs(r, [[(23, 66), (27, 73), (21, 77), (24, 82)]], hide, upper=3.6, lower=2.0, outline=DARK_GRAY)
+    _legs(r, [[(36, 44), (43, 42), (47, 35)]], hide, upper=3.0, lower=2.0, outline=DARK_GRAY)
+    paw(24, 82)
+    paw(47, 35)
+    # Crown.
+    crown = r.part().rect(33, 25, 41, 27)
+    for px in (33, 37, 41):
+        crown.poly([(px - 1.5, 26), (px, 21), (px + 1.5, 26)])
+    crown.paint(YELLOW)
+    r.put(37, 26, RED)
+    return r

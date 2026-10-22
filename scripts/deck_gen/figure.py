@@ -111,6 +111,15 @@ HATS = {
             '..bBBBBBBBBBb..',
         ],
     ),
+    'wreath': (  # oak leaves with acorns, for the wild man
+        -3,
+        [
+            '..cC.T.cC.T....',
+            '.cCCcCcCCcCc...',
+            'cCCcCCcCCcCCc..',
+            '.cc.cc.cc.cc...',
+        ],
+    ),
     'crown': (
         -4,
         [
@@ -126,20 +135,55 @@ HATS = {
 }
 
 
+# Heads for figures drawn at vignette size (rig scale below SMALL_SCALE), on
+# the same placeholders; the face centre is column 3, row 3.
+SMALL_SCALE = 0.6
+
+SMALL_FACES = {
+    'young': [
+        '.hHHHh.',
+        'hHHHHHH',
+        'hHHf0f.',
+        'hHfffff',
+        '.hffcf.',
+        '..fff..',
+    ],
+    'beard': [
+        '.hHHHh.',
+        'hHHHHHH',
+        'hHHf0f.',
+        'hHfffff',
+        '.hJJ4J.',
+        '..JJJ..',
+    ],
+}
+SMALL_FACES['old'] = SMALL_FACES['beard']
+
+SMALL_HATS = {
+    'cap': (-2, ['T.cCCc..', '.cCCCCCc', '.bBBBBBb']),
+    'brim': (-3, ['..cCCc...', 'TcCCCCc..', 'cCCCCCCCc']),
+    'beret': (-2, ['..cCCCT.', '.cCCCCCc', '..bBBBb.']),
+    'crown': (-3, ['.T.T.T.', '.BBBBB.', '.bBTBb.']),
+    'jester': (-4, ['T.....T.', 'Cc...cC.', '.CcCcC..', '.bBBBBb.']),
+}
+
+
 def draw_head(rig, hx, hy, face='young', hair=BROWN, beard=None, hat=None):
     """Draws a head in 3/4 view facing right with its face centred near (hx, hy).
 
-    `hat` is (kind, cloth, trim, band) with kind from `HATS`.
+    `hat` is (kind, cloth, trim, band) with kind from `HATS`. On a rig scaled
+    below `SMALL_SCALE` the small templates are used instead.
     """
-    x0, y0 = hx - 8, hy - 6
+    small = rig.s < SMALL_SCALE
+    faces, hats, anchor = (SMALL_FACES, SMALL_HATS, (3, 3)) if small else (FACES, HATS, (8, 6))
     beard = beard if beard is not None else hair
     subst = {'H': hair, 'h': darker(hair), 'J': beard, 'j': darker(beard)}
-    rig.sprite(FACES[face], x0, y0, subst)
+    rig.sprite(faces[face], hx, hy, subst, anchor=anchor)
     if hat is not None:
         kind, cloth, trim, band = hat
-        top, rows = HATS[kind]
+        top, rows = hats[kind]
         subst = {'C': cloth, 'c': darker(cloth), 'T': trim, 't': darker(trim), 'B': band, 'b': darker(band)}
-        rig.sprite(rows, x0, y0 + top, subst)
+        rig.sprite(rows, hx, hy, subst, anchor=(anchor[0], anchor[1] - top))
 
 
 def draw_hand(rig, x, y, grip=False):
@@ -151,13 +195,13 @@ def draw_hand(rig, x, y, grip=False):
         rig.put(x - 1, y + 1, LIGHT_GRAY)
 
 
-def arm(rig, sh, el, wr, sleeve, cuff=None, upper_r=2.7, puff=None):
+def arm(rig, sh, el, wr, sleeve, cuff=None, upper_r=3.1, puff=None):
     """A sleeved arm through shoulder, elbow and wrist.
 
     `cuff` adds a turned-back cuff at the wrist, `puff` a slashed puffed
     upper sleeve in that colour.
     """
-    rig.part().chain([sh, el, wr], [upper_r, 2.2, 1.8]).paint(sleeve)
+    rig.part().chain([sh, el, wr], [upper_r, 2.5, 2.0]).paint(sleeve)
     ex, ey = el
     wx, wy = wr
     if puff is not None:
@@ -169,14 +213,14 @@ def arm(rig, sh, el, wr, sleeve, cuff=None, upper_r=2.7, puff=None):
         )
 
 
-def leg(rig, hip, kn, an, toe, hose, boot, boot_top=0.4, thigh_r=3.4, cuff=None):
+def leg(rig, hip, kn, an, toe, hose, boot, boot_top=0.4, thigh_r=3.8, cuff=None):
     """A leg through hip, knee and ankle, booted from `boot_top` of the shin, the foot pointing at `toe`."""
-    rig.part().chain([hip, kn, an], [thigh_r, 2.5, 2.0]).paint(hose)
+    rig.part().chain([hip, kn, an], [thigh_r, 2.8, 2.1]).paint(hose)
     kx, ky = kn
     ax, ay = an
     bx, by = kx + (ax - kx) * boot_top, ky + (ay - ky) * boot_top
     tx, ty = toe
-    b = rig.part().chain([(bx, by), an], [2.8, 2.3]).capsule(ax, ay + 0.5, tx, ty, 2.2, 1.3)
+    b = rig.part().chain([(bx, by), an], [3.1, 2.5]).capsule(ax, ay + 0.5, tx, ty, 2.3, 1.4)
     b.paint(boot)
     rig.part().ellipse(bx, by, 3.3, 1.4).paint(cuff if cuff is not None else boot)
 
@@ -204,7 +248,7 @@ def torso(rig, j, tunic, skirt, belt, collar=WHITE, pattern=None, skirt_pattern=
     sk.paint(skirt, pattern=pleats)
     # Chest: broad at the shoulders, narrowing to the waist, the breast pushed forward.
     body = rig.part().poly([(sbx - 1, sby - 1), (sfx + 1, sfy - 1), (wx + 4, wy), (wx - 4, wy)])
-    body.ellipse((sbx + sfx) / 2 + 1.5, sby + 6, 6.2, 6.0)
+    body.ellipse((sbx + sfx) / 2 + 1.5, sby + 6, 6.8, 6.4)
     body.paint(tunic, pattern=pattern)
     if buttons is not None:
         bx = (sbx + sfx) / 2 + 3
@@ -252,4 +296,50 @@ def sword(rig, hilt, tip, blade=LIGHT_CYAN, guard=YELLOW):
 def pole(rig, a, b, col=BROWN):
     """A staff or shaft from `a` to `b`."""
     rig.part().capsule(*a, *b, 0.8).fill(col)
+
+
+# Standing pose shared by Unters, Obers and the vignette people; each figure
+# overrides arms and legs, and may override these joints through `pose`.
+BASE = dict(head=(30, 15), neck=(30, 21), sh_b=(23, 26), sh_f=(36, 26), waist=(30, 44), hem=56)
+
+
+def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose=None):
+    """Draws a standing figure back to front.
+
+    `look` names the colours (sleeve_b, sleeve_f, hose, boot, tunic, skirt,
+    belt, hair, hat and optional extras); `arms` is ((sh, el, wr, hand),
+    (sh, el, wr, hand)) for the back and the front arm, where hand is
+    'open', 'grip' or None; `legs` is ((hip, knee, ankle, toe), ...) back
+    then front. Props are callbacks taking the rig.
+    """
+    j = dict(BASE, **(pose or {}))
+    if look.get('cape') is not None:
+        cape(rig, j, look['cape'], length=look.get('cape_len', 64), swing=look.get('swing', -7), lining=look.get('lining'))
+    if back_props:
+        back_props(rig)
+    (bsh, bel, bwr, bhand), (fsh, fel, fwr, fhand) = arms
+    arm(rig, bsh, bel, bwr, look['sleeve_b'], cuff=look.get('cuff'), puff=look.get('puff'))
+    if bhand:
+        draw_hand(rig, *bwr, grip=bhand == 'grip')
+    for hip, kn, an, toe in legs:
+        leg(rig, hip, kn, an, toe, look['hose'], look['boot'], cuff=look.get('boot_cuff'))
+    torso(
+        rig,
+        j,
+        look['tunic'],
+        look['skirt'],
+        look['belt'],
+        collar=look.get('collar', WHITE),
+        pattern=look.get('pattern'),
+        skirt_pattern=look.get('skirt_pattern'),
+        buttons=look.get('buttons'),
+    )
+    hx, hy = j['head']
+    draw_head(rig, hx, hy, face=look.get('face', 'young'), hair=look['hair'], beard=look.get('beard'), hat=look['hat'])
+    arm(rig, fsh, fel, fwr, look['sleeve_f'], cuff=look.get('cuff'), puff=look.get('puff'))
+    if fhand:
+        draw_hand(rig, *fwr, grip=fhand == 'grip')
+    if front_props:
+        front_props(rig)
+    return rig
 

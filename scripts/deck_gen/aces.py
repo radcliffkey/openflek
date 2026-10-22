@@ -2,7 +2,6 @@
 
 import math
 from scripts.deck_gen.palette import (
-    BLACK,
     BLUE,
     BROWN,
     CYAN,
@@ -19,93 +18,8 @@ from scripts.deck_gen.palette import (
     WHITE,
     YELLOW,
 )
+from scripts.deck_gen import animals, people
 from scripts.deck_gen.symbols import draw_suit
-
-
-# Hand-crafted rampant double-tailed Bohemian lion (Český dvouocasý lev, 41x48)
-# Features: golden royal crown, deep stepped profile snout with wide-open roaring V-jaws,
-# white upper & lower fangs, projecting crimson-gold tongue, sculpted silver-and-gold mane,
-# muscular 3D-shaded torso & narrow heraldic waist, jointed forelegs and hind legs with
-# golden claws, and a crossed double tail with two wide foliate plumes on the crimson shield.
-LION_RAMPANT = [
-    '........6e6..6e6..6e6....................',
-    '.......8eeeeeeeeeeeee8...................',
-    '.......864e62eee26e468...................',
-    '.......88fffffffffff888..................',
-    '......88fffffff87f8e6ff88..8..8.....8..8.',
-    '.....8fff888fff78f78eeff788f88f8...8f88f8',
-    '...88ffff898fff87f78eff788fffff8..8fffff8',
-    '..8fffffff88fff787f8eff78.8ffff8...8ffff8',
-    '..8ff0ffff0ffff7887f8ef88..8fff8...8fff8.',
-    '...880....0fffff787f78f7ff8.8ff78..8ff78.',
-    '..6cc44...0ffffff787f8ff78..8ff78..8ff78.',
-    '....80f000fffffff78878ff78..8ff78..8ff78.',
-    '.6e..8ffffffffffff7888ff8...8ff78..8ff78.',
-    '......888fffffffffff778778..8ff78.8ff78..',
-    '6ef88....8ffffffffffff7888...8ff78ff78...',
-    '...8ff888ffffffffffffff778...8ff7ff78....',
-    '6efff77fffffffffffffffff78....8eeeee8....',
-    '.888ff77ffffffffffffffff78...8ff78ff78...',
-    '....88888fffffffffffffff78..8ff78.8ff78..',
-    '.6e......8fffffffffffff78..8ff78...8ff78.',
-    '.........8fffffffffffff78..8ff78...8ff78.',
-    '6ef88...8ffffffffffffff78..8ff78...8ff78.',
-    '...8ff88fffffffffffffff78...8ff78..8ff78.',
-    '6efff77fffffffffffffff778....8ff788ff78..',
-    '.888ff77ffffffffffffff78......8fffff78...',
-    '....888888ffffffffff778........8fff78....',
-    '..........8fffffffff78........8fff778....',
-    '..........8ffffffffff78......8fff778.....',
-    '.........8ffffffffffff78....8fff778......',
-    '........8fffffff77fffff78..8fff778.......',
-    '.......8fffffff788ffffff788fff778........',
-    '......8fffffff78..8ffffff7ff778..........',
-    '.....8fffffff78....8fffffff778...........',
-    '....8fffffff78......8ffffff78............',
-    '...8fffffff78........8fffff78............',
-    '..6effffff78.........8fffff78............',
-    '....8ffff78...........8ffff78............',
-    '.6efffff78............8ffff78............',
-    '...888888..............8fff78............',
-    '.......................8fff78............',
-    '......................6efff78............',
-    '........................8ff78............',
-    '.....................6effff8.............',
-    '.......................8888..............',
-    '.........................................',
-    '.........................................',
-    '.........................................',
-    '.........................................',
-]
-
-# Crowned Woodland Griffin / Eagle Crest for Acorn Ace (29x32)
-ACORN_CREST_EAGLE = [
-    '...........6e6.6e6...........',
-    '..........8eeeeeee8..........',
-    '..........864e6e468..........',
-    '.........887fffff788.........',
-    '........8ee8f8f8f8ee8........',
-    '.......8eee88eee88eee8.......',
-    '..888...8866eeeee6688...888..',
-    '.86ee88..86ee4e4ee68..88ee68.',
-    '86eeeee886ee4ccc4ee688eeeee68',
-    '86e66eee66e4ceeeec4e66eee66e8',
-    '.88666eee64ceeeeeec46eee6668.',
-    '..86666ee64ce6e6ec46ee66668..',
-    '..886666e64ceeeeeec46e666688.',
-    '...88666e64cceeeecc46e66688..',
-    '....88666664cccccc46666688...',
-    '.....886666644cc446666688....',
-    '......8866ee664466ee6688.....',
-    '.......866eee6666eee668......',
-    '......866eeeee66eeeee668.....',
-    '.....866eee68888886eee668....',
-    '.....866ee68......86ee668....',
-    '......86ee8........8ee68.....',
-    '......8eee8........8eee8.....',
-    '.....8eeeee8......8eeeee8....',
-    '.....8888888......8888888....',
-]
 
 
 def _fill_ace_ground(c, top_y=52, water=True):
@@ -203,24 +117,17 @@ def draw_ace_acorn(c):
                 if p == '8':
                     c.put(lx0 + gx, ly0 + gy, DARK_GRAY)
 
-    # Lush oak-foliage wreath & crimson drapery reaching from y=34 down to y=85
-    c.fill_ellipse(30, 60, 25, 24, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='checker')
-    c.fill_poly([(12, 38), (48, 38), (52, 84), (8, 84)], LIGHT_RED, RED, outline=RED)
-    c.fill_poly([(16, 40), (44, 40), (46, 84), (14, 84)], YELLOW, BROWN, outline=BROWN)
-    c.fill_poly([(19, 42), (41, 42), (43, 84), (17, 84)], LIGHT_RED, RED, outline=DARK_GRAY)
+    # An oak behind him: trunk and a round crown of leaves dotted with acorns.
+    c.fill_rect(27, 60, 33, 84, BROWN, DARK_GRAY, mode='vstripe')
+    c.fill_ellipse(30, 55, 25, 19, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='sparse')
+    acorn = ['.6.', '666', 'eee', 'eee', '.e.']
+    for ax, ay in ((11, 48), (19, 40), (41, 40), (49, 48), (8, 60), (52, 60), (15, 67), (45, 67)):
+        c.blit_centered(acorn, ax, ay)
 
-    # Outstretched oak-bough wings & central heraldic eagle/griffin crest (y=34..83)
-    c.fill_poly([(4, 42), (20, 46), (18, 64), (5, 58)], GREEN, LIGHT_GREEN, outline=DARK_GRAY)
-    c.fill_poly([(56, 42), (40, 46), (42, 64), (55, 58)], GREEN, LIGHT_GREEN, outline=DARK_GRAY)
-    c.blit_centered(ACORN_CREST_EAGLE, 30, 56)
+    # The wild man of Czech heraldry standing before the oak.
+    people.draw_wild_man(c)
 
-    # Sturdy golden legs & talons planted into the hillside
-    c.fill_poly([(21, 67), (26, 67), (25, 83), (19, 83)], YELLOW, BROWN, outline=DARK_GRAY)
-    c.fill_poly([(34, 67), (39, 67), (41, 83), (35, 83)], YELLOW, BROWN, outline=DARK_GRAY)
-    c.fill_ellipse(22, 83, 4, 2, YELLOW, BROWN, outline=DARK_GRAY)
-    c.fill_ellipse(38, 83, 4, 2, YELLOW, BROWN, outline=DARK_GRAY)
-
-    _overlap_foreground_turf(c, base_y=82)
+    _overlap_foreground_turf(c, base_y=84)
 
     # Twin O / F golden medallions nestled in the foreground turf (y=75..87)
     c.fill_ellipse(11, 81, 6, 6, YELLOW, BROWN, outline=DARK_GRAY)
@@ -268,7 +175,7 @@ def draw_ace_leaf(c):
         c.put(jx, 19, jcol)
 
     # Rampant double-tailed Bohemian lion centered inside the crimson shield
-    c.blit_centered(LION_RAMPANT, 30, 50)
+    animals.draw_lion_rampant(c)
 
     # Overlapping foreground hillock & bushes cradling the lower shield
     _overlap_foreground_turf(c, base_y=79)

@@ -1,6 +1,6 @@
 """Number cards (7, 8, 9, 10) and their 16 large, high-detail EGA pixel-art vignettes."""
 
-from scripts.deck_gen import animals
+from scripts.deck_gen import animals, people
 from scripts.deck_gen.palette import (
     BROWN,
     DARK_GRAY,
@@ -18,41 +18,7 @@ from scripts.deck_gen.symbols import (
 
 # Large, richly detailed EGA vignette sprites (width 22..44, height 18..31)
 # modelled on the scale and craft of the 1992 deck_data.bin pip scenes.
-# The animals are drawn by `animals` instead, from jointed shapes.
-
-# Acorn 7: Standing Bohemian woodsman/forester in 3/4 profile with long pipe & staff (20x30)
-SPRITE_FORESTER = [
-    '......8222228.4c....',
-    '.....822aaa228cc4...',
-    '....822222222284....',
-    '...8888888888888....',
-    '....866fffffff8.....',
-    '...866fffffffff8....',
-    '...866ff89fff898....',
-    '...866fffffff8f8....',
-    '....86fffffff888..7.',
-    '....86ffff66668..7..',
-    '.....8ffff4488887...',
-    '.....88ffffff8..8...',
-    '...88222aaaa2288....',
-    '..82222a8cc8a2228...',
-    '.82228228cc8228228..',
-    '.8228.828cc828.8228.',
-    '.8ff8.828cc828.8ff88',
-    '..88..88cccc88..8868',
-    '......84cccc48....68',
-    '.....84cccccc48...68',
-    '.....84cc44cc48...68',
-    '....84ccc88ccc48..68',
-    '....84cc4884cc48..68',
-    '.....8ee8..8ee8...68',
-    '.....8ee8..8ee8...68',
-    '.....8e68..8e68...68',
-    '.....8668..8668...68',
-    '....86668..86668..68',
-    '...866668..866668.68',
-    '...888888..888888.88',
-]
+# People and animals are drawn by `people` and `animals` instead, from jointed shapes.
 
 # Acorn 7 right side: Timbered hillside cottage (roubenka) with smoking chimney (23x23)
 SPRITE_COTTAGE = [
@@ -75,62 +41,6 @@ SPRITE_COTTAGE = [
     '87777777777778666877778',
     '8f77877f77877866687f778',
     '87777777777778888877778',
-]
-
-# Acorn 8: Reclining/seated huntsman in 3/4 profile blowing long golden hunting horn (28x22)
-SPRITE_HORNBLOWER = [
-    '...8222228..................',
-    '..822aaa2284c...............',
-    '.8888888888c4...............',
-    '..866ffffff8................',
-    '..866ff89ff8................',
-    '..866fffff888...............',
-    '...86fffff8e68888......88...',
-    '...88ffffff8eeeee888888ee8..',
-    '..844cccccc48eeeeeeeeeeeee8.',
-    '.84cccccccc488888888888eee8.',
-    '.84cc4ee4ccc48.........888..',
-    '84ccc4ee4cccc48.............',
-    '84ccc444cccccc48............',
-    '.84cccccccccccc48888........',
-    '..844cccccccccce6eee88......',
-    '...886666666eeeeeeeeee88....',
-    '....866666666666eeeeeee688..',
-    '.....882222222888666eee64c8.',
-    '.......8888888...88866684cc8',
-    '....................88888888',
-]
-
-# Leaf 7: Agile sword-dancer / jester in right-facing profile lunging with downward blade (24x29)
-SPRITE_SWORD_DANCER = [
-    '....2a2.84444cc4........',
-    '...2aa284ccccccc4.......',
-    '....2288888888888.......',
-    '......86666ffffff8......',
-    '.....86666ffffffff8.....',
-    '.....86666fff833ff8.....',
-    '.....8666fffffffff88....',
-    '......866ffffffff8ff8...',
-    '......866ffff444fff8....',
-    '.......88fffffffff8.....',
-    '.....88eeeeeeeeeee88....',
-    '....8eeeee4ccc4eeeee8...',
-    '...8eee8ee4ccc4ee8eee8..',
-    '...8ff8.8e4ccc4e8.8eee8.',
-    '....88..8ee4c4ee8..8ff8.',
-    '........8eeeeeee8..8e68.',
-    '.......844ccc448..88e688',
-    '......84ccccccc48...8f78',
-    '.....84cccc8cccc48..87f8',
-    '....84cc48..84ccc48..8f7',
-    '...84cc48....84ccc48.87f',
-    '...84cc8......8ccc48..8f',
-    '...82228.......82228..87',
-    '...82228.......82228..88',
-    '..82228.........82228...',
-    '..86668.........86668...',
-    '..866668........866668..',
-    '..88888.........888888..',
 ]
 
 # Bell 7: Ornate crimson-and-gold Renaissance garden urn with blooming rose bush (26x26)
@@ -159,28 +69,6 @@ SPRITE_POTTED_ROSE = [
     '.......84cccccccc48.......',
     '......84cccccccccc48......',
     '......88888888888888......',
-]
-
-# Bell 10: Festive village herald & musician duo with horn & banner (42x22)
-SPRITE_VILLAGE_TRIO = [
-    '....82228........................84448....',
-    '...82aaa28......................84ccc48...',
-    '...8888888......................8888888...',
-    '...8fffff8......................8fffff8...',
-    '...8f8f8f8.......8888888........8f8f8f8...',
-    '...8fffff888...88eeeeee8.......88fffff8...',
-    '..884ccc48ee888eeeeeeee8......822a22a228..',
-    '.84cccccc4888888888eeee8.....8222aeee2228.',
-    '.84cceecc48.......8eeee8.....8282aeee2828.',
-    '.84cccccc48.......84cc48.....8f822eee28f8.',
-    '..84cccc48.......84cccc48.....8.84ccc48.8.',
-    '..822aa228......84cccccc48......84ccc48...',
-    '.822a88a228.....84cc88cc48.....84cc8cc48..',
-    '.8228..8228.....8888..8888.....8998.8998..',
-    '.8ee8..8ee8.....8668..8668.....8998.8998..',
-    '.8668..8668.....8668..8668.....8668.8668..',
-    '86668..86668...86668..86668...86668.86668.',
-    '8888....8888...8888....8888...8888...8888.',
 ]
 
 # Heart 7: Large coopered wooden barrel/tub overflowing with rose foliage & heart bloom (28x27)
@@ -257,24 +145,24 @@ SPRITE_OBELISK = [
     '8888888888888.',
 ]
 
-# Heart 10: Winged Cupid in profile aiming bow & arrow at a heart target on a post (42x23)
-SPRITE_CUPID_SCENE = [
-    '....66.........................8eee8......',
-    '...6ee6.......................8eeeee8.3b3.',
-    '..44ee44.....................8ff89eee8b3b3',
-    '.4cccccc4.......6.........6..8fffffee83b3b',
-    '.4cccccc4......6.8.......8.6..8ff44e83b3b.',
-    '..4cccc4......6..888888888..6..88ff883b3..',
-    '...4cc4......6..88ffffffff8888884cc43b3...',
-    '...6ee6.......6..8888888888...84cccc48....',
-    '...6ee6........6.............84cccccc48...',
-    '...6ee6.........6............84cc44cc48...',
-    '...6ee6......................8fff88fff8...',
-    '...6ee6......................8ff8..8ff8...',
-    '...6ee6.....................8ff8....8ff8..',
-    '...6ee6.....................8ff8....8ff8..',
-    '..86ee68...................86ee8....8ee68.',
-    '..888888...................88888....88888.',
+# Heart 10 left: Heart target on a post for Cupid to aim at (9x16)
+SPRITE_HEART_POST = [
+    '....66...',
+    '...6ee6..',
+    '..44ee44.',
+    '.4cccccc4',
+    '.4cccccc4',
+    '..4cccc4.',
+    '...4cc4..',
+    '...6ee6..',
+    '...6ee6..',
+    '...6ee6..',
+    '...6ee6..',
+    '...6ee6..',
+    '...6ee6..',
+    '...6ee6..',
+    '..86ee68.',
+    '..888888.',
 ]
 
 
@@ -359,12 +247,12 @@ def draw_vignette_scene(c, suit, rank):
     draw_ground(c, suit, rank)
     gy = 88
 
-    if (suit, rank) == (0, 0):  # Acorn 7: Large forester smoking pipe + timbered cottage
+    if (suit, rank) == (0, 0):  # Acorn 7: Forester smoking a pipe beside a timbered cottage
         draw_bush_or_flowers(c, 8, gy, LIGHT_RED)
-        c.blit_sprite(SPRITE_FORESTER, 14, gy - 27)
         c.blit_sprite(SPRITE_COTTAGE, 35, gy - 16)
-    elif (suit, rank) == (0, 1):  # Acorn 8: Reclining huntsman blowing long horn + hunting dog
-        c.blit_sprite(SPRITE_HORNBLOWER, 5, gy - 17)
+        people.draw_forester(c)
+    elif (suit, rank) == (0, 1):  # Acorn 8: Huntsman sitting in the grass blowing his horn, his dog by him
+        people.draw_hornblower(c)
         animals.draw_dog(c, dx=3)
     elif (suit, rank) == (0, 2):  # Acorn 9: Cock pheasant perched on an oak bough
         draw_bush_or_flowers(c, 9, gy, LIGHT_RED)
@@ -375,10 +263,10 @@ def draw_vignette_scene(c, suit, rank):
         draw_bush_or_flowers(c, 52, gy, LIGHT_RED)
         animals.draw_boar(c, scale=0.7)
 
-    elif (suit, rank) == (1, 0):  # Leaf 7: Large 3/4 sword-dancer / jester with downward blade
+    elif (suit, rank) == (1, 0):  # Leaf 7: Jester dancing with a sword raised overhead
         draw_bush_or_flowers(c, 10, gy, YELLOW)
         draw_bush_or_flowers(c, 50, gy, LIGHT_RED)
-        c.blit_sprite(SPRITE_SWORD_DANCER, 18, gy - 25)
+        people.draw_sword_dancer(c)
     elif (suit, rank) == (1, 1):  # Leaf 8: Elephant walking, trunk curled
         draw_bush_or_flowers(c, 9, gy, LIGHT_RED)
         draw_bush_or_flowers(c, 52, gy, YELLOW)
@@ -405,8 +293,8 @@ def draw_vignette_scene(c, suit, rank):
         c.rect(4, 64, 10, 65, BROWN)
         c.line(10, 67, 19, 68, BROWN)
         animals.draw_horse(c, flip=True, dx=4, scale=0.75)
-    elif (suit, rank) == (2, 3):  # Bell 10: Festive village herald & musician trio
-        c.blit_sprite(SPRITE_VILLAGE_TRIO, 9, gy - 15)
+    elif (suit, rank) == (2, 3):  # Bell 10: Village band of trumpeter, drummer and fiddler
+        people.draw_musicians(c)
 
     elif (suit, rank) == (3, 0):  # Heart 7: Large coopered rose-tub with heart bloom
         draw_bush_or_flowers(c, 9, gy, YELLOW)
@@ -419,8 +307,9 @@ def draw_vignette_scene(c, suit, rank):
     elif (suit, rank) == (3, 2):  # Heart 9: Peacock in display beside a garden obelisk
         c.blit_sprite(SPRITE_OBELISK, 4, gy - 13)
         animals.draw_peacock(c, dx=10)
-    elif (suit, rank) == (3, 3):  # Heart 10: Winged Cupid aiming bow at heart on post
-        c.blit_sprite(SPRITE_CUPID_SCENE, 9, gy - 14)
+    elif (suit, rank) == (3, 3):  # Heart 10: Winged Cupid aiming his bow at a heart on a post
+        c.blit_sprite(SPRITE_HEART_POST, 9, gy - 14)
+        people.draw_cupid(c)
 
 
 def draw_number_card(c, suit, rank):

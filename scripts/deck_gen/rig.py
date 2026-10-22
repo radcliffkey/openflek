@@ -65,9 +65,13 @@ class Rig:
     The pose is scaled by `scale` about the point (`axis`, `ground`), so a
     scaled figure keeps its feet on the turf, then mirrored about `axis`
     when `flip` is set and shifted by (`dx`, `dy`).
+
+    A `thin` rig is for figures a few pixels wide, where a per-part outline
+    would swallow a two-pixel limb: parts are painted without outlines and
+    `silhouette` then draws one outline around everything painted.
     """
 
-    def __init__(self, c, flip=False, axis=30, dx=0, dy=0, scale=1.0, ground=86):
+    def __init__(self, c, flip=False, axis=30, dx=0, dy=0, scale=1.0, ground=86, thin=False):
         self.c = c
         self.flip = flip
         self.axis = axis
@@ -75,6 +79,24 @@ class Rig:
         self.dy = dy
         self.s = scale
         self.ground = ground
+        self.thin = thin
+        self.painted = set()
+
+    def plot(self, x, y, col):
+        """Puts a pixel at card coordinates and remembers it for `silhouette`."""
+        x, y = int(round(x)), int(round(y))
+        self.c.put(x, y, col)
+        self.painted.add((x, y))
+
+    def silhouette(self, col=DARK_GRAY):
+        """Outlines the union of everything this rig has painted."""
+        ring = set()
+        for x, y in self.painted:
+            for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                if (nx, ny) not in self.painted:
+                    ring.add((nx, ny))
+        for x, y in ring:
+            self.c.put(x, y, col)
 
     def tx(self, x, y):
         if self.s != 1.0:
@@ -92,23 +114,42 @@ class Rig:
         return Part(self)
 
     def line(self, x0, y0, x1, y1, col):
-        ax, ay = self.tx(x0, y0)
-        bx, by = self.tx(x1, y1)
-        self.c.line(ax, ay, bx, by, col)
+        ax, ay = (int(round(v)) for v in self.tx(x0, y0))
+        bx, by = (int(round(v)) for v in self.tx(x1, y1))
+        dx, dy = abs(bx - ax), -abs(by - ay)
+        sx, sy = (1 if ax < bx else -1), (1 if ay < by else -1)
+        err = dx + dy
+        while True:
+            self.plot(ax, ay, col)
+            if ax == bx and ay == by:
+                break
+            e2 = 2 * err
+            if e2 >= dy:
+                err += dy
+                ax += sx
+            if e2 <= dx:
+                err += dx
+                ay += sy
 
     def put(self, x, y, col):
-        self.c.put(*self.tx(x, y), col)
+        self.plot(*self.tx(x, y), col)
 
-    def sprite(self, rows, x0, y0, subst=None):
-        """Blits a hex sprite whose top-left corner is (x0, y0) in pose coordinates.
+    def sprite(self, rows, x0, y0, subst=None, anchor=(0, 0)):
+        """Blits a hex sprite pixel for pixel, never scaled.
 
-        `subst` maps placeholder characters to colours (hair, beard, cloth).
+        The sprite pixel at `anchor` (column, row) lands on the pose point
+        (x0, y0); a flipped rig mirrors the sprite about that pixel. `subst`
+        maps placeholder characters to colours (hair, beard, cloth).
         """
+        cx, cy = self.tx(x0, y0)
+        cx, cy = int(round(cx)), int(round(cy))
+        ax, ay = anchor
         for sy, row in enumerate(rows):
             for sx, ch in enumerate(row):
                 col = subst.get(ch) if subst and ch in subst else HEX_CHAR_MAP.get(ch)
                 if col is not None:
-                    self.put(x0 + sx, y0 + sy, col)
+                    px = cx - (sx - ax) if self.flip else cx + (sx - ax)
+                    self.plot(px, cy + sy - ay, col)
 
 
 def _seg_dist(px, py, ax, ay, bx, by):
@@ -233,15 +274,22 @@ class Part:
             shade = darker(base)
         if outline is AUTO:
             outline = darker(base)
-        c = self.rig.c
+        thin = self.rig.thin
+        if thin:
+            outline = None
+        plot = self.rig.plot
         m = self.mask
         rim = self.edge() if outline is not None else set()
         for x, y in m:
             if (x, y) in rim:
-                c.put(x, y, outline)
+                plot(x, y, outline)
                 continue
             col = base
-            if shade is not None:
+            if shade is not None and thin:
+                # Only parts at least three pixels wide get a shaded right edge.
+                if (x + 1, y) not in m and (x - 2, y) in m:
+                    col = shade
+            elif shade is not None:
                 near_right = (x + 2, y) not in m
                 near_bottom = (x, y + 2) not in m
                 if near_right and near_bottom:
@@ -254,10 +302,10 @@ class Part:
                 p = pattern(x, y)
                 if p is not None:
                     col = p
-            c.put(x, y, col)
+            plot(x, y, col)
         return self
 
     def fill(self, col):
         for x, y in self.mask:
-            self.rig.c.put(x, y, col)
+            self.rig.plot(x, y, col)
         return self

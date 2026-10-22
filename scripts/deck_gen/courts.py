@@ -73,52 +73,13 @@ def _quarters(col):
     return lambda x, y: col if (x + y) % 4 == 0 else None
 
 
-# Standing pose shared by Unters and Obers; each card overrides arms and legs.
-BASE = dict(head=(30, 15), neck=(30, 21), sh_b=(24, 26), sh_f=(35, 26), waist=(30, 44), hem=56)
 # Obers wear a longer, fuller coat skirt than the Unters' short doublet.
 OBER_COAT = dict(hem=61, flare=10)
 
 
 def _standing(c, flip, look, arms, legs, back_props=None, front_props=None, pose=None):
-    """Draws a standing figure back to front.
-
-    `arms` is ((sh, el, wr, hand), (sh, el, wr, hand)) for the back and the
-    front arm, where hand is 'open', 'grip' or None; `legs` is
-    ((hip, knee, ankle, toe), ...) back then front.
-    """
     r = Rig(c, flip=flip)
-    j = dict(BASE, **(pose or {}))
-    if look.get('cape') is not None:
-        F.cape(r, j, look['cape'], length=look.get('cape_len', 64), swing=look.get('swing', -7), lining=look.get('lining'))
-    if back_props:
-        back_props(r)
-    (bsh, bel, bwr, bhand), front_arm = arms
-    F.arm(r, bsh, bel, bwr, look['sleeve_b'], cuff=look.get('cuff'), puff=look.get('puff'))
-    if bhand:
-        F.draw_hand(r, *bwr, grip=bhand == 'grip')
-    for hip, kn, an, toe in legs:
-        F.leg(r, hip, kn, an, toe, look['hose'], look['boot'], cuff=look.get('boot_cuff'))
-    F.torso(
-        r,
-        j,
-        look['tunic'],
-        look['skirt'],
-        look['belt'],
-        collar=look.get('collar', WHITE),
-        pattern=look.get('pattern'),
-        skirt_pattern=look.get('skirt_pattern'),
-        buttons=look.get('buttons'),
-    )
-    hx, hy = j['head']
-    F.draw_head(r, hx, hy, face=look.get('face', 'young'), hair=look['hair'], beard=look.get('beard'), hat=look['hat'])
-    fsh, fel, fwr, fhand = front_arm
-    if look.get('front_first') and front_props:
-        front_props(r)
-    F.arm(r, fsh, fel, fwr, look['sleeve_f'], cuff=look.get('cuff'), puff=look.get('puff'))
-    if fhand:
-        F.draw_hand(r, *fwr, grip=fhand == 'grip')
-    if front_props and not look.get('front_first'):
-        front_props(r)
+    F.draw_standing(r, look, arms, legs, back_props=back_props, front_props=front_props, pose=pose)
     return r
 
 
@@ -141,8 +102,8 @@ def draw_unter(c, suit):
             hair=BROWN,
             hat=('cap', GREEN, LIGHT_RED, YELLOW),
         )
-        arms = (((24, 26), (17, 17), (22, 9), 'grip'), ((35, 26), (42, 33), (48, 37), 'open'))
-        legs = (((27, 52), (19, 68), (13, 84), (18, 87)), ((33, 52), (41, 67), (42, 84), (48, 87)))
+        arms = (((23, 26), (17, 17), (22, 9), 'grip'), ((36, 26), (42, 33), (48, 37), 'open'))
+        legs = (((26, 52), (19, 68), (13, 84), (18, 87)), ((34, 52), (41, 67), (42, 84), (48, 87)))
 
         def blade(r):
             F.sword(r, (22, 9), (5, 24))
@@ -169,8 +130,8 @@ def draw_unter(c, suit):
             hair=YELLOW,
             hat=('beret', LIGHT_RED, WHITE, YELLOW),
         )
-        arms = (((24, 26), (31, 34), (39, 24), 'grip'), ((35, 26), (43, 33), (47, 24), 'grip'))
-        legs = (((28, 52), (27, 68), (25, 84), (30, 87)), ((33, 52), (36, 68), (38, 84), (44, 87)))
+        arms = (((23, 26), (31, 34), (39, 24), 'grip'), ((36, 26), (43, 33), (47, 24), 'grip'))
+        legs = (((28, 52), (27, 68), (25, 84), (30, 87)), ((34, 52), (36, 68), (38, 84), (44, 87)))
 
         def flute(r):
             r.part().capsule(34, 22, 54, 22, 1.0).paint(YELLOW, None, outline=BROWN)
@@ -197,8 +158,8 @@ def draw_unter(c, suit):
             hair=BROWN,
             hat=('cap', LIGHT_RED, YELLOW, CYAN),
         )
-        arms = (((24, 26), (16, 36), (23, 44), 'open'), ((35, 26), (40, 38), (45, 47), 'grip'))
-        legs = (((27, 52), (23, 68), (20, 84), (25, 87)), ((33, 52), (38, 68), (40, 84), (46, 87)))
+        arms = (((23, 26), (16, 36), (23, 44), 'open'), ((36, 26), (40, 38), (45, 47), 'grip'))
+        legs = (((26, 52), (23, 68), (20, 84), (25, 87)), ((34, 52), (38, 68), (40, 84), (46, 87)))
 
         def planted(r):
             F.sword(r, (45, 47), (47, 85))
@@ -223,8 +184,8 @@ def draw_unter(c, suit):
             hair=YELLOW,
             hat=('cap', CYAN, LIGHT_RED, YELLOW),
         )
-        arms = (((24, 26), (21, 38), (27, 46), 'open'), ((35, 26), (41, 33), (40, 23), 'grip'))
-        legs = (((27, 52), (22, 68), (17, 83), (22, 87)), ((33, 52), (40, 67), (43, 83), (49, 87)))
+        arms = (((23, 26), (21, 38), (27, 46), 'open'), ((36, 26), (41, 33), (40, 23), 'grip'))
+        legs = (((26, 52), (22, 68), (17, 83), (22, 87)), ((34, 52), (40, 67), (43, 83), (49, 87)))
 
         def halberd(r):
             F.pole(r, (24, 52), (52, 2))
@@ -258,8 +219,8 @@ def draw_ober(c, suit):
             hair=BROWN,
             hat=('brim', LIGHT_RED, WHITE, YELLOW),
         )
-        arms = (((24, 26), (17, 35), (24, 43), 'grip'), ((35, 26), (43, 22), (49, 14), 'grip'))
-        legs = (((27, 52), (22, 68), (19, 84), (24, 87)), ((33, 52), (40, 67), (42, 84), (48, 87)))
+        arms = (((23, 26), (17, 35), (24, 43), 'grip'), ((36, 26), (43, 22), (49, 14), 'grip'))
+        legs = (((26, 52), (22, 68), (19, 84), (24, 87)), ((34, 52), (40, 67), (42, 84), (48, 87)))
 
         def blade(r):
             F.sword(r, (49, 14), (37, 1))
@@ -285,8 +246,8 @@ def draw_ober(c, suit):
             hair=BROWN,
             hat=('brim', LIGHT_RED, YELLOW, GREEN),
         )
-        arms = (((24, 26), (24, 39), (34, 41), 'grip'), ((35, 26), (44, 34), (50, 30), 'grip'))
-        legs = (((27, 52), (23, 68), (20, 84), (25, 87)), ((33, 52), (38, 68), (40, 84), (46, 87)))
+        arms = (((23, 26), (24, 39), (34, 41), 'grip'), ((36, 26), (44, 34), (50, 30), 'grip'))
+        legs = (((26, 52), (23, 68), (20, 84), (25, 87)), ((34, 52), (38, 68), (40, 84), (46, 87)))
 
         def drum(r):
             d = r.part().ellipse(41, 52, 8, 3).rect(33, 52, 49, 63).ellipse(41, 63, 8, 2.5)
@@ -321,8 +282,8 @@ def draw_ober(c, suit):
             beard=YELLOW,
             hat=('brim', CYAN, LIGHT_RED, YELLOW),
         )
-        arms = (((24, 26), (19, 37), (22, 47), 'grip'), ((35, 26), (43, 30), (50, 25), 'open'))
-        legs = (((27, 52), (24, 68), (21, 84), (26, 87)), ((33, 52), (37, 68), (39, 84), (45, 87)))
+        arms = (((23, 26), (19, 37), (22, 47), 'grip'), ((36, 26), (43, 30), (50, 25), 'open'))
+        legs = (((26, 52), (24, 68), (21, 84), (26, 87)), ((34, 52), (37, 68), (39, 84), (45, 87)))
 
         def scabbard(r):
             r.part().capsule(21, 49, 9, 71, 1.4).paint(BROWN)
@@ -350,8 +311,8 @@ def draw_ober(c, suit):
             hair=BROWN,
             hat=('brim', GREEN, LIGHT_RED, YELLOW),
         )
-        arms = (((24, 26), (16, 35), (22, 44), 'open'), ((35, 26), (42, 35), (46, 30), 'grip'))
-        legs = (((27, 52), (22, 68), (19, 84), (24, 87)), ((33, 52), (38, 68), (41, 84), (47, 87)))
+        arms = (((23, 26), (16, 35), (22, 44), 'open'), ((36, 26), (42, 35), (46, 30), 'grip'))
+        legs = (((26, 52), (22, 68), (19, 84), (24, 87)), ((34, 52), (38, 68), (41, 84), (47, 87)))
 
         def spear(r):
             F.pole(r, (47, 86), (47, 5))
@@ -394,24 +355,29 @@ def _seated(c, flip, look, front_arm, back_arm, props_back=None, props_front=Non
     for an, toe in (((27, 83), (31, 86)), ((40, 83), (45, 86))):
         r.part().capsule(an[0], an[1] - 4, *an, 2.3).capsule(*an, *toe, 2.1, 1.4).paint(look['shoe'])
     # Robe: lap running forward to the knees, then falling in folds to the ankles.
-    robe = r.part().poly([(23, 44), (37, 44), (46, 53), (49, 60), (51, 82), (18, 82), (20, 60)])
+    robe = r.part().poly([(23, 44), (37, 44), (46, 53), (49, 60), (53, 82), (15, 82), (20, 60)])
     robe.ellipse(43, 57, 7, 4.5).ellipse(25, 57, 6, 4.5)
     robe_shade = darker(look['robe'])
     pattern = look.get('robe_pattern')
+    knee_y = r.tx(0, 61)[1]
+    hem_y = r.tx(0, 79)[1]
 
     def folds(x, y):
+        if y >= hem_y:
+            # Gold hem band with a row of jewels.
+            return RED if y == hem_y + 1 and x % 4 == 0 else YELLOW
         if pattern is not None and pattern(x, y) is not None:
             return pattern(x, y)
-        fx, fy = r.tx(0, 0)
-        if y > 63 and (x - fx) % 5 == 0:
+        if y == knee_y or (y == knee_y + 1 and x % 2):
+            return robe_shade
+        # Folds fall from the knees and fan out towards the hem.
+        fx, _ = r.tx(34, 0)
+        spread = 1 + (y - knee_y) / 22
+        if y > knee_y + 2 and round((x - fx) / spread) % 5 == 0:
             return robe_shade
         return None
 
     robe.paint(look['robe'], pattern=folds)
-    # The front knee catches the light.
-    kx, ky = r.tx(43, 56)
-    for dx, dy in ((0, 0), (1, 0), (-1, 1), (0, 1)):
-        c.put(kx + dx, ky + dy, WHITE if look['robe'] in (YELLOW, LIGHT_CYAN) else YELLOW)
     body = r.part().poly([(23, 26), (36, 26), (35, 46), (24, 46)]).ellipse(31, 33, 6.5, 6.5)
     body.paint(look['tunic'], pattern=look.get('pattern'))
     r.part().rect(23, 45, 37, 47).paint(YELLOW)
