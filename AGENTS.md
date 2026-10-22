@@ -75,11 +75,12 @@ table in the README.
 - `src/art/deck_data.bin` holds the card faces as a 4-bit bitmap.
   `art::cards` embeds it with `include_bytes!`, and a compile-time check requires
   exactly 97,600 bytes (32 faces of 61×100 pixels, two pixels per byte).
-  Don't remove, regenerate or replace it unless you are asked to.
+  It is generated, never edited by hand: don't remove or replace it.
 - The faces are drawn by the Python generator in `scripts/deck_gen` (plain
-  Python 3). `python3 scripts/deck_gen/build_sheet.py` rewrites
-  `deck_data.bin`; check the result with the `card_sheet` example below. The
-  card back is drawn by `back_pixel` in `art::cards`, not by the generator.
+  Python 3). When you change card art there, `python3
+  scripts/deck_gen/build_sheet.py` rewrites `deck_data.bin`; check the result
+  with the `card_sheet` example below. The card back is drawn by
+  `back_pixel` in `art::cards`, not by the generator.
 - After changing card rendering, regenerate the README image:
   `cargo run --example card_sheet -- docs/card_sheet.png 2`.
 

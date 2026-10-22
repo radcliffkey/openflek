@@ -1,6 +1,6 @@
 """Builds the 32 card faces and writes them to src/art/deck_data.bin.
 
-Run from the repository root:
+Run it from anywhere:
 
     python3 scripts/deck_gen/build_sheet.py
 
@@ -11,14 +11,16 @@ then look at the result in the game's own rendering with
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, REPO_ROOT)
 
 from scripts.deck_gen.aces import draw_ace_card
 from scripts.deck_gen.courts import draw_court_card
 from scripts.deck_gen.palette import FaceCanvas
 from scripts.deck_gen.vignettes import draw_number_card
 
-DECK_PATH = 'src/art/deck_data.bin'
+DECK_PATH = os.path.join(REPO_ROOT, 'src', 'art', 'deck_data.bin')
+DECK_BYTES = 32 * 61 * 100 // 2
 
 
 def build_all_faces():
@@ -44,7 +46,9 @@ def pack_deck_bytes(faces):
         flat = [col for row in face.px for col in row]
         for i in range(0, len(flat), 2):
             out.append((flat[i] << 4) | flat[i + 1])
-    assert len(out) == 97600
+    # Checked explicitly rather than with assert, which `python -O` skips.
+    if len(out) != DECK_BYTES:
+        raise ValueError(f'deck packs to {len(out)} bytes, the game expects {DECK_BYTES}')
     return bytes(out)
 
 
@@ -54,8 +58,10 @@ def main():
     seen = set()
     for cid, f in enumerate(faces):
         flat = tuple(col for row in f.px for col in row)
-        assert all(0 <= col <= 15 for col in flat), f'Invalid colour in card {cid}'
-        assert flat not in seen, f'Duplicate card face at {cid}'
+        if not all(0 <= col <= 15 for col in flat):
+            raise ValueError(f'invalid colour in card {cid}')
+        if flat in seen:
+            raise ValueError(f'card {cid} duplicates an earlier face')
         seen.add(flat)
     with open(DECK_PATH, 'wb') as fp:
         fp.write(pack_deck_bytes(faces))
