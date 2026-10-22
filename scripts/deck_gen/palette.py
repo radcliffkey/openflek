@@ -118,7 +118,13 @@ class FaceCanvas:
         self.w = FACE_W
         self.h = FACE_H
         self.px = [[WHITE for _ in range(FACE_W)] for _ in range(FACE_H)]
-        self.rect(1, 1, FACE_W - 2, FACE_H - 2, DARK_GRAY)
+        # Dark-grey inner border with its corner pixels left white, as on the 1992 faces.
+        for x in range(2, FACE_W - 2):
+            self.px[1][x] = DARK_GRAY
+            self.px[FACE_H - 2][x] = DARK_GRAY
+        for y in range(2, FACE_H - 2):
+            self.px[y][1] = DARK_GRAY
+            self.px[y][FACE_W - 2] = DARK_GRAY
 
     def in_interior(self, x, y):
         if x < 2 or x > 58 or y < 2 or y > 97:
