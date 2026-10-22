@@ -22,32 +22,9 @@ from scripts.deck_gen.symbols import (
     draw_tree_trunk,
 )
 
-# Large, richly detailed EGA vignette sprites (width 22..44, height 18..31)
-# modelled on the scale and craft of the 1992 deck_data.bin pip scenes.
-# People and animals are drawn by `people` and `animals` instead, from jointed shapes.
-
-# Acorn 7 right side: Timbered hillside cottage (roubenka) with smoking chimney (23x23)
-SPRITE_COTTAGE = [
-    '...............77......',
-    '........444444.87......',
-    '......44cccccc4868.....',
-    '....44cccc44ccc468.....',
-    '..44cccc44cccc44c44....',
-    '.4cccccc44cccc44cccc4..',
-    '84444444444444444444448',
-    '.866e66e66e66e66e66ee8.',
-    '.8ee66e66e66e66e66eee8.',
-    '.866888886e668888866e8.',
-    '.8ee8b9b86e668eee8eee8.',
-    '.86689b986e668e6e866e8.',
-    '.8ee888886e668e688eee8.',
-    '.866e66e66e668e6e866e8.',
-    '.8ee66e66e66e8e6e8eee8.',
-    '8866e66e66e668e6e866e88',
-    '87777777777778666877778',
-    '8f77877f77877866687f778',
-    '87777777777778888877778',
-]
+# The vignettes are drawn from shapes: people and animals by `people` and
+# `animals`, buildings and garden pieces by the helpers below. Only the
+# heart target on Cupid's post is a hand-pixelled sprite.
 
 # Heart 10 left: Heart target on a post for Cupid to aim at (9x16)
 SPRITE_HEART_POST = [
@@ -154,6 +131,44 @@ def _draw_obelisk(c, cx, base_y):
     c.blit_centered(['.4.4.', '4cc44', '4ccc4', '.4c4.', '..4..'], cx, base_y - 23)
 
 
+def _draw_cottage(c, cx, base_y):
+    """A Czech log cottage (roubenka) gable-on: dark logs with white chinking, a boarded gable,
+    a red tiled roof with a smoking chimney, a window with a flower box and a plank door."""
+    r = Rig(c)
+    left, right, eave = cx - 9, cx + 9, base_y - 12
+    # Smoke drifting up and away from the chimney.
+    for k, (sx, sy) in enumerate(((5, -13), (4, -15), (2, -17), (1, -19), (-1, -21))):
+        r.part().ellipse(cx + sx, eave + sy, 1.4 + k * 0.2, 1.1).fill(WHITE if k % 2 else LIGHT_GRAY)
+    # Log walls: brown logs, each with a white band of chinking beneath it.
+    walls = r.part().rect(left, eave, right, base_y - 1)
+    walls.paint(BROWN, shade=None, outline=DARK_GRAY, pattern=lambda x, y: WHITE if (y - eave) % 3 == 2 else (YELLOW if (x + y) % 7 == 0 else None))
+    # Log ends sticking out at the corners.
+    for y in range(eave + 1, base_y - 1, 3):
+        for x in (left - 1, right + 1):
+            c.put(x, y, YELLOW)
+            c.put(x, y + 1, BROWN)
+    # Boarded gable and the roof over it.
+    gable = r.part().poly([(left + 1, eave), (right - 1, eave), (cx, eave - 9)])
+    gable.paint(YELLOW, shade=None, outline=BROWN, pattern=lambda x, y: BROWN if (x - cx) % 2 == 0 else None)
+    r.part().ellipse(cx, eave - 4, 1.5, 1.5).paint(LIGHT_CYAN, None, outline=DARK_GRAY)
+    for side in (-1, 1):
+        slope = r.part().chain([(cx, eave - 11), (cx + side * 12, eave + 1)], [1.6, 1.6])
+        slope.paint(LIGHT_RED, outline=RED, pattern=lambda x, y: RED if (x + y) % 3 == 0 else None)
+    r.part().rect(cx + 4, eave - 12, cx + 6, eave - 6).paint(LIGHT_RED, outline=DARK_GRAY, pattern=lambda x, y: RED if y % 2 else None)
+    # Window with a cross of glazing bars and a box of flowers; plank door.
+    r.part().rect(left + 2, eave + 3, left + 7, eave + 7).paint(WHITE, None, outline=DARK_GRAY)
+    r.part().rect(left + 3, eave + 4, left + 6, eave + 6).fill(LIGHT_CYAN)
+    c.line(left + 3, eave + 5, left + 6, eave + 5, WHITE)
+    c.line(left + 4, eave + 4, left + 4, eave + 6, WHITE)
+    c.line(left + 2, eave + 8, left + 7, eave + 8, GREEN)
+    for fx in (left + 3, left + 5, left + 7):
+        c.put(fx, eave + 7, LIGHT_RED)
+    r.part().rect(right - 6, eave + 4, right - 2, base_y - 1).paint(YELLOW, None, outline=DARK_GRAY, pattern=lambda x, y: BROWN if x % 2 else None)
+    c.put(right - 3, eave + 8, DARK_GRAY)
+    # Stone step and a path of beaten earth.
+    c.line(right - 7, base_y, right - 1, base_y, LIGHT_GRAY)
+
+
 def _water_arc(c, x0, y0, x1, y1, rise):
     """A jet of water: a parabola from (x0, y0) up by `rise` and down to (x1, y1), with droplets."""
     steps = int(abs(x1 - x0) * 2) + 8
@@ -239,7 +254,7 @@ def draw_vignette_scene(c, suit, rank):
 
     if (suit, rank) == (0, 0):  # Acorn 7: Forester smoking a pipe beside a timbered cottage
         draw_bush_or_flowers(c, 8, gy, LIGHT_RED)
-        c.blit_sprite(SPRITE_COTTAGE, 35, gy - 16)
+        _draw_cottage(c, 46, gy - 1)
         people.draw_forester(c)
     elif (suit, rank) == (0, 1):  # Acorn 8: Huntsman sitting in the grass blowing his horn, his dog by him
         people.draw_hornblower(c)
