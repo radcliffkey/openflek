@@ -33,15 +33,40 @@ from scripts.deck_gen.rig import Rig, darker
 THIN_SCALE = 0.75
 
 
-def _rig(c, flip, dx, scale):
-    return Rig(c, flip=flip, dx=dx, scale=scale, thin=scale < THIN_SCALE)
+def _rig(c, flip, dx, scale, shadow=None):
+    """Starts an animal; `shadow` is (centre x, half length) of its shadow on the turf, in pose coordinates."""
+    r = Rig(c, flip=flip, dx=dx, scale=scale, thin=scale < THIN_SCALE)
+    if shadow is not None:
+        _ground_shadow(r, *shadow)
+    return r
 
 
-def _done(r):
-    """Finishes an animal: on a thin rig, outlines its whole silhouette."""
+def _done(r, feet=()):
+    """Finishes an animal: on a thin rig, outlines its whole silhouette; grass then grows over `feet`."""
     if r.thin:
         r.silhouette()
+    for fx, fy in feet:
+        x, y = r.tx(fx, fy)
+        for k in (-2, 0, 2):
+            r.c.put(x + k, y, GREEN)
+            r.c.put(x + k + 1, y - 1, LIGHT_GREEN)
     return r
+
+
+def _ground_shadow(r, cx, half, gy=87):
+    """A flat dithered shadow on the ground under an animal so it doesn't float on the turf.
+
+    Drawn straight on the card, outside the rig, so a thin rig's silhouette
+    doesn't outline it.
+    """
+    x0, y0 = r.tx(cx, gy)
+    rx, ry = max(half * r.s, 2.0), 1.9
+    for y in range(int(y0 - ry), int(y0 + ry) + 2):
+        for x in range(int(x0 - rx), int(x0 + rx) + 2):
+            d = ((x - x0) / rx) ** 2 + ((y - y0) / ry) ** 2
+            # A solid core fading to a dithered rim.
+            if d <= 0.45 or (d <= 1 and (x + y) % 2):
+                r.c.put(x, y, DARK_GRAY)
 
 
 def _legs(r, legs, col, upper=2.2, lower=1.2, hoof=None, outline=None):
@@ -63,7 +88,7 @@ def _eye(r, x, y, col=BLACK):
 
 def draw_horse(c, flip=False, dx=0, scale=1.0, coat=LIGHT_GRAY, mane=DARK_GRAY, cloth=LIGHT_RED):
     """A saddled dapple-grey horse standing at rest, one hind hoof cocked."""
-    r = _rig(c, flip, dx, scale)
+    r = _rig(c, flip, dx, scale, shadow=(29, 14))
     far = darker(coat)
     _legs(r, [[(36, 72), (35, 79), (36, 85)], [(24, 71), (27, 77), (24, 80), (25, 85)]], far, hoof=DARK_GRAY)
     r.part().chain([(17, 66), (14, 71), (14, 79)], [1.8, 1.8, 1.2]).paint(mane)
@@ -82,12 +107,12 @@ def draw_horse(c, flip=False, dx=0, scale=1.0, coat=LIGHT_GRAY, mane=DARK_GRAY, 
     r.part().ellipse(29, 64, 5, 1.8).paint(BROWN)
     r.line(29, 66, 29, 76, BROWN)
     _legs(r, [[(39, 72), (40, 79), (40, 85)], [(21, 71), (22, 77), (18, 80), (19, 85)]], coat, outline=DARK_GRAY, hoof=DARK_GRAY)
-    return _done(r)
+    return _done(r, feet=[(36, 86), (25, 86), (40, 86), (19, 86)])
 
 
 def draw_hound(c, flip=False, dx=0, scale=1.0, coat=WHITE, spots=LIGHT_GRAY, collar=RED):
     """A lean coursing hound in full gallop: forelegs reaching, hind legs driving."""
-    r = _rig(c, flip, dx, scale)
+    r = _rig(c, flip, dx, scale, shadow=(30, 15))
     far = darker(coat)
     _legs(r, [[(37, 74), (43, 77), (48, 79)], [(20, 73), (14, 76), (9, 80)]], far, upper=1.8, lower=1.0)
     r.part().chain([(17, 71), (12, 67), (8, 66)], [1.2, 0.9, 0.6]).paint(coat, outline=DARK_GRAY)
@@ -110,7 +135,7 @@ def draw_hound(c, flip=False, dx=0, scale=1.0, coat=WHITE, spots=LIGHT_GRAY, col
 
 def draw_dog(c, flip=False, dx=0, scale=1.0, coat=WHITE, patch=BROWN):
     """A small spaniel standing alert, tail up."""
-    r = _rig(c, flip, dx, scale)
+    r = _rig(c, flip, dx, scale, shadow=(41, 8))
     _legs(r, [[(43, 81), (43, 86)], [(36, 81), (35, 86)]], LIGHT_GRAY, upper=1.3, lower=1.0)
     r.part().chain([(34, 78), (32, 74), (33, 71)], [1.0, 0.9, 0.6]).paint(coat, outline=DARK_GRAY)
     body = r.part().ellipse(40, 79, 6, 3).capsule(44, 78, 46, 74, 2.0).ellipse(47, 73, 2.4, 2.2).capsule(48, 74, 51, 75, 1.2)
@@ -119,12 +144,12 @@ def draw_dog(c, flip=False, dx=0, scale=1.0, coat=WHITE, patch=BROWN):
     _eye(r, 48, 72)
     r.put(51, 75, BLACK)
     _legs(r, [[(44, 81), (45, 86)], [(37, 81), (37, 86)]], coat, upper=1.3, lower=1.0, outline=DARK_GRAY)
-    return _done(r)
+    return _done(r, feet=[(44, 87), (36, 87)])
 
 
 def draw_boar(c, flip=False, dx=0, scale=1.0):
     """A wild boar trotting, head low, bristled crest and white tusks."""
-    r = _rig(c, flip, dx, scale)
+    r = _rig(c, flip, dx, scale, shadow=(31, 15))
     hide = BROWN
     _legs(r, [[(36, 76), (38, 81), (38, 86)], [(19, 76), (17, 81), (18, 86)]], DARK_GRAY, upper=2.4, lower=1.5, outline=DARK_GRAY)
     r.part().chain([(13, 70), (10, 72), (11, 75)], [1.0, 0.8, 0.6]).paint(hide, outline=DARK_GRAY)
@@ -145,12 +170,12 @@ def draw_boar(c, flip=False, dx=0, scale=1.0):
     r.part().ellipse(51, 75.5, 1.2, 2.2).paint(LIGHT_RED, None, outline=DARK_GRAY)
     r.part().chain([(46, 77), (48, 75), (48, 72)], [0.8, 0.7, 0.5]).fill(WHITE)
     _legs(r, [[(40, 76), (41, 81), (42, 86)], [(23, 76), (22, 81), (23, 86)]], hide, upper=2.6, lower=1.6, outline=DARK_GRAY, hoof=BLACK)
-    return _done(r)
+    return _done(r, feet=[(38, 87), (18, 87), (42, 87), (23, 87)])
 
 
 def draw_stag(c, flip=False, dx=0, scale=1.0):
     """A red stag leaping, forelegs tucked and hind legs stretched behind, antlers swept back."""
-    r = _rig(c, flip, dx, scale)
+    r = _rig(c, flip, dx, scale, shadow=(28, 13))
     hide = BROWN
     belly = YELLOW
     _legs(r, [[(36, 70), (40, 74), (37, 77)], [(20, 71), (14, 75), (7, 79)]], darker(hide), upper=2.0, lower=1.0)
@@ -180,7 +205,7 @@ def draw_stag(c, flip=False, dx=0, scale=1.0):
 
 def draw_elephant(c, flip=False, dx=0, scale=1.0):
     """An elephant walking, trunk curled down, tusk and a fan-shaped ear."""
-    r = _rig(c, flip, dx, scale)
+    r = _rig(c, flip, dx, scale, shadow=(30, 18))
     hide = LIGHT_GRAY
     _legs(r, [[(37, 75), (37, 86)], [(19, 75), (21, 86)]], DARK_GRAY, upper=3.2, lower=2.8)
     r.part().chain([(12, 68), (9, 72), (9, 76)], [0.9, 0.7, 0.6]).paint(hide, outline=DARK_GRAY)
@@ -195,7 +220,7 @@ def draw_elephant(c, flip=False, dx=0, scale=1.0):
     _legs(r, [[(33, 75), (34, 86)], [(16, 75), (16, 86)]], hide, upper=3.4, lower=3.0, outline=DARK_GRAY)
     for fx in (34, 16):
         r.line(fx - 2, 85, fx + 2, 85, WHITE)
-    return _done(r)
+    return _done(r, feet=[(37, 87), (21, 87), (34, 87), (16, 87)])
 
 
 def draw_lion(c, flip=False, dx=0, scale=1.0):
@@ -246,7 +271,7 @@ def draw_pheasant(c, flip=False, dx=0, scale=1.0):
 
 def draw_peacock(c, flip=False, dx=0, scale=1.0):
     """A peacock in display, its train raised behind it in a wedge of radiating, eyed feathers."""
-    r = _rig(c, flip, dx, scale)
+    r = _rig(c, flip, dx, scale, shadow=(31, 7))
     ox, oy = 30, 80
     lo, hi, reach = 198, 278, 21
 
@@ -276,7 +301,7 @@ def draw_peacock(c, flip=False, dx=0, scale=1.0):
         r.put(34 + k * 2, 62, LIGHT_CYAN)
     r.line(29, 84, 28, 87, BROWN)
     r.line(32, 84, 33, 87, BROWN)
-    return _done(r)
+    return _done(r, feet=[(28, 88), (33, 88)])
 
 
 # Heraldic lion's head facing right (15x13): ear, heavy brow, open jaws with
