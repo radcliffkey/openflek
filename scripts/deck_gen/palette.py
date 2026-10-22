@@ -44,71 +44,47 @@ EGA_PALETTE = [
     (0xFF, 0xFF, 0xFF),
 ]
 
-CHAR_MAP = {
-    '0': BLACK,
-    'k': BLACK,
-    '1': BLUE,
-    'b': BLUE,
-    '2': GREEN,
-    'G': GREEN,
-    '3': CYAN,
-    'c': CYAN,
-    '4': RED,
-    'R': RED,
-    '5': MAGENTA,
-    'm': MAGENTA,
-    '6': BROWN,
-    'B': BROWN,
-    '7': LIGHT_GRAY,
-    'l': LIGHT_GRAY,
-    '8': DARK_GRAY,
-    'K': DARK_GRAY,
-    '9': LIGHT_BLUE,
-    'L': LIGHT_BLUE,
-    'a': LIGHT_GREEN,
-    'g': LIGHT_GREEN,
-    'b_': LIGHT_CYAN,
-    'C': LIGHT_CYAN,
-    'r': LIGHT_RED,
-    'M': LIGHT_MAGENTA,
-    'd': LIGHT_MAGENTA,
-    'e': YELLOW,
-    'Y': YELLOW,
-    'f': WHITE,
-    'W': WHITE,
-}
+# Sprite rows spell colours as hex digits; any other character is transparent.
+HEX_CHAR_MAP = {ch: i for i, ch in enumerate('0123456789abcdef')}
 
-HEX_CHAR_MAP = {
-    '0': 0,
-    '1': 1,
-    '2': 2,
-    '3': 3,
-    '4': 4,
-    '5': 5,
-    '6': 6,
-    '7': 7,
-    '8': 8,
-    '9': 9,
-    'a': 10,
-    'b': 11,
-    'c': 12,
-    'd': 13,
-    'e': 14,
-    'f': 15,
-    'W': 15,
-    'K': 8,
-    'R': 4,
-    'r': 12,
-    'Y': 14,
-    'B': 6,
-    'G': 2,
-    'g': 10,
-    'L': 9,
-    'C': 11,
-    'M': 13,
-    'm': 5,
-    'l': 7,
-}
+
+def bresenham(x0, y0, x1, y1):
+    """The pixels of a line between two points, rounded to the pixel grid."""
+    x0, y0, x1, y1 = int(round(x0)), int(round(y0)), int(round(x1)), int(round(y1))
+    dx = abs(x1 - x0)
+    dy = -abs(y1 - y0)
+    sx = 1 if x0 < x1 else -1
+    sy = 1 if y0 < y1 else -1
+    err = dx + dy
+    while True:
+        yield x0, y0
+        if x0 == x1 and y0 == y1:
+            return
+        e2 = 2 * err
+        if e2 >= dy:
+            err += dy
+            x0 += sx
+        if e2 <= dx:
+            err += dx
+            y0 += sy
+
+
+def checker(x, y, c1, c2):
+    """A one-pixel chequer of two colours, as used for turf and water."""
+    return c1 if ((x + y) & 1) == 0 else c2
+
+
+def fill_terrain(c, top, hill_y, colour):
+    """Fills ground from row `top` to the bottom of the face.
+
+    `hill_y(x)` gives the crest of the ground in each column; the crest is
+    drawn dark grey, the rows above it are left alone and the rows below it
+    take `colour(x, y, crest)`.
+    """
+    for x in range(2, FACE_W - 2):
+        crest = hill_y(x)
+        for y in range(max(top, crest), FACE_H - 2):
+            c.put(x, y, DARK_GRAY if y == crest else colour(x, y, crest))
 
 
 class FaceCanvas:
@@ -145,36 +121,8 @@ class FaceCanvas:
         return WHITE
 
     def line(self, x0, y0, x1, y1, col):
-        x0, y0, x1, y1 = int(round(x0)), int(round(y0)), int(round(x1)), int(round(y1))
-        dx = abs(x1 - x0)
-        dy = -abs(y1 - y0)
-        sx = 1 if x0 < x1 else -1
-        sy = 1 if y0 < y1 else -1
-        err = dx + dy
-        while True:
-            self.put(x0, y0, col)
-            if x0 == x1 and y0 == y1:
-                break
-            e2 = 2 * err
-            if e2 >= dy:
-                err += dy
-                x0 += sx
-            if e2 <= dx:
-                err += dx
-                y0 += sy
-
-    def thick_line(self, x0, y0, x1, y1, col, thickness=2):
-        self.line(x0, y0, x1, y1, col)
-        if thickness >= 2:
-            if abs(x1 - x0) >= abs(y1 - y0):
-                self.line(x0, y0 + 1, x1, y1 + 1, col)
-            else:
-                self.line(x0 + 1, y0, x1 + 1, y1, col)
-        if thickness >= 3:
-            if abs(x1 - x0) >= abs(y1 - y0):
-                self.line(x0, y0 - 1, x1, y1 - 1, col)
-            else:
-                self.line(x0 - 1, y0, x1 - 1, y1, col)
+        for x, y in bresenham(x0, y0, x1, y1):
+            self.put(x, y, col)
 
     def rect(self, x0, y0, x1, y1, col):
         for x in range(min(x0, x1), max(x0, x1) + 1):
@@ -198,24 +146,14 @@ class FaceCanvas:
     def _shade(self, x, y, c1, c2, mode):
         if mode == 'solid' or c1 == c2:
             return c1
-        if mode == 'drape':
-            # Classic 1992 EGA cloth shading: mostly solid c1 with diagonal fold ribs in c2
-            v = (x + y * 2) % 7
-            if v == 0:
-                return c2
-            if v == 1 and ((x + y) & 1) == 0:
-                return c2
-            return c1
         if mode == 'checker':
-            return c1 if ((x + y) & 1) == 0 else c2
+            return checker(x, y, c1, c2)
         if mode == 'sparse':
             return c2 if ((x & 1) == 0 and (y & 1) == 0) else c1
         if mode == 'vstripe':
             return c1 if (x & 1) == 0 else c2
         if mode == 'hstripe':
             return c1 if (y & 1) == 0 else c2
-        if mode == 'diag':
-            return c1 if ((x - y) % 3) != 0 else c2
         return c1
 
     def fill_ellipse(self, cx, cy, rx, ry, c1, c2=None, outline=None, mode='drape'):
@@ -284,22 +222,19 @@ class FaceCanvas:
                 bx, by = pts[(i + 1) % n]
                 self.line(ax, ay, bx, by, outline)
 
-    def blit_sprite(self, rows, x0, y0, flip_x=False, flip_y=False):
-        """Draws a list of strings using HEX_CHAR_MAP, where '.' or ' ' is transparent."""
-        src = list(reversed(rows)) if flip_y else rows
-        for dy, row in enumerate(src):
+    def blit_sprite(self, rows, x0, y0, flip_x=False):
+        """Draws a list of hex-digit strings; any other character is transparent."""
+        for dy, row in enumerate(rows):
             line = ''.join(reversed(row)) if flip_x else row
             for dx, ch in enumerate(line):
-                if ch in ('.', ' '):
-                    continue
                 col = HEX_CHAR_MAP.get(ch)
                 if col is not None:
                     self.put(x0 + dx, y0 + dy, col)
 
-    def blit_centered(self, rows, cx, cy, flip_x=False, flip_y=False):
+    def blit_centered(self, rows, cx, cy, flip_x=False):
         h = len(rows)
         w = len(rows[0]) if h > 0 else 0
-        self.blit_sprite(rows, cx - w // 2, cy - h // 2, flip_x=flip_x, flip_y=flip_y)
+        self.blit_sprite(rows, cx - w // 2, cy - h // 2, flip_x=flip_x)
 
 
 # Lighter partner of each back colour the game offers (1..7), for petals and fills.

@@ -13,6 +13,7 @@ from scripts.deck_gen.palette import (
     DARK_GRAY,
     GREEN,
     LIGHT_CYAN,
+    LIGHT_GRAY,
     LIGHT_GREEN,
     LIGHT_RED,
     RED,
@@ -59,7 +60,7 @@ def draw_forester(c, x=22, scale=0.34):
     # Smoke curling from the pipe bowl.
     for k, (sx, sy) in enumerate(((1, -2), (0, -4), (1, -6))):
         px, py = r.tx(42, 23)
-        c.put(px + sx, py + sy, 7 if k else WHITE)
+        c.put(px + sx, py + sy, LIGHT_GRAY if k else WHITE)
 
 
 def draw_hornblower(c, x=19, scale=0.42):
@@ -195,7 +196,7 @@ def draw_wild_man(c, x=28, scale=0.66):
         collar=WHITE,
         skirt_pattern=lambda x, y: LIGHT_GREEN if (x * 2 + y) % 5 == 0 else (YELLOW if (x * 3 + y) % 11 == 0 else None),
         # Body hair in short strokes over the chest.
-        pattern=lambda x, y: 7 if (x + 2 * y) % 7 == 0 else None,
+        pattern=lambda x, y: LIGHT_GRAY if (x + 2 * y) % 7 == 0 else None,
         face='old',
         hair=BROWN,
         beard=BROWN,

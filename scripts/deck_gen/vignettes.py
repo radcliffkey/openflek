@@ -1,5 +1,7 @@
 """Number cards (7, 8, 9, 10) and their 16 large, high-detail EGA pixel-art vignettes."""
 
+import math
+
 from scripts.deck_gen import animals, people
 from scripts.deck_gen.palette import (
     BROWN,
@@ -13,6 +15,8 @@ from scripts.deck_gen.palette import (
     RED,
     WHITE,
     YELLOW,
+    checker,
+    fill_terrain,
 )
 from scripts.deck_gen.rig import Rig
 from scripts.deck_gen.symbols import (
@@ -48,60 +52,23 @@ SPRITE_HEART_POST = [
 
 
 def draw_ground(c, suit, rank):
-    """Draws rich, multi-layered organic landscape terrain at the bottom (y=80..97)."""
-    import math
-    for y in range(80, 98):
-        for x in range(2, 59):
-            if not c.in_interior(x, y):
-                continue
-            # Rolling multi-hill contour so terrain looks natural rather than a flat stage line
-            wave = int(round(math.sin((x + suit * 7 + rank * 5) * 0.22) * 2.0))
-            hill_y = 84 + wave
-            if y < hill_y:
-                continue
-            if y == hill_y:
-                col = DARK_GRAY
-            elif suit == 0:  # Acorns: mossy woodland hills & winding golden forest path
-                if abs(x - (29 + (y - 86))) <= 10 and y >= 88:
-                    col = YELLOW if ((x + y) & 1) == 0 else BROWN
-                else:
-                    col = GREEN if ((x + y) & 1) == 0 else LIGHT_GREEN
-            elif suit == 1:  # Leaves: lush emerald hills & sunlit meadow clearing
-                if y >= 89 and abs(x - 31) <= 14:
-                    col = YELLOW if ((x + y) & 1) == 0 else LIGHT_GREEN
-                else:
-                    col = GREEN if ((x + y) & 1) == 0 else LIGHT_GREEN
-            elif suit == 2:  # Bells: rolling green turf & golden road
-                if y >= 88 and abs(x - 30) <= 16:
-                    col = YELLOW if ((x + y) & 1) == 0 else BROWN
-                else:
-                    col = GREEN if ((x + y) & 1) == 0 else LIGHT_GREEN
-            else:  # Hearts: terraced garden hills & golden parterre
-                if y >= 90:
-                    col = YELLOW if ((x + y) & 1) == 0 else LIGHT_GREEN
-                else:
-                    col = GREEN if ((x + y) & 1) == 0 else LIGHT_GREEN
-            c.put(x, y, col)
+    """Draws rolling turf at the bottom (y=80..97) with a path or clearing for each suit."""
 
+    def colour(x, y, crest):
+        if suit == 0:  # Acorns: a golden forest path winding down
+            if abs(x - (29 + (y - 86))) <= 10 and y >= 88:
+                return checker(x, y, YELLOW, BROWN)
+        elif suit == 1:  # Leaves: a sunlit meadow clearing
+            if y >= 89 and abs(x - 31) <= 14:
+                return checker(x, y, YELLOW, LIGHT_GREEN)
+        elif suit == 2:  # Bells: a golden road
+            if y >= 88 and abs(x - 30) <= 16:
+                return checker(x, y, YELLOW, BROWN)
+        elif y >= 90:  # Hearts: a golden parterre
+            return checker(x, y, YELLOW, LIGHT_GREEN)
+        return checker(x, y, GREEN, LIGHT_GREEN)
 
-def draw_fir(c, cx, base_y, h):
-    """Draws a layered pixel-art conifer tree rooted into the ground at base_y..base_y+2."""
-    c.fill_rect(cx - 2, base_y - 3, cx + 2, base_y + 1, BROWN, DARK_GRAY, mode='vstripe')
-    c.fill_poly(
-        [(cx - 6, base_y + 1), (cx - 4, base_y - 2), (cx + 4, base_y - 2), (cx + 6, base_y + 1)],
-        GREEN,
-        DARK_GRAY,
-        outline=DARK_GRAY,
-        mode='checker',
-    )
-    tiers = 3
-    for t in range(tiers):
-        ty0 = base_y - h + t * (h // 4)
-        ty1 = base_y - 1 - (tiers - 1 - t) * (h // 5)
-        w = 2 + t * 2
-        pts = [(cx, ty0), (cx - w - 2, ty1), (cx + w + 2, ty1)]
-        c.fill_poly(pts, GREEN, DARK_GRAY, outline=DARK_GRAY, mode='checker')
-        c.line(cx, ty0 + 1, cx - w, ty1 - 1, LIGHT_GREEN)
+    fill_terrain(c, 80, lambda x: 84 + int(round(math.sin((x + suit * 7 + rank * 5) * 0.22) * 2.0)), colour)
 
 
 def draw_bush_or_flowers(c, cx, base_y, col):

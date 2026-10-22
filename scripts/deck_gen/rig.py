@@ -32,6 +32,7 @@ from scripts.deck_gen.palette import (
     RED,
     WHITE,
     YELLOW,
+    bresenham,
 )
 
 # Darker partner of each colour: used for shading and the default outline.
@@ -83,10 +84,11 @@ class Rig:
         self.painted = set()
 
     def plot(self, x, y, col):
-        """Puts a pixel at card coordinates and remembers it for `silhouette`."""
+        """Puts a pixel at card coordinates; a thin rig remembers it for `silhouette`."""
         x, y = int(round(x)), int(round(y))
         self.c.put(x, y, col)
-        self.painted.add((x, y))
+        if self.thin:
+            self.painted.add((x, y))
 
     def silhouette(self, col=DARK_GRAY):
         """Outlines the union of everything this rig has painted."""
@@ -114,22 +116,8 @@ class Rig:
         return Part(self)
 
     def line(self, x0, y0, x1, y1, col):
-        ax, ay = (int(round(v)) for v in self.tx(x0, y0))
-        bx, by = (int(round(v)) for v in self.tx(x1, y1))
-        dx, dy = abs(bx - ax), -abs(by - ay)
-        sx, sy = (1 if ax < bx else -1), (1 if ay < by else -1)
-        err = dx + dy
-        while True:
-            self.plot(ax, ay, col)
-            if ax == bx and ay == by:
-                break
-            e2 = 2 * err
-            if e2 >= dy:
-                err += dy
-                ax += sx
-            if e2 <= dx:
-                err += dx
-                ay += sy
+        for x, y in bresenham(*self.tx(x0, y0), *self.tx(x1, y1)):
+            self.plot(x, y, col)
 
     def put(self, x, y, col):
         self.plot(*self.tx(x, y), col)
@@ -239,20 +227,6 @@ class Part:
         for y in range(round(min(ay, by)), round(max(ay, by)) + 1):
             for x in range(round(min(ax, bx)), round(max(ax, bx)) + 1):
                 self.mask.add((x, y))
-        return self
-
-    def cut(self, other):
-        """Removes another part's pixels from this one."""
-        self.mask -= other.mask
-        return self
-
-    def clip(self, x0=None, y0=None, x1=None, y1=None):
-        """Keeps pixels inside the box, given in card coordinates."""
-        self.mask = {
-            (x, y)
-            for x, y in self.mask
-            if (x0 is None or x >= x0) and (x1 is None or x <= x1) and (y0 is None or y >= y0) and (y1 is None or y <= y1)
-        }
         return self
 
     def edge(self):

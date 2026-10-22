@@ -18,6 +18,7 @@ from scripts.deck_gen.palette import (
     YELLOW,
 )
 from scripts.deck_gen import animals, people
+from scripts.deck_gen.palette import checker, fill_terrain
 from scripts.deck_gen.rig import Rig, darker
 from scripts.deck_gen.symbols import draw_suit
 
@@ -36,49 +37,26 @@ MINI_BELL = [
 
 def _fill_ace_ground(c, top_y=52, water=True):
     """Fills the lower background with rolling green hills and optional river bank."""
-    for y in range(top_y, 98):
-        for x in range(2, 59):
-            if not c.in_interior(x, y):
-                continue
-            dx = abs(x - 30)
-            hill_y = top_y + 2 + (dx * dx) // 120
-            if y < hill_y:
-                continue
-            if y == hill_y:
-                col = DARK_GRAY
-            else:
-                col = GREEN if ((x + y) & 1) == 0 else LIGHT_GREEN
-            c.put(x, y, col)
-
+    fill_terrain(c, top_y, lambda x: top_y + 2 + (x - 30) ** 2 // 120, lambda x, y, crest: checker(x, y, GREEN, LIGHT_GREEN))
     if water:
         for y in range(90, 98):
             for x in range(2, 59):
-                if not c.in_interior(x, y):
-                    continue
-                dx = abs(x - 30)
-                if dx <= 12 + (y - 90) * 2:
-                    c.put(x, y, CYAN if ((x + y) & 1) == 0 else LIGHT_CYAN)
+                if abs(x - 30) <= 12 + (y - 90) * 2:
+                    c.put(x, y, checker(x, y, CYAN, LIGHT_CYAN))
 
 
 def _overlap_foreground_turf(c, base_y=79):
     """Draws overlapping foreground hillock, mossy shadow, and bushes over a crest base."""
-    for y in range(base_y - 3, 98):
-        for x in range(2, 59):
-            if not c.in_interior(x, y):
-                continue
-            dx = abs(x - 30)
-            hill_y = int(round(base_y + (dx * dx) / 140.0 + math.sin(x * 0.45) * 1.2))
-            if y < hill_y:
-                continue
-            if y == hill_y:
-                col = DARK_GRAY
-            elif y <= hill_y + 2 and dx < 18:
-                col = GREEN if ((x + y) & 1) == 0 else DARK_GRAY
-            elif y >= 91 and dx <= 12 + (y - 91) * 2:
-                col = CYAN if ((x + y) & 1) == 0 else LIGHT_CYAN
-            else:
-                col = GREEN if ((x + y) & 1) == 0 else LIGHT_GREEN
-            c.put(x, y, col)
+
+    def colour(x, y, crest):
+        dx = abs(x - 30)
+        if y <= crest + 2 and dx < 18:
+            return checker(x, y, GREEN, DARK_GRAY)
+        if y >= 91 and dx <= 12 + (y - 91) * 2:
+            return checker(x, y, CYAN, LIGHT_CYAN)
+        return checker(x, y, GREEN, LIGHT_GREEN)
+
+    fill_terrain(c, base_y - 3, lambda x: int(round(base_y + (x - 30) ** 2 / 140.0 + math.sin(x * 0.45) * 1.2)), colour)
 
     for cx, cy in [(15, base_y), (23, base_y - 1), (30, base_y - 2), (37, base_y - 1), (45, base_y)]:
         c.fill_ellipse(cx, cy, 4, 2, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='checker')

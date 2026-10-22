@@ -23,6 +23,7 @@ from scripts.deck_gen.palette import (
     RED,
     WHITE,
     YELLOW,
+    fill_terrain,
 )
 from scripts.deck_gen.rig import Rig, darker
 from scripts.deck_gen.symbols import draw_suit
@@ -107,14 +108,12 @@ def _floor_colour(suit, x, y):
 
 def _draw_throne_floor(c, suit):
     """A stone dais under the throne, its top at the king's feet, and the suit's floor below."""
-    for y in range(80, 98):
+    for y in range(85, 98):
         for x in range(2, 59):
-            if not c.in_interior(x, y) or y < 85:
-                continue
             if y in (85, 89):
                 col = DARK_GRAY
             elif y < 89:
-                col = LIGHT_GRAY if y == 86 else (WHITE if y == 87 else LIGHT_GRAY)
+                col = WHITE if y == 87 else LIGHT_GRAY
             else:
                 col = _floor_colour(suit, x, y)
             c.put(x, y, col)
@@ -125,28 +124,15 @@ def draw_pedestal(c, suit, is_king=False):
     if is_king:
         _draw_throne_floor(c, suit)
         return
-    for y in range(80, 98):
-        for x in range(2, 59):
-            if not c.in_interior(x, y):
-                continue
-            # The town square is level; the other grounds roll.
-            amp = 0.6 if suit == 2 and not is_king else 2.0
-            wave = int(round(math.sin((x + suit * 9) * 0.22) * amp))
-            hill_y = (84 if is_king else 82) + wave
-            if y < hill_y:
-                continue
-            if y == hill_y:
-                col = DARK_GRAY
-            elif is_king and y >= 88:
-                tile = ((x // 5) + ((y - 88) // 3)) & 1
-                col = [(CYAN, DARK_GRAY), (GREEN, YELLOW), (YELLOW, CYAN), (LIGHT_CYAN, CYAN)][suit][tile]
-            elif is_king:
-                col = GREEN if ((x + y) & 1) == 0 else LIGHT_GREEN
-            else:
-                col = _ground_colour(suit, x, y, hill_y)
-            c.put(x, y, col)
-    if not is_king:
-        _ground_details(c, suit)
+    # The town square is level; the other grounds roll.
+    amp = 0.6 if suit == 2 else 2.0
+    fill_terrain(
+        c,
+        80,
+        lambda x: 82 + int(round(math.sin((x + suit * 9) * 0.22) * amp)),
+        lambda x, y, crest: _ground_colour(suit, x, y, crest),
+    )
+    _ground_details(c, suit)
 
 
 def _ground_details(c, suit):

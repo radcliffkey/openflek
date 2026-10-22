@@ -7,11 +7,9 @@ from scripts.deck_gen.palette import (
     DARK_GRAY,
     GREEN,
     LIGHT_BLUE,
-    LIGHT_CYAN,
     LIGHT_GREEN,
     LIGHT_RED,
     RED,
-    WHITE,
     YELLOW,
 )
 
@@ -162,9 +160,7 @@ def draw_suit(c, suit, cx, cy, orientation='v'):
     elif suit == 2:  # Bells
         c.blit_centered(BELL_SYM, cx, cy)
     else:  # Hearts
-        # Clean spaces in HEART_SYM
-        rows = [r.strip() if len(r) > 15 else r for r in HEART_SYM]
-        c.blit_centered(rows, cx, cy)
+        c.blit_centered(HEART_SYM, cx, cy)
 
 
 def draw_roman_x(c, cx=30, y0=3):
