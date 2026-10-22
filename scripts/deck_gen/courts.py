@@ -28,13 +28,66 @@ from scripts.deck_gen.rig import Rig, darker
 from scripts.deck_gen.symbols import draw_suit
 
 
+def _speckle(x, y):
+    """A fixed pseudo-random value per pixel for scattering leaves, flowers and pebbles."""
+    return (x * 73 + y * 151 + x * y * 7) % 97
+
+
+def _ground_colour(suit, x, y, hill_y):
+    """The ground under a standing figure, one kind per suit.
+
+    Acorns stand on a forest floor strewn with fallen leaves, Leaves in a
+    flowering meadow, Bells on the cobbles of a town square and Hearts on a
+    garden lawn with a gravel path between rose beds.
+    """
+    d = y - hill_y
+    h = _speckle(x, y)
+    dither = (x + y) & 1
+    if suit == 0:
+        if d <= 2:
+            return GREEN if dither else DARK_GRAY
+        if h < 5:
+            return YELLOW
+        if h < 8:
+            return RED
+        if h < 10:
+            return LIGHT_RED
+        return BROWN if dither or h > 60 else DARK_GRAY
+    if suit == 1:
+        if h < 4 and d > 1:
+            return YELLOW
+        if h < 7 and d > 1:
+            return WHITE
+        if h < 9 and d > 1:
+            return LIGHT_RED
+        return LIGHT_GREEN if dither else GREEN
+    if suit == 2:
+        # Rows of cobbles, each row offset by half a stone.
+        row, ry = divmod(d - 1, 3)
+        sx = (x + (3 if row & 1 else 0)) % 6
+        if ry == 2 or sx == 5:
+            return DARK_GRAY
+        if ry == 0 and sx == 0:
+            return WHITE
+        return LIGHT_GRAY if (row + (x + (3 if row & 1 else 0)) // 6) % 3 else BROWN
+    if d <= 2:
+        return GREEN if dither else LIGHT_GREEN
+    if 14 <= x <= 46:
+        return YELLOW if dither else BROWN
+    if h < 12:
+        return LIGHT_RED if h < 8 else RED
+    return GREEN if dither else LIGHT_GREEN
+
+
 def draw_pedestal(c, suit, is_king=False):
-    """Draws the rolling turf under a standing figure, or a tiled floor under a throne."""
+    """Draws the ground under a standing figure, or a tiled floor under a throne."""
     for y in range(80, 98):
         for x in range(2, 59):
             if not c.in_interior(x, y):
                 continue
-            wave = int(round(math.sin((x + suit * 9) * 0.22) * 2.0))
+            # The town square is level; the other grounds roll.
+            amp = 0.6 if suit == 2 and not is_king else 2.0
+            wave = int(round(math.sin((x + suit * 9) * 0.22) * amp))
             hill_y = (84 if is_king else 82) + wave
             if y < hill_y:
                 continue
@@ -43,21 +96,40 @@ def draw_pedestal(c, suit, is_king=False):
             elif is_king and y >= 88:
                 tile = ((x // 5) + ((y - 88) // 3)) & 1
                 col = [(CYAN, DARK_GRAY), (GREEN, YELLOW), (YELLOW, CYAN), (LIGHT_CYAN, CYAN)][suit][tile]
-            elif y <= hill_y + 3:
+            elif is_king:
                 col = GREEN if ((x + y) & 1) == 0 else LIGHT_GREEN
-            elif 12 <= x <= 48:
-                col = YELLOW if ((x + y) & 1) == 0 else LIGHT_GREEN
             else:
-                col = GREEN if ((x + y) & 1) == 0 else LIGHT_GREEN
+                col = _ground_colour(suit, x, y, hill_y)
             c.put(x, y, col)
+    if not is_king:
+        _ground_details(c, suit)
 
 
-def _tufts(c, xs, y=87):
-    """Grass tufts over the boot soles so the feet stand in the turf rather than on it."""
+def _ground_details(c, suit):
+    """Small things growing or lying at the edges of each suit's ground."""
+    if suit == 0:  # a toadstool and a fern on the forest floor
+        c.blit_sprite(['.8888.', '84c4c48', '8f4f4f8', '8888888', '..8f8..', '..8f8..', '.8fff8.'], 4, 77)
+        for k in range(4):
+            c.line(53, 83, 50 + k * 2, 76 + k, GREEN if k & 1 else LIGHT_GREEN)
+    elif suit == 1:  # tall grass blades along the meadow's edge
+        for x in range(3, 58, 3):
+            y = 82 + int(round(math.sin((x + 9) * 0.22) * 2.0))
+            c.line(x, y, x + (1 if x % 2 else -1), y - 3 - x % 2, GREEN if x % 2 else LIGHT_GREEN)
+    elif suit == 3:  # clipped box hedges at the corners of the rose beds
+        for hx in (6, 54):
+            c.fill_ellipse(hx, 81, 4, 3, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='checker')
+
+
+def _tufts(c, suit, xs, y=87):
+    """Grass over the boot soles so the feet stand in the turf; on cobbles a shadow instead."""
     for bx in xs:
         for dx in range(-4, 5, 2):
-            c.put(bx + dx, y, GREEN)
-            c.put(bx + dx + 1, y - 1, LIGHT_GREEN)
+            if suit == 2:
+                c.put(bx + dx, y + 1, DARK_GRAY)
+                c.put(bx + dx + 1, y + 1, DARK_GRAY)
+            else:
+                c.put(bx + dx, y, GREEN)
+                c.put(bx + dx + 1, y - 1, LIGHT_GREEN if suit != 0 else GREEN)
 
 
 def _ermine(x, y):
@@ -109,7 +181,7 @@ def draw_unter(c, suit):
             F.sword(r, (22, 9), (5, 24))
 
         _standing(c, False, look, arms, legs, back_props=blade)
-        _tufts(c, [16, 45])
+        _tufts(c, suit, [16, 45])
         draw_suit(c, 0, 50, 72, 'v')
 
     elif suit == 1:  # Leaf: playing a transverse flute, facing left
@@ -139,7 +211,7 @@ def draw_unter(c, suit):
                 r.put(x, 22, BROWN)
 
         _standing(c, True, look, arms, legs, front_props=flute)
-        _tufts(c, [21, 33])
+        _tufts(c, suit, [21, 33])
         draw_suit(c, 1, 48, 72, 'v')
 
     elif suit == 2:  # Bell: hand on hip, the other resting on a sword planted point-down
@@ -166,7 +238,7 @@ def draw_unter(c, suit):
             F.sword(r, (45, 47), (47, 85))
 
         _standing(c, False, look, arms, legs, front_props=planted)
-        _tufts(c, [22, 43])
+        _tufts(c, suit, [22, 43])
         draw_suit(c, 2, 13, 72)
 
     else:  # Heart: halberd over the shoulder, walking left
@@ -194,7 +266,7 @@ def draw_unter(c, suit):
             r.part().poly([(50, 3), (53, 0), (52, 6)]).paint(LIGHT_CYAN, None, outline=BLUE)
 
         _standing(c, True, look, arms, legs, back_props=halberd)
-        _tufts(c, [17, 40])
+        _tufts(c, suit, [17, 40])
         draw_suit(c, 3, 50, 72)
 
 
@@ -227,7 +299,7 @@ def draw_ober(c, suit):
             F.sword(r, (49, 14), (37, 1))
 
         _standing(c, True, look, arms, legs, front_props=blade, pose=OBER_COAT)
-        _tufts(c, [19, 42])
+        _tufts(c, suit, [19, 42])
         draw_suit(c, 0, 47, 12, 'v')
 
     elif suit == 1:  # Leaf: drummer with the drum slung at his hip
@@ -260,7 +332,7 @@ def draw_ober(c, suit):
             F.pole(r, (50, 30), (45, 48))
 
         _standing(c, False, look, arms, legs, front_props=drum, pose=OBER_COAT)
-        _tufts(c, [21, 43])
+        _tufts(c, suit, [21, 43])
         draw_suit(c, 1, 12, 12, 'v')
 
     elif suit == 2:  # Bell: hand on sword hilt at his side, the other open in greeting, facing left
@@ -292,7 +364,7 @@ def draw_ober(c, suit):
             r.part().capsule(19, 48, 25, 46, 0.7).fill(YELLOW)
 
         _standing(c, True, look, arms, legs, back_props=scabbard, pose=OBER_COAT)
-        _tufts(c, [22, 41])
+        _tufts(c, suit, [22, 41])
         draw_suit(c, 2, 47, 12)
 
     else:  # Heart: spear upright in one hand, the other on his hip
@@ -320,7 +392,7 @@ def draw_ober(c, suit):
             r.part().poly([(47, -1), (49, 5), (47, 8), (45, 5)]).paint(LIGHT_CYAN, None, outline=BLUE)
 
         _standing(c, False, look, arms, legs, back_props=spear, pose=OBER_COAT)
-        _tufts(c, [21, 44])
+        _tufts(c, suit, [21, 44])
         draw_suit(c, 3, 12, 12)
 
 

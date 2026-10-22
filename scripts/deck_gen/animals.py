@@ -230,19 +230,28 @@ def draw_pheasant(c, flip=False, dx=0, scale=1.0):
 
 
 def draw_peacock(c, flip=False, dx=0, scale=1.0):
-    """A peacock in display, the train fanned behind it with eyed feathers."""
+    """A peacock in display, its train raised behind it in a wedge of radiating, eyed feathers."""
     r = Rig(c, flip=flip, dx=dx, scale=scale)
-    fan = r.part().ellipse(26, 76, 15, 11).clip(y1=int(r.tx(0, 80)[1]))
-    fan.paint(GREEN, outline=DARK_GRAY, pattern=lambda x, y: LIGHT_GREEN if (x + y) % 3 == 0 else None)
-    for k in range(9):
-        a = math.radians(200 + k * 17.5)
-        ex, ey = 26 + math.cos(a) * 11.5, 76 + math.sin(a) * 8.5
-        r.part().ellipse(ex, ey, 1.8, 1.8).paint(YELLOW, None, outline=BLUE)
+    ox, oy = 30, 80
+    lo, hi, reach = 198, 278, 21
+
+    def polar(deg, rad):
+        a = math.radians(deg)
+        return ox + math.cos(a) * rad, oy + math.sin(a) * rad
+
+    # The wedge, its rim fringed by the feather tips.
+    fan = r.part().poly([(ox, oy)] + [polar(lo + (hi - lo) * k / 12, reach) for k in range(13)])
+    feathers = 11
+    for k in range(feathers):
+        fan.ellipse(*polar(lo + (hi - lo) * (k + 0.5) / feathers, reach - 0.5), 2.2, 2.2)
+    fan.paint(GREEN, shade=None, outline=DARK_GRAY)
+    # Shafts radiating from the rump, each ending in an eye.
+    for k in range(feathers):
+        deg = lo + (hi - lo) * (k + 0.5) / feathers
+        r.line(*polar(deg, 5), *polar(deg, reach - 3), LIGHT_GREEN)
+        ex, ey = polar(deg, reach - 1.5)
+        r.part().ellipse(ex, ey, 1.9, 1.9).paint(CYAN, None, outline=YELLOW)
         r.put(ex, ey, BLUE)
-    for k in range(5):
-        a = math.radians(215 + k * 27)
-        ex, ey = 26 + math.cos(a) * 6.5, 76 + math.sin(a) * 4.5
-        r.part().ellipse(ex, ey, 1.4, 1.4).paint(LIGHT_CYAN, None, outline=BLUE)
     body = r.part().ellipse(30, 80, 4, 4.5).capsule(31, 77, 34, 68, 1.8, 1.3).ellipse(34, 67, 1.8, 1.6)
     body.paint(BLUE, shade=DARK_GRAY, outline=DARK_GRAY, pattern=lambda x, y: LIGHT_BLUE if (x + y) % 3 == 0 else None)
     r.put(36, 67, YELLOW)
