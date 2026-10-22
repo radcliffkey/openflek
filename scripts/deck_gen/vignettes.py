@@ -5,10 +5,13 @@ from scripts.deck_gen.palette import (
     BROWN,
     DARK_GRAY,
     GREEN,
+    LIGHT_GRAY,
     LIGHT_GREEN,
     LIGHT_RED,
+    WHITE,
     YELLOW,
 )
+from scripts.deck_gen.rig import Rig
 from scripts.deck_gen.symbols import (
     draw_floret,
     draw_roman_x,
@@ -126,25 +129,6 @@ SPRITE_FOUNTAIN = [
     '..88888888888888888888888888888888..',
 ]
 
-# Heart 9 left: Golden garden obelisk beside the peacock (14x15)
-SPRITE_OBELISK = [
-    '.....6e6......',
-    '....8eee8.....',
-    '....8e4e8.....',
-    '...8ee4ee8....',
-    '...8e4c4e8....',
-    '..8ee4c4ee8...',
-    '..8e4ccc4e8...',
-    '.8ee4ccc4ee8..',
-    '.8e4ccccc4e8..',
-    '8ee4ccccc4ee8.',
-    '8eeeeeeeeeee8.',
-    '8444444444448.',
-    '877fffffff778.',
-    '87fffffffff78.',
-    '8888888888888.',
-]
-
 # Heart 10 left: Heart target on a post for Cupid to aim at (9x16)
 SPRITE_HEART_POST = [
     '....66...',
@@ -239,6 +223,17 @@ def draw_bush_or_flowers(c, cx, base_y, col):
     c.put(cx, base_y - 3, YELLOW)
 
 
+def _draw_obelisk(c, cx, base_y):
+    """A slender gilded garden obelisk on a stepped plinth, topped by a small heart."""
+    r = Rig(c)
+    r.part().rect(cx - 5, base_y - 3, cx + 5, base_y).paint(LIGHT_GRAY, light=WHITE, outline=DARK_GRAY)
+    r.part().rect(cx - 4, base_y - 5, cx + 4, base_y - 4).paint(LIGHT_GRAY, outline=DARK_GRAY)
+    shaft = r.part().poly([(cx - 3, base_y - 5), (cx + 3, base_y - 5), (cx + 1.5, base_y - 17), (cx - 1.5, base_y - 17)])
+    shaft.poly([(cx - 1.5, base_y - 17), (cx + 1.5, base_y - 17), (cx, base_y - 20)])
+    shaft.paint(YELLOW, light=WHITE, outline=BROWN)
+    c.blit_centered(['.4.4.', '4cc44', '4ccc4', '.4c4.', '..4..'], cx, base_y - 23)
+
+
 def draw_vignette_scene(c, suit, rank):
     """Draws one of the 16 large, grounded bottom scenes (y=60..91).
 
@@ -305,7 +300,7 @@ def draw_vignette_scene(c, suit, rank):
         draw_bush_or_flowers(c, 52, gy, LIGHT_RED)
         c.blit_sprite(SPRITE_FOUNTAIN, 12, gy - 21)
     elif (suit, rank) == (3, 2):  # Heart 9: Peacock in display beside a garden obelisk
-        c.blit_sprite(SPRITE_OBELISK, 4, gy - 13)
+        _draw_obelisk(c, 10, gy - 2)
         animals.draw_peacock(c, dx=10)
     elif (suit, rank) == (3, 3):  # Heart 10: Winged Cupid aiming his bow at a heart on a post
         c.blit_sprite(SPRITE_HEART_POST, 9, gy - 14)
