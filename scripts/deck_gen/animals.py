@@ -230,13 +230,17 @@ def draw_boar(c, flip=False, dx=0, scale=1.0):
 
 
 def draw_stag(c, flip=False, dx=0, scale=1.0):
-    """A red stag leaping, forelegs tucked and hind legs stretched behind, antlers swept back."""
+    """A red stag leaping, forelegs reaching forward and hind legs stretched behind, antlers swept back.
+
+    Forelegs folded under the chest, as a real stag jumps, shrink to stubs at
+    this card's scale, so they reach out ahead instead.
+    """
     r = _rig(c, flip, dx, scale, shadow=(28, 13))
     # Leaping low, head stretched forward, so the antlers stay under the Nine's lowest pips.
     r.dy = 2
     hide = BROWN
     belly = YELLOW
-    _legs(r, [[(36, 70), (40, 74), (37, 77)], [(20, 71), (14, 75), (7, 79)]], darker(hide), upper=2.0, lower=1.0)
+    _legs(r, [[(36, 71), (42, 75), (46, 79)], [(20, 71), (14, 75), (7, 79)]], darker(hide), upper=2.0, lower=1.2)
     body = r.part().ellipse(28, 69, 10.5, 4.5, angle=-10).ellipse(36, 67, 4.5, 4.8).ellipse(20, 70, 4.5, 4.5)
     body.capsule(37, 65, 42, 60, 2.8, 2.0).ellipse(45, 59, 2.6, 2.2).capsule(46, 60, 50, 62, 1.6, 1.0)
 
@@ -250,7 +254,7 @@ def draw_stag(c, flip=False, dx=0, scale=1.0):
     r.part().poly([(42, 56), (44, 57), (41, 59)]).paint(hide, outline=DARK_GRAY)
     _eye(r, 46, 59)
     r.put(50, 62, BLACK)
-    _legs(r, [[(38, 71), (43, 73), (41, 77)], [(19, 72), (12, 74), (5, 76)]], hide, upper=2.1, lower=1.0, outline=DARK_GRAY, hoof=BLACK)
+    _legs(r, [[(38, 71), (45, 72), (51, 75)], [(19, 72), (12, 74), (5, 76)]], hide, upper=2.1, lower=1.2, outline=DARK_GRAY, hoof=BLACK)
     _done(r)
     # Antlers swept back along the neck, pixelled at card size after the
     # silhouette so the thin tines aren't swallowed by an outline.

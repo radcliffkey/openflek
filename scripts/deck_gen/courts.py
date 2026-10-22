@@ -10,6 +10,7 @@ import math
 
 from scripts.deck_gen import figure as F
 from scripts.deck_gen.palette import (
+    BLUE,
     BROWN,
     CYAN,
     DARK_GRAY,
@@ -229,26 +230,6 @@ def _quarters(col):
     return lambda x, y: col if (x + y) % 4 == 0 else None
 
 
-# Heart Unter's halberd head as it shows on the card (blade to the left):
-# a spear point on the shaft, a broad crescent axe blade and a back hook.
-# Hand-pixelled because a shape outline swallows the two-pixel point and hook.
-HALBERD_HEAD = [
-    '.......1........',
-    '.......11.......',
-    '.......1b1......',
-    '.......1b1......',
-    '.1.....1bb1.....',
-    '.11...1bbb1..1..',
-    '.1b1111bbb1.1b1.',
-    '.1bbbbbbbb31b1..',
-    '.1bbbbbbbb331...',
-    '.1bbbbbbbb31....',
-    '.1bbbbbb3331....',
-    '.1b11111111.....',
-    '.11.............',
-    '.1..............',
-]
-
 # Heart King's chalice as it shows on the card, held up by its foot: a
 # jewelled bowl, a knop on the stem and a spreading foot, lit from the left.
 HEART_CHALICE = [
@@ -395,9 +376,24 @@ def draw_unter(c, suit):
         legs = (((26, 52), (22, 68), (17, 83), (22, 87)), ((34, 52), (40, 67), (43, 83), (49, 87)))
 
         def halberd(r):
-            F.pole(r, (24, 52), (48, 9))
-            # Pixelled in card space, as the mirrored figure shows it.
-            r.c.blit_sprite(HALBERD_HEAD, 2, 2)
+            # The head follows the shaft's slant: an upright head on a leaning
+            # shaft reads as a flag. Spear point on top, crescent axe blade on
+            # the far side, hook on the near side, a red tassel below.
+            (bx, by), (tx, ty) = (24, 52), (47, 10)
+            ln = math.hypot(tx - bx, ty - by)
+            ux, uy = (tx - bx) / ln, (ty - by) / ln
+            nx, ny = -uy, ux
+
+            def at(along, side):
+                return tx + ux * along + nx * side, ty + uy * along + ny * side
+
+            F.pole(r, (bx, by), (tx, ty), BROWN, outline=DARK_GRAY)
+            r.part().capsule(*at(-1, 0), *at(7, 0), 1.6, 0.6).paint(LIGHT_CYAN, None, outline=BLUE)
+            blade = r.part().poly([at(0, 1), at(1, 7), at(-3, 8.5), at(-7, 7), at(-6, 1)])
+            blade.paint(LIGHT_CYAN, None, outline=BLUE)
+            r.line(*at(0, 6.5), *at(-6, 6.5), WHITE)
+            r.part().poly([at(-1.5, -1), at(-3, -5), at(-4.5, -1)]).paint(LIGHT_CYAN, None, outline=BLUE)
+            r.part().ellipse(*at(-9, 0), 1.6, 1.6).paint(LIGHT_RED)
 
         _standing(c, suit, True, look, arms, legs, back_props=halberd)
         draw_suit(c, 3, 9, 67)
