@@ -430,15 +430,63 @@ def draw_ober(c, suit):
         draw_suit(c, 3, 12, 12)
 
 
-def _throne(r, wood, velvet):
-    """A throne seen from the front: arched back with finials framing the king, velvet panel inside."""
-    back = r.part().rect(12, 26, 48, 66).ellipse(30, 26, 18, 7)
-    back.paint(wood, pattern=lambda x, y: darker(wood) if (x + y) % 7 == 0 else None)
-    panel = r.part().rect(16, 28, 44, 66).ellipse(30, 28, 14, 5)
-    panel.paint(velvet, pattern=lambda x, y: darker(velvet) if x % 4 == 0 and y % 4 == 0 else None)
-    for fx in (12, 48):
-        r.part().rect(fx - 2, 20, fx + 2, 70).paint(wood)
-        r.part().ellipse(fx, 18, 2.6, 2.6).paint(YELLOW)
+def _throne(r, wood, velvet, style):
+    """A throne seen from the front, framing the king, in one of four styles.
+
+    'round' has an arched back and gold ball finials, 'gothic' a pointed back
+    and spires, 'canopy' a fringed valance with curtains falling to either
+    side, 'baroque' scroll volutes and a shell crest. Tops stay below y=21,
+    clear of the corner pips.
+    """
+
+    def grain(x, y):
+        return darker(wood) if (x + y) % 7 == 0 else None
+
+    def nap(x, y):
+        return darker(velvet) if x % 4 == 0 and y % 4 == 0 else None
+
+    if style == 'gothic':
+        r.part().poly([(12, 66), (12, 34), (30, 15), (48, 34), (48, 66)]).paint(wood, pattern=grain)
+        r.part().poly([(16, 66), (16, 36), (30, 21), (44, 36), (44, 66)]).paint(velvet, pattern=nap)
+        # Pointed lancet windows of tracery either side of the king.
+        for lx in (19, 41):
+            r.part().poly([(lx - 2.5, 60), (lx - 2.5, 42), (lx, 36), (lx + 2.5, 42), (lx + 2.5, 60)]).paint(
+                darker(velvet), None, outline=wood
+            )
+        for fx in (12, 48):
+            r.part().rect(fx - 2, 28, fx + 2, 70).paint(wood)
+            r.part().poly([(fx - 2.5, 28), (fx, 21), (fx + 2.5, 28)]).paint(YELLOW)
+    elif style == 'canopy':
+        r.part().rect(12, 26, 48, 66).paint(wood, pattern=grain)
+        r.part().rect(16, 28, 44, 66).paint(velvet, pattern=nap)
+        for fx, sway in ((12, -1), (48, 1)):
+            r.part().poly([(fx - 3, 25), (fx + 3, 25), (fx + 2 - sway, 66), (fx - 2 - sway, 66)]).paint(
+                velvet, pattern=lambda x, y: darker(velvet) if x % 3 == 0 else None
+            )
+        valance = r.part().rect(9, 21, 51, 25)
+        for sx in range(11, 51, 5):
+            valance.ellipse(sx + 1.5, 25, 2.6, 2)
+        valance.paint(velvet, pattern=lambda x, y: YELLOW if y == 22 else None)
+        for sx in range(11, 51, 5):
+            r.put(sx + 1.5, 28, YELLOW)
+    elif style == 'baroque':
+        r.part().rect(12, 28, 48, 66).ellipse(30, 28, 15, 6).paint(wood, pattern=grain)
+        r.part().rect(16, 30, 44, 66).ellipse(30, 30, 12, 4).paint(velvet, pattern=nap)
+        # A scallop shell on the crest, its ribs fanning from the hinge.
+        r.part().ellipse(30, 22, 5, 3.5).rect(25, 22, 35, 24).paint(YELLOW)
+        for k in (-4, -2, 0, 2, 4):
+            r.line(30, 25, 30 + k, 20 + abs(k) // 2, BROWN)
+        for fx, turn in ((12, 1), (48, -1)):
+            r.part().rect(fx - 2, 30, fx + 2, 70).paint(wood)
+            r.part().ellipse(fx, 28, 3.4, 3.2).paint(YELLOW)
+            r.put(fx + turn, 28, BROWN)
+            r.put(fx, 27, BROWN)
+    else:
+        r.part().rect(12, 26, 48, 66).ellipse(30, 26, 18, 7).paint(wood, pattern=grain)
+        r.part().rect(16, 28, 44, 66).ellipse(30, 28, 14, 5).paint(velvet, pattern=nap)
+        for fx in (12, 48):
+            r.part().rect(fx - 2, 22, fx + 2, 70).paint(wood)
+            r.part().ellipse(fx, 21, 2.4, 2.4).paint(YELLOW)
     # Seat front and legs below the robe.
     r.part().rect(11, 66, 49, 70).paint(wood)
     r.part().rect(11, 70, 14, 86).paint(wood)
@@ -452,7 +500,7 @@ def _seated(c, flip, look, front_arm, back_arm, props_back=None, props_front=Non
     """
     r = Rig(c, flip=flip)
     j = dict(head=(30, 16), neck=(30, 22), sh_b=(24, 27), sh_f=(35, 27), waist=(30, 46))
-    _throne(r, look['throne'], look['cushion'])
+    _throne(r, look['throne'], look['cushion'], look['style'])
     if props_back:
         props_back(r)
     F.cape(r, j, look['mantle'], length=78, swing=-5)
@@ -512,6 +560,7 @@ def draw_king(c, suit):
     if suit == 0:  # Acorn: sceptre upright, orb on the knee
         look = dict(
             throne=YELLOW,
+            style='gothic',
             cushion=LIGHT_RED,
             mantle=GREEN,
             sleeve=LIGHT_RED,
@@ -546,6 +595,7 @@ def draw_king(c, suit):
     elif suit == 1:  # Leaf: sceptre resting on the shoulder, facing left
         look = dict(
             throne=BROWN,
+            style='canopy',
             cushion=GREEN,
             mantle=LIGHT_RED,
             sleeve=GREEN,
@@ -575,6 +625,7 @@ def draw_king(c, suit):
     elif suit == 2:  # Bell: drawn sword held upright
         look = dict(
             throne=YELLOW,
+            style='baroque',
             cushion=CYAN,
             mantle=CYAN,
             sleeve=LIGHT_RED,
@@ -603,6 +654,7 @@ def draw_king(c, suit):
     else:  # Heart: raising a golden chalice, facing left
         look = dict(
             throne=BROWN,
+            style='round',
             cushion=LIGHT_RED,
             mantle=LIGHT_RED,
             sleeve=CYAN,
