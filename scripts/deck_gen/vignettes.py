@@ -22,6 +22,7 @@ from scripts.deck_gen.rig import Rig
 from scripts.deck_gen.symbols import (
     draw_floret,
     draw_roman_x,
+    draw_shrub,
     draw_suit,
     draw_tree_trunk,
 )
@@ -107,19 +108,9 @@ def draw_ground(c, suit, rank):
 
 
 def draw_bush_or_flowers(c, cx, base_y, col):
-    """Draws a flat-bottomed flowering bush rooted directly into base_y..base_y+1."""
-    pts = [
-        (cx - 6, base_y + 1),
-        (cx - 5, base_y - 3),
-        (cx - 2, base_y - 6),
-        (cx + 2, base_y - 6),
-        (cx + 5, base_y - 3),
-        (cx + 6, base_y + 1),
-    ]
-    c.fill_poly(pts, GREEN, DARK_GRAY, outline=DARK_GRAY, mode='checker')
-    for dx, dy in [(-3, -3), (0, -5), (3, -3), (-1, -2), (2, -4)]:
-        c.put(cx + dx, base_y + dy, col)
-    c.put(cx, base_y - 3, YELLOW)
+    """Draws a flowering bush rooted into the turf at base_y..base_y+1."""
+    blooms = [(dx, dy, col) for dx, dy in [(-3, -3), (0, -5), (3, -3), (-1, -2), (2, -4)]]
+    draw_shrub(c, cx, base_y + 1, 6, 4, blooms + [(0, -3, YELLOW)])
 
 
 def _draw_obelisk(c, cx, base_y):

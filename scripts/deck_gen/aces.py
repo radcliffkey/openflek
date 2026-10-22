@@ -20,7 +20,7 @@ from scripts.deck_gen.palette import (
 from scripts.deck_gen import animals, people
 from scripts.deck_gen.palette import checker, fill_terrain
 from scripts.deck_gen.rig import Rig, darker
-from scripts.deck_gen.symbols import draw_suit
+from scripts.deck_gen.symbols import draw_shrub, draw_suit
 
 
 # Small round hawk-bell (7x8) charged on the Bell Ace shield: a loop on top,
@@ -47,22 +47,24 @@ def _fill_ace_ground(c, top_y=52, water=True):
                     c.put(x, y, checker(x, y, CYAN, LIGHT_CYAN))
 
 
-def _overlap_foreground_turf(c, base_y=79):
-    """Draws overlapping foreground hillock, mossy shadow, and bushes over a crest base."""
+def _overlap_foreground_turf(c, base_y=79, water=True):
+    """Draws the foreground hillock over the bottom of a crest, with a row of flowering shrubs.
+
+    `water` matches the ground's: an ace without a river gets no water here either.
+    """
 
     def colour(x, y, crest):
         dx = abs(x - 30)
-        if y <= crest + 2 and dx < 18:
-            return checker(x, y, GREEN, DARK_GRAY)
-        if y >= 91 and dx <= 12 + (y - 91) * 2:
+        if y <= crest + 1 and dx < 18:
+            return GREEN
+        if water and y >= 91 and dx <= 12 + (y - 91) * 2:
             return checker(x, y, CYAN, LIGHT_CYAN)
         return checker(x, y, GREEN, LIGHT_GREEN)
 
     fill_terrain(c, base_y - 3, lambda x: int(round(base_y + (x - 30) ** 2 / 140.0 + math.sin(x * 0.45) * 1.2)), colour)
 
     for cx, cy in [(15, base_y), (23, base_y - 1), (30, base_y - 2), (37, base_y - 1), (45, base_y)]:
-        c.fill_ellipse(cx, cy, 4, 2, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='checker')
-        c.put(cx, cy - 1, YELLOW if cx % 2 == 0 else LIGHT_RED)
+        draw_shrub(c, cx, cy + 1, 4, 2.5, [(0, -2, YELLOW if cx % 2 == 0 else LIGHT_RED)])
 
 
 def draw_ace_acorn(c):
@@ -255,7 +257,7 @@ def draw_ace_bell(c):
     for px, col in ((27, RED), (30, LIGHT_CYAN), (33, RED)):
         c.put(px, 15, col)
 
-    _overlap_foreground_turf(c, base_y=82)
+    _overlap_foreground_turf(c, base_y=82, water=False)
 
 
 def draw_ace_heart(c):

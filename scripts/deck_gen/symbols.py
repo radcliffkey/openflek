@@ -219,3 +219,32 @@ def draw_tree_trunk(c, top_y, bottom_y, branch_ys, suit):
         c.put(cx - 3, by - 2, LIGHT_RED)
         c.put(cx + 3, by - 2, LIGHT_RED)
         c.put(cx, by, DARK_GRAY)
+
+
+def draw_shrub(c, cx, base_y, rx, ry, flowers=()):
+    """A rounded shrub standing on row `base_y`: solid green, lit on the upper left, dark-edged.
+
+    Its flat bottom has no outline, so it grows out of the turf. `flowers`
+    lists blooms as (dx, dy, colour) relative to (cx, base_y).
+    """
+    cy = base_y - ry + 1
+    lx, ly = cx - rx * 0.35, cy - ry * 0.35
+
+    def inside(x, y):
+        return y <= base_y and ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1
+
+    for y in range(int(cy - ry) - 1, base_y + 1):
+        for x in range(int(cx - rx) - 1, int(cx + rx) + 2):
+            if not inside(x, y):
+                continue
+            if not (inside(x - 1, y) and inside(x + 1, y) and inside(x, y - 1)):
+                col = DARK_GRAY
+            elif ((x - lx) / (rx * 0.5)) ** 2 + ((y - ly) / (ry * 0.5)) ** 2 <= 1:
+                col = LIGHT_GREEN
+            elif (x * 3 + y * 5) % 11 == 0:
+                col = LIGHT_GREEN
+            else:
+                col = GREEN
+            c.put(x, y, col)
+    for dx, dy, col in flowers:
+        c.put(cx + dx, base_y + dy, col)
