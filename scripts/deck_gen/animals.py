@@ -335,17 +335,35 @@ def draw_lion(c, flip=False, dx=0, scale=1.0):
     return _done(r)
 
 
+# An ear of ripe wheat on its stalk: plump golden grains edged in brown with
+# whiskers above. The top row is the whiskers; the stalk hangs from the bottom.
+WHEAT_EAR = [
+    '6.6',
+    '.6.',
+    'e6e',
+    '6e6',
+    'e6e',
+    '6e6',
+    '.6.',
+]
+
+
+def _wheat(c, x, ear_y, ground_y=87):
+    """One stalk of wheat rooted at (x, ground_y), its ear's whiskers at row `ear_y`."""
+    c.line(x, ear_y + len(WHEAT_EAR), x, ground_y, BROWN)
+    c.blit_sprite(WHEAT_EAR, x - 1, ear_y)
+
+
 def draw_pheasant(c, flip=False, dx=0, scale=1.0):
-    """A cock pheasant on a fallen oak bough: copper body, green head, red wattle, long barred tail.
+    """A cock pheasant standing in ripe wheat: copper body, green head, red wattle, long barred tail.
 
     Posed right of the tree trunk with its head below the lowest pips; the
-    tail sweeps back across the trunk.
+    tail sweeps back across the trunk. A taller row of wheat stands behind
+    it and a shorter one in front of its legs, every ear below the pips.
     """
     r = _rig(c, flip, dx, scale)
-    # The bough lying in the grass, flecks of light on its bark and a broken twig at its end.
-    r.part().capsule(26, 85, 50, 84, 1.7, 1.5).paint(BROWN, shade=None, outline=DARK_GRAY, pattern=lambda x, y: YELLOW if x % 5 == 1 else None)
-    r.line(49, 83, 52, 80, DARK_GRAY)
-    r.put(50, 82, BROWN)
+    for wx, wy in ((24, 72), (27, 75), (33, 71), (47, 72), (51, 74), (54, 76)):
+        _wheat(c, r.tx(wx, 0)[0], wy)
     # Long golden tail crossed by brown bars, wide enough at the trunk not to read as part of it.
     tail = r.part().chain([(35, 79), (21, 75), (6, 71)], [2.8, 2.0, 0.7])
     tail.paint(YELLOW, shade=None, outline=DARK_GRAY, pattern=lambda x, y: BROWN if (4 * x + y) % 9 < 2 else None)
@@ -370,11 +388,14 @@ def draw_pheasant(c, flip=False, dx=0, scale=1.0):
         43,
         68,
     )
-    # Legs gripping the bough.
+    # Legs down to the ground, toes spread.
     for fx in (38, 41):
-        r.line(fx, 82, fx, 83, DARK_GRAY)
-        r.put(fx + 1, 83, DARK_GRAY)
-    return _done(r)
+        r.line(fx, 82, fx, 86, DARK_GRAY)
+        r.put(fx + 1, 86, DARK_GRAY)
+    _done(r)
+    for wx, wy in ((31, 81), (36, 82), (46, 82), (50, 81)):
+        _wheat(c, r.tx(wx, 0)[0], wy)
+    return r
 
 
 def draw_peacock(c, flip=False, dx=0, scale=1.0):

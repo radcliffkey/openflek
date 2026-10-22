@@ -145,41 +145,63 @@ def draw_hornblower(c, x=16, seat_y=85):
     r.silhouette()
 
 
-def draw_sword_dancer(c, x=30, scale=0.32):
-    """A jester in parti-coloured motley dancing on one foot, brandishing a sword."""
-    r = _rig(c, scale, x)
+# The jester, pixelled by hand so every mark of the fool reads at card size:
+# motley split down the middle, red on his right and yellow on his left with
+# the legs the other way round, a dagged green collar and hem, pointed shoes
+# with bells, and a marotte (a fool's sceptre: a stick topped by a little
+# capped head) held up in his hand. He hops on one foot, the other kicked out.
+JESTER_BODY = [
+    '..................',
+    '................c.',
+    '...............ccc',
+    '...............fff',
+    '................e.',
+    '................6.',
+    '.....2a2a2a2....6.',
+    '....cccccceeeeeff.',
+    'ff.cccccccceeeeff.',
+    '.ccccccccceeee..6.',
+    '....cccccceeee..6.',
+    '....cccccceeee..6.',
+    '....cccccceeee....',
+    '....2a2a2a2a2a....',
+    '...cccccceeeeee...',
+    '...c.c.c.e.e.e....',
+    '.....ee....cc.....',
+    '.....ee.....ccc...',
+    '.....ee......ccc..',
+    '.....ee.......ccc.',
+    '.....ee........c2e',
+    '.....ee.........2.',
+    '.....ee...........',
+    '.....ee...........',
+    '.....ee...........',
+    '....222...........',
+    '..e2222...........',
+]
 
-    def motley(x, y):
-        fx, _ = r.tx(30, 0)
-        return LIGHT_RED if x < fx else None
+# A three-pointed fool's cap, red, yellow and green, each point tipped with a
+# bell; the band sits on the brow.
+JESTER_CAP = [
+    'e.......e',
+    'cc..e..ee',
+    '.cc.2.ee.',
+    '..cc2ee..',
+    '.2a2a2a2.',
+]
 
-    look = dict(
-        sleeve_b=LIGHT_RED,
-        sleeve_f=YELLOW,
-        cuff=GREEN,
-        hose=YELLOW,
-        boot=GREEN,
-        tunic=YELLOW,
-        skirt=YELLOW,
-        belt=GREEN,
-        pattern=motley,
-        skirt_pattern=motley,
-        hair=YELLOW,
-        hat=None,
-    )
-    arms = (((23, 26), (14, 30), (6, 26), 'open'), ((36, 26), (43, 22), (49, 16), 'grip'))
-    # Hopping on the back leg, the front leg kicked out high.
-    legs = (((27, 52), (27, 68), (28, 84), (33, 87)), ((33, 52), (45, 59), (55, 65), (61, 64)))
 
-    def blade(rr):
-        # Long enough to read at vignette size, pointing up and out clear of the pips.
-        # A plain white blade: a cyan one dithers into specks this thin.
-        F.sword(rr, (49, 16), (78, 4), blade=WHITE)
+def draw_jester(c, x=30, foot_y=88):
+    """A jester dancing on one foot, his marotte held high.
 
-    F.draw_standing(r, look, arms, legs, front_props=blade)
-    # A parti-coloured cap whose two points flop out sideways to hanging
-    # bells, keeping it below the tree's lowest twigs.
-    r.sprite(['...222ccc..', '.22222cccc.', 'e2.eeeee.ce'], 30, 15, anchor=(5, 6))
+    `x` is the column of his face; his standing foot is on row `foot_y`.
+    """
+    r = Rig(c, thin=True)
+    top = foot_y - len(JESTER_BODY) + 1
+    r.sprite(JESTER_BODY, x - 8, top)
+    hy = top + 3
+    r.sprite(F.SMALL_FACES['young'], x, hy, {'H': YELLOW, 'h': BROWN}, anchor=(3, 3))
+    r.sprite(JESTER_CAP, x, hy, anchor=(4, 7))
     r.silhouette()
 
 

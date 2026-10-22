@@ -348,7 +348,7 @@ def draw_vignette_scene(c, suit, rank):
     elif (suit, rank) == (0, 1):  # Acorn 8: Huntsman sitting in the grass blowing a long horn, his dog by him
         people.draw_hornblower(c)
         animals.draw_dog(c, flip=True)
-    elif (suit, rank) == (0, 2):  # Acorn 9: Cock pheasant perched on an oak bough
+    elif (suit, rank) == (0, 2):  # Acorn 9: Cock pheasant standing in ripe wheat
         draw_bush_or_flowers(c, 9, gy, LIGHT_RED)
         animals.draw_pheasant(c)
     elif (suit, rank) == (0, 3):  # Acorn 10: Wild boar trotting across a forest clearing
@@ -356,10 +356,10 @@ def draw_vignette_scene(c, suit, rank):
         draw_bush_or_flowers(c, 52, gy, LIGHT_RED)
         animals.draw_boar(c)
 
-    elif (suit, rank) == (1, 0):  # Leaf 7: Jester dancing with a sword raised overhead
+    elif (suit, rank) == (1, 0):  # Leaf 7: Jester dancing on one foot, his marotte held high
+        # Right of the trunk, so his yellow standing leg doesn't merge with it.
         draw_bush_or_flowers(c, 10, gy, YELLOW)
-        draw_bush_or_flowers(c, 50, gy, LIGHT_RED)
-        people.draw_sword_dancer(c)
+        people.draw_jester(c, x=37)
     elif (suit, rank) == (1, 1):  # Leaf 8: Elephant walking, trunk curled
         draw_bush_or_flowers(c, 9, gy, LIGHT_RED)
         draw_bush_or_flowers(c, 52, gy, YELLOW)
