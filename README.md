@@ -104,7 +104,7 @@ Keyboard, as in the original; the mouse works too.
 | `src/game/` | rules engine: cards, deal and trick rules (`round`), hand evaluation (`analysis`), scoring (`settle`), computer players (`ai`) |
 | `src/gfx/` | indexed-colour framebuffer with BGI-style primitives; 8×8 font with Czech letters |
 | `src/art/` | card faces from a bundled bitmap (`deck_data.bin`); backs and the card frame drawn at runtime |
-| `scripts/deck_gen/` | Python generator for the card faces: `python3 scripts/deck_gen/build_sheet.py --write-bin` rewrites `deck_data.bin` (needs Pillow) |
+| `scripts/deck_gen/` | Python generator for the card faces: `python3 scripts/deck_gen/build_sheet.py` rewrites `deck_data.bin` |
 | `src/app/` | screens and dialogs, the game flow, options, title screen |
 | `src/config.rs`, `src/sound.rs` | settings file; square-wave "PC speaker" sounds |
 | `examples/card_sheet.rs` | renders the deck to a PNG: `cargo run --example card_sheet -- out.png 2` |

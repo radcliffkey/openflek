@@ -125,8 +125,7 @@ fn back_light(line_color: u8) -> u8 {
 /// eight-petalled rosette.
 ///
 /// Everything is measured from the centre, so the back is mirror symmetric
-/// both ways and looks the same either way up. Mirrors
-/// `scripts/deck_gen/palette.py::back_colour`.
+/// both ways and looks the same either way up.
 fn back_pixel(line_color: u8, x: i32, y: i32) -> u8 {
     let dark = if line_color == color::LIGHT_GRAY {
         color::DARK_GRAY

@@ -1,12 +1,9 @@
-"""EGA 16-colour canvas, pixel-art primitives, and card-sheet compositor."""
+"""EGA 16-colour palette, the card-face canvas and pixel-art primitives."""
 
 import math
-from PIL import Image
 
 FACE_W = 61
 FACE_H = 100
-SPRITE_W = 67
-SPRITE_H = 106
 
 BLACK = 0
 BLUE = 1
@@ -25,6 +22,8 @@ LIGHT_MAGENTA = 13
 YELLOW = 14
 WHITE = 15
 
+# RGB of each colour index, for scripts that render faces to an image while
+# working on them; the game itself draws the bitmap with its own palette.
 EGA_PALETTE = [
     (0x00, 0x00, 0x00),
     (0x00, 0x00, 0xAA),
@@ -235,115 +234,3 @@ class FaceCanvas:
         h = len(rows)
         w = len(rows[0]) if h > 0 else 0
         self.blit_sprite(rows, cx - w // 2, cy - h // 2, flip_x=flip_x)
-
-
-# Lighter partner of each back colour the game offers (1..7), for petals and fills.
-BACK_LIGHT = {
-    BLUE: LIGHT_BLUE,
-    GREEN: LIGHT_GREEN,
-    CYAN: LIGHT_CYAN,
-    RED: LIGHT_RED,
-    MAGENTA: LIGHT_MAGENTA,
-    BROWN: YELLOW,
-    LIGHT_GRAY: LIGHT_GRAY,
-}
-
-
-def back_colour(line_col, x, y):
-    """The card-back pattern at face pixel (x, y) for one line colour, or None outside the border.
-
-    The pattern is built from distances to the centre, so it is mirror
-    symmetric both ways and the back looks the same either way up: a
-    double border with fans in the corners, a diamond lattice with a small
-    flower in every cell, and a medallion holding an eight-petalled rosette.
-    """
-    dark = DARK_GRAY if line_col == LIGHT_GRAY else line_col
-    light = BACK_LIGHT.get(line_col, WHITE)
-    # Quadrant coordinates: rows 49 and 50 are both the middle row.
-    qx = abs(x - 30)
-    qy = (abs(2 * y - 99) - 1) // 2
-    if not (2 <= x <= 58 and 2 <= y <= 97):
-        return None
-    # Border: a dark rule, a light band, another dark rule.
-    edge = min(x - 2, 58 - x, y - 2, 97 - y)
-    if edge == 1 or edge == 4:
-        return dark
-    if edge in (2, 3):
-        return light if (qx + qy) % 4 else dark
-    if edge == 0:
-        return WHITE
-    # Fans in the four corners of the field.
-    fx, fy = 23 - qx, 42 - qy
-    fr = math.hypot(fx, fy)
-    if fx >= 0 and fy >= 0 and fr <= 9:
-        if fr > 8 or int(fr) % 3 == 0:
-            return dark
-        return light if int(math.degrees(math.atan2(fy, fx)) / 15) % 2 else WHITE
-    # Central medallion with a rosette.
-    mr = math.hypot(qx / 15.0, (qy + 0.5) / 19.0)
-    if mr <= 1.0:
-        if mr > 0.92:
-            return dark
-        if mr > 0.84:
-            return light if (qx + qy) % 2 else WHITE
-        theta = math.atan2(qy + 0.5, qx)
-        petal = 0.25 + 0.55 * abs(math.cos(4 * theta))
-        if mr < 0.14:
-            return dark
-        if mr < petal:
-            return dark if mr > petal - 0.08 else light
-        return WHITE
-    # Diamond lattice with a flower in each cell.
-    a, b = (qx + qy) % 8, (qx - qy) % 8
-    if a == 0 or b == 0:
-        return dark
-    if a == 4 and b == 4:
-        return dark
-    if (a == 4 and b in (3, 5)) or (b == 4 and a in (3, 5)):
-        return light
-    # Every other cell is tinted, so the lattice reads as a chequer of diamonds.
-    if ((qx + qy) // 8 + (qx - qy) // 8) % 2 and (qx + qy) % 2:
-        return light
-    return WHITE
-
-
-def draw_back_face(line_col):
-    """A card back in `line_col`: lattice, corner fans and a central rosette, without lettering."""
-    f = FaceCanvas()
-    for y in range(FACE_H):
-        for x in range(FACE_W):
-            col = back_colour(line_col, x, y)
-            if col is not None:
-                f.put(x, y, col)
-    return f
-
-
-def save_sheet(faces, out_path='docs/new_card_sheet.png', ref_sheet='docs/card_sheet.png'):
-    """Composites 32 FaceCanvas objects into the exact 8x5 sheet layout with frames and backs."""
-    ref = Image.open(ref_sheet).convert('RGB')
-    out = ref.copy()
-    px = out.load()
-
-    scale = 2
-    gap = 4
-    all_faces = list(faces) + [
-        draw_back_face(BLUE),
-        draw_back_face(RED),
-        draw_back_face(MAGENTA),
-        draw_back_face(BROWN),
-    ]
-    for cid, face in enumerate(all_faces):
-        col_idx = cid % 8
-        row_idx = cid // 8
-        sx0 = gap + col_idx * (SPRITE_W + gap) + 2
-        sy0 = gap + row_idx * (SPRITE_H + gap) + 2
-        for fy in range(FACE_H):
-            for fx in range(FACE_W):
-                if not face.in_interior(fx, fy):
-                    continue
-                rgb = EGA_PALETTE[face.px[fy][fx] & 0x0F]
-                for dy in range(scale):
-                    for dx in range(scale):
-                        px[(sx0 + fx) * scale + dx, (sy0 + fy) * scale + dy] = rgb
-
-    out.save(out_path)
