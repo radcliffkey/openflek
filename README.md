@@ -6,8 +6,9 @@ flek/re/tutti doubling and settlement in Kč.
 
 The remake follows the original program closely: its rules, scoring,
 computer-player logic, screen layout, dialogs and PC-speaker sounds were
-reconstructed by studying the 1992 executable. EGA rendering of Czech
-mariáš cards is mostly borrowed from the original game.
+reconstructed by studying the 1992 executable. The 16-colour EGA card art
+is new, drawn by a generator in `scripts/deck_gen` in the spirit of the
+original Czech mariáš deck.
 
 ![The deck](docs/card_sheet.png)
 
@@ -102,7 +103,8 @@ Keyboard, as in the original; the mouse works too.
 |---|---|
 | `src/game/` | rules engine: cards, deal and trick rules (`round`), hand evaluation (`analysis`), scoring (`settle`), computer players (`ai`) |
 | `src/gfx/` | indexed-colour framebuffer with BGI-style primitives; 8×8 font with Czech letters |
-| `src/art/` | card faces from a bundled bitmap of the original deck; backs and the card frame drawn at runtime |
+| `src/art/` | card faces from a bundled bitmap (`deck_data.bin`); backs and the card frame drawn at runtime |
+| `scripts/deck_gen/` | Python generator for the card faces: `python3 scripts/deck_gen/build_sheet.py` rewrites `deck_data.bin` |
 | `src/app/` | screens and dialogs, the game flow, options, title screen |
 | `src/config.rs`, `src/sound.rs` | settings file; square-wave "PC speaker" sounds |
 | `examples/card_sheet.rs` | renders the deck to a PNG: `cargo run --example card_sheet -- out.png 2` |

@@ -37,6 +37,7 @@ Before you hand work back, run `cargo fmt`, `cargo clippy --all-targets` and
 | `src/game/` | rules engine, no UI: `cards`, `round` (deck, deal, contract state, trick rules), `analysis` (hand evaluation), `settle` (scoring), `ai` (computer players), `rng` |
 | `src/gfx/` | indexed-colour `Canvas` (the screen is 640×480) with BGI-like primitives, 8×8 font with Czech letters, PNG writer |
 | `src/art/` | card sprites: faces decoded from `deck_data.bin`, backs and frame drawn in code |
+| `scripts/deck_gen/` | Python generator for the card faces in `deck_data.bin` |
 | `src/app/` | game flow (`flow`), dialogs (`ui`), table drawing, options, title screen, all UI strings (`text`) |
 | `src/config.rs`, `src/sound.rs` | settings file; square-wave PC-speaker sounds |
 | `tests/headless.rs` | plays full deals through the real flow without a window |
@@ -74,7 +75,12 @@ table in the README.
 - `src/art/deck_data.bin` holds the card faces as a 4-bit bitmap.
   `art::cards` embeds it with `include_bytes!`, and a compile-time check requires
   exactly 97,600 bytes (32 faces of 61×100 pixels, two pixels per byte).
-  Don't remove, regenerate or replace it unless you are asked to.
+  It is generated, never edited by hand: don't remove or replace it.
+- The faces are drawn by the Python generator in `scripts/deck_gen` (plain
+  Python 3). When you change card art there, `python3
+  scripts/deck_gen/build_sheet.py` rewrites `deck_data.bin`; check the result
+  with the `card_sheet` example below. The card back is drawn by
+  `back_pixel` in `art::cards`, not by the generator.
 - After changing card rendering, regenerate the README image:
   `cargo run --example card_sheet -- docs/card_sheet.png 2`.
 
