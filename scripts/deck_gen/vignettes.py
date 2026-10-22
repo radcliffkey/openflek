@@ -345,7 +345,7 @@ def draw_vignette_scene(c, suit, rank):
     if (suit, rank) == (0, 0):  # Acorn 7: Forester smoking a pipe beside a timbered cottage
         _draw_cottage(c, 46, gy - 1)
         people.draw_forester(c)
-    elif (suit, rank) == (0, 1):  # Acorn 8: Huntsman sitting in the grass blowing his horn, his dog by him
+    elif (suit, rank) == (0, 1):  # Acorn 8: Huntsman sitting in the grass playing a pipe, his dog by him
         people.draw_hornblower(c)
         animals.draw_dog(c, flip=True)
     elif (suit, rank) == (0, 2):  # Acorn 9: Cock pheasant perched on an oak bough

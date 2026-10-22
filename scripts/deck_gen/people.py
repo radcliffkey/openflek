@@ -93,16 +93,16 @@ def draw_forester(c, x=19, foot_y=88):
 
 
 # The sitting huntsman, pixelled by hand like the forester: fill colours only.
-# He leans back on his far arm, his near knee drawn up over the far leg, and
-# raises the horn so its bell opens below the tree's lowest twigs.
+# He leans back on his far arm, his near knee drawn up over the far leg; the
+# hand under his chin holds the pipe, drawn separately as `PIPE`.
 HORNBLOWER_BODY = [
-    '................ee6...',
-    '...............eee6...',
-    '..............eee6....',
-    '.............eee......',
-    '............ee........',
-    '...........ee.........',
-    '..........ee..........',
+    '......................',
+    '......................',
+    '......................',
+    '......................',
+    '......................',
+    '......................',
+    '......................',
     '...........ff.........',
     '....cccccc4ff.........',
     '...cccccc4cc..........',
@@ -120,8 +120,23 @@ HORNBLOWER_BODY = [
 ]
 
 
+# A wooden shawm played as pipes are, pointing down and forward from the lips:
+# brown with a gold highlight, dark finger holes, a flared bell and the
+# second hand's fingers on the holes. Anchored at the mouthpiece.
+PIPE = [
+    '66.......',
+    '.6e6.....',
+    '..6e86...',
+    '...6ff6..',
+    '....6ff6.',
+    '....6e86.',
+    '...6eeee6',
+    '...666666',
+]
+
+
 def draw_hornblower(c, x=16, seat_y=85):
-    """A huntsman sitting in the grass, leaning back on one arm and blowing a horn.
+    """A huntsman sitting in the grass, leaning back on one arm and playing a pipe.
 
     `x` is the column of his face; he sits on row `seat_y`.
     """
@@ -129,6 +144,7 @@ def draw_hornblower(c, x=16, seat_y=85):
     top = seat_y - len(HORNBLOWER_BODY) + 1
     r.sprite(HORNBLOWER_BODY, x - 8, top)
     _pixel_head(r, x, top + 5, 'young', BROWN, ('cap', GREEN, LIGHT_RED, YELLOW))
+    r.sprite(PIPE, x + 2, top + 6)
     r.silhouette()
 
 
