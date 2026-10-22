@@ -2,6 +2,7 @@
 
 import math
 from scripts.deck_gen.palette import (
+    BLACK,
     BLUE,
     BROWN,
     CYAN,
@@ -11,15 +12,26 @@ from scripts.deck_gen.palette import (
     LIGHT_CYAN,
     LIGHT_GRAY,
     LIGHT_GREEN,
-    LIGHT_MAGENTA,
     LIGHT_RED,
-    MAGENTA,
     RED,
     WHITE,
     YELLOW,
 )
 from scripts.deck_gen import animals, people
+from scripts.deck_gen.rig import Rig, darker
 from scripts.deck_gen.symbols import draw_suit
+
+
+# Small gold bell (7x7) charged on the Bell Ace shield.
+MINI_BELL = [
+    '...8...',
+    '..8e8..',
+    '.8efe8.',
+    '.8eee8.',
+    '8eeeee8',
+    '8444448',
+    '.88688.',
+]
 
 
 def _fill_ace_ground(c, top_y=52, water=True):
@@ -189,40 +201,50 @@ def draw_ace_bell(c):
     draw_suit(c, 2, 11, 12)
     draw_suit(c, 2, 49, 12)
 
-    # Crested Knight's Tournament Helm at top center (y=10..33, x=21..39)
-    c.fill_ellipse(25, 14, 5, 3, LIGHT_RED, RED, outline=RED)
-    c.fill_ellipse(35, 14, 5, 3, YELLOW, BROWN, outline=BROWN)
-    c.fill_ellipse(30, 12, 4, 4, LIGHT_CYAN, CYAN, outline=BLUE)
-    c.fill_ellipse(30, 24, 8, 8, LIGHT_GRAY, WHITE, outline=DARK_GRAY)
-    for vx in range(25, 36, 2):
-        c.line(vx, 20, vx, 28, YELLOW if vx == 30 else DARK_GRAY)
-    # Flowing crimson/magenta & gold mantling scrolls flanking helm and shield
-    c.fill_ellipse(15, 30, 7, 6, LIGHT_MAGENTA, MAGENTA, outline=DARK_GRAY)
-    c.fill_ellipse(45, 30, 7, 6, LIGHT_MAGENTA, MAGENTA, outline=DARK_GRAY)
-    c.fill_ellipse(30, 55, 26, 26, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='checker')
+    # Acanthus mantling flowing from the helm down both sides of the shield:
+    # cyan cloth with a gold lining, its edge cut into curling leaves.
+    for flip in (False, True):
+        r = Rig(c, flip=flip)
+        stem = [(26, 30), (17, 31), (10, 38), (7, 48), (10, 57), (7, 66), (11, 74)]
+        mant = r.part().chain(stem, [3.0, 3.6, 3.8, 3.6, 3.2, 2.8, 2.2])
+        for (ax, ay), (bx, by) in zip(stem[1:], stem[2:]):
+            mant.ellipse((ax + bx) / 2 - 3, (ay + by) / 2, 3.2, 2.4, angle=-30)
+        mant.paint(CYAN, shade=BLUE, outline=BLUE)
+        r.part().chain(stem[1:-1], [1.3, 1.5, 1.5, 1.3, 1.1]).paint(YELLOW, None, outline=None)
 
-    # Golden baroque cartouche border reaching down to y=84
-    c.fill_poly([(9, 32), (51, 32), (52, 62), (30, 84), (8, 62)], YELLOW, BROWN, outline=DARK_GRAY)
-    # Inner quartered shield (x=13..47, y=35..76)
-    c.fill_rect(13, 35, 30, 55, CYAN, BLUE, mode='drape')
-    c.fill_rect(30, 55, 47, 76, CYAN, BLUE, mode='drape')
-    c.fill_rect(30, 35, 47, 55, LIGHT_RED, RED, mode='drape')
-    c.fill_rect(13, 55, 30, 76, LIGHT_RED, RED, mode='drape')
-    c.rect(13, 35, 47, 76, DARK_GRAY)
-    c.line(30, 35, 30, 76, YELLOW)
-    c.line(13, 55, 47, 55, YELLOW)
+    # Heater shield quartered azure and gules, with a gold rim.
+    rim = [(12, 34), (48, 34), (48, 58), (45, 68), (38, 76), (30, 81), (22, 76), (15, 68), (12, 58)]
+    field = [(15, 37), (45, 37), (45, 58), (42, 67), (36, 73), (30, 77), (24, 73), (18, 67), (15, 58)]
+    plain = Rig(c)
+    plain.part().poly(rim).paint(YELLOW, outline=DARK_GRAY)
+    shield = plain.part().poly(field)
 
-    # Heraldic charges in the 4 quarters
-    for qx, qy in [(21, 45), (39, 45), (21, 65), (39, 65)]:
-        c.fill_ellipse(qx, qy, 4, 4, YELLOW, WHITE, outline=BROWN)
-        c.line(qx - 2, qy, qx + 2, qy, RED)
+    def quarters(x, y):
+        return LIGHT_RED if (x < 30) == (y < 56) else CYAN
 
-    # Central Bell escutcheon at (30, 55)
-    c.fill_ellipse(30, 55, 6, 6, WHITE, LIGHT_GRAY, outline=DARK_GRAY)
-    c.fill_ellipse(30, 55, 4, 4, YELLOW, BROWN, outline=BROWN)
-    c.line(27, 55, 33, 55, RED)
+    shield.paint(CYAN, None, outline=DARK_GRAY, pattern=quarters)
+    c.line(30, 37, 30, 77, YELLOW)
+    c.line(15, 56, 45, 56, YELLOW)
+    for qx, qy in [(22, 46), (38, 46), (22, 64), (38, 64)]:
+        c.blit_centered(MINI_BELL, qx, qy)
 
-    _overlap_foreground_turf(c, base_y=80)
+    # Barred tournament helm above the shield, crowned and plumed.
+    for tip, mid, col in (((19, 4), (24, 6), LIGHT_RED), ((41, 4), (36, 6), LIGHT_RED), ((30, 1), (30, 5), LIGHT_CYAN)):
+        plain.part().chain([(30, 12), mid, tip], [1.6, 2.8, 1.8]).paint(col, outline=darker(col))
+    helm = plain.part().ellipse(30, 22, 7.5, 8).rect(23, 22, 37, 30)
+    helm.paint(LIGHT_GRAY, light=WHITE, outline=DARK_GRAY)
+    plain.part().rect(25, 21, 35, 28).paint(DARK_GRAY, None, outline=BLACK)
+    for vx in range(26, 35, 2):
+        c.line(vx, 21, vx, 28, YELLOW if vx == 30 else LIGHT_GRAY)
+    plain.part().rect(22, 30, 38, 32).paint(YELLOW)
+    crown = plain.part().rect(24, 12, 36, 15)
+    for px in (24, 30, 36):
+        crown.poly([(px - 2, 13), (px, 8), (px + 2, 13)])
+    crown.paint(YELLOW)
+    for px, col in ((27, RED), (30, LIGHT_CYAN), (33, RED)):
+        c.put(px, 14, col)
+
+    _overlap_foreground_turf(c, base_y=82)
 
 
 def draw_ace_heart(c):
@@ -233,36 +255,43 @@ def draw_ace_heart(c):
     draw_suit(c, 3, 12, 12)
     draw_suit(c, 3, 48, 12)
 
-    # Overarching golden baroque scroll arch (y=21..35, x=4..56)
+    r = Rig(c)
+    # Golden arch over the wreath, studded with garnets.
+    arch = r.part()
     for x in range(4, 57):
         dx = abs(x - 30)
-        ay = 22 + (dx * dx) // 65
-        c.put(x, ay - 1, DARK_GRAY)
-        for ry in range(ay, ay + 6):
-            c.put(x, ry, YELLOW if ((x + ry) & 1) == 0 else BROWN)
-        c.put(x, ay + 6, DARK_GRAY)
+        arch.rect(x, 22 + (dx * dx) // 65, x, 27 + (dx * dx) // 65)
+    arch.paint(YELLOW, outline=DARK_GRAY)
+    for x in range(8, 54, 6):
+        dx = abs(x - 30)
+        c.put(x, 24 + (dx * dx) // 65, RED)
 
-    # Lush rose-and-leaf oval wreath (center=(30, 56), rx=25, ry=26, reaching y=30..82)
-    c.fill_ellipse(30, 56, 25, 26, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='checker')
-    for angle_deg in range(0, 360, 45):
-        rad = math.radians(angle_deg)
-        rx = int(round(30 + 21 * math.cos(rad)))
-        ry = int(round(56 + 22 * math.sin(rad)))
-        c.fill_ellipse(rx, ry, 3, 3, LIGHT_RED, RED, outline=DARK_GRAY)
-        c.put(rx, ry, YELLOW)
+    # Wreath of leaves around an oval of sky, roses set at intervals.
+    for k in range(36):
+        a = math.radians(k * 10)
+        lx, ly = 30 + 21 * math.cos(a), 56 + 22 * math.sin(a)
+        col = GREEN if k % 2 else LIGHT_GREEN
+        r.part().ellipse(lx, ly, 4.2, 2.2, angle=k * 10 + 90 + (25 if k % 2 else -25)).paint(col, outline=DARK_GRAY)
+    r.part().ellipse(30, 56, 17, 18).paint(LIGHT_CYAN, None, outline=BLUE, pattern=lambda x, y: WHITE if y < 46 and (x + y) % 4 == 0 else None)
+    for k in range(8):
+        a = math.radians(k * 45 + 22.5)
+        rx, ry = 30 + 21 * math.cos(a), 56 + 22 * math.sin(a)
+        r.part().ellipse(rx, ry, 3.2, 3.0).paint(LIGHT_RED, outline=RED)
+        c.put(round(rx), round(ry), RED)
+        c.put(round(rx) - 1, round(ry) - 1, WHITE)
 
-    # Inner golden & azure cartouche shield
-    c.fill_ellipse(30, 56, 17, 19, YELLOW, BROWN, outline=DARK_GRAY)
-    c.fill_ellipse(30, 56, 14, 16, LIGHT_CYAN, CYAN, outline=BLUE)
-
-    # Golden royal chalice & glowing crowned heart inside the cartouche
-    c.fill_poly([(22, 53), (38, 53), (34, 62), (26, 62)], YELLOW, WHITE, outline=BROWN)
-    c.fill_rect(28, 62, 32, 68, YELLOW, BROWN, mode='vstripe')
-    c.rect(28, 62, 32, 68, DARK_GRAY)
-    c.fill_rect(22, 68, 38, 72, YELLOW, BROWN, mode='hstripe')
-    c.rect(22, 68, 38, 72, DARK_GRAY)
-    # Heart rising above the chalice
+    # Rays of light behind the heart.
+    for k in range(9):
+        a = math.radians(200 + k * 17.5)
+        c.line(30 + 6 * math.cos(a), 46 + 6 * math.sin(a), 30 + 13 * math.cos(a), 46 + 13 * math.sin(a), YELLOW)
     draw_suit(c, 3, 30, 46)
+
+    # Golden chalice: wide cup, knopped stem and a broad foot.
+    cup = r.part().poly([(21, 55), (39, 55), (36, 63), (31, 66), (29, 66), (24, 63)]).ellipse(30, 55, 9, 1.6)
+    cup.paint(YELLOW, light=WHITE, outline=BROWN, pattern=lambda x, y: RED if y == 59 and x % 3 == 0 else None)
+    r.part().ellipse(30, 55, 8, 1.2).fill(BROWN)
+    r.part().rect(29, 66, 31, 71).ellipse(30, 68.5, 2.4, 1.4).paint(YELLOW, outline=BROWN)
+    r.part().poly([(24, 75), (36, 75), (33, 71), (27, 71)]).ellipse(30, 75, 6.5, 1.5).paint(YELLOW, outline=BROWN)
 
     _overlap_foreground_turf(c, base_y=80)
 
