@@ -296,54 +296,84 @@ class FaceCanvas:
         self.blit_sprite(rows, cx - w // 2, cy - h // 2, flip_x=flip_x, flip_y=flip_y)
 
 
+# Lighter partner of each back colour the game offers (1..7), for petals and fills.
+BACK_LIGHT = {
+    BLUE: LIGHT_BLUE,
+    GREEN: LIGHT_GREEN,
+    CYAN: LIGHT_CYAN,
+    RED: LIGHT_RED,
+    MAGENTA: LIGHT_MAGENTA,
+    BROWN: YELLOW,
+    LIGHT_GRAY: LIGHT_GRAY,
+}
+
+
+def back_colour(line_col, x, y):
+    """The card-back pattern at face pixel (x, y) for one line colour, or None outside the border.
+
+    The pattern is built from distances to the centre, so it is mirror
+    symmetric both ways and the back looks the same either way up: a
+    double border with fans in the corners, a diamond lattice with a small
+    flower in every cell, and a medallion holding an eight-petalled rosette.
+    """
+    dark = DARK_GRAY if line_col == LIGHT_GRAY else line_col
+    light = BACK_LIGHT.get(line_col, WHITE)
+    # Quadrant coordinates: rows 49 and 50 are both the middle row.
+    qx = abs(x - 30)
+    qy = (abs(2 * y - 99) - 1) // 2
+    if not (2 <= x <= 58 and 2 <= y <= 97):
+        return None
+    # Border: a dark rule, a light band, another dark rule.
+    edge = min(x - 2, 58 - x, y - 2, 97 - y)
+    if edge == 1 or edge == 4:
+        return dark
+    if edge in (2, 3):
+        return light if (qx + qy) % 4 else dark
+    if edge == 0:
+        return WHITE
+    # Fans in the four corners of the field.
+    fx, fy = 23 - qx, 42 - qy
+    fr = math.hypot(fx, fy)
+    if fx >= 0 and fy >= 0 and fr <= 9:
+        if fr > 8 or int(fr) % 3 == 0:
+            return dark
+        return light if int(math.degrees(math.atan2(fy, fx)) / 15) % 2 else WHITE
+    # Central medallion with a rosette.
+    mr = math.hypot(qx / 15.0, (qy + 0.5) / 19.0)
+    if mr <= 1.0:
+        if mr > 0.92:
+            return dark
+        if mr > 0.84:
+            return light if (qx + qy) % 2 else WHITE
+        theta = math.atan2(qy + 0.5, qx)
+        petal = 0.25 + 0.55 * abs(math.cos(4 * theta))
+        if mr < 0.14:
+            return dark
+        if mr < petal:
+            return dark if mr > petal - 0.08 else light
+        return WHITE
+    # Diamond lattice with a flower in each cell.
+    a, b = (qx + qy) % 8, (qx - qy) % 8
+    if a == 0 or b == 0:
+        return dark
+    if a == 4 and b == 4:
+        return dark
+    if (a == 4 and b in (3, 5)) or (b == 4 and a in (3, 5)):
+        return light
+    # Every other cell is tinted, so the lattice reads as a chequer of diamonds.
+    if ((qx + qy) // 8 + (qx - qy) // 8) % 2 and (x + y) % 2:
+        return light
+    return WHITE
+
+
 def draw_back_face(line_col):
-    """Draws an ornate diamond-lattice and rosette card-back face in line_col."""
+    """A card back in `line_col`: lattice, corner fans and a central rosette, without lettering."""
     f = FaceCanvas()
-    # Outer ornamental double border
-    f.rect(3, 3, FACE_W - 4, FACE_H - 4, line_col)
-    f.rect(5, 5, FACE_W - 6, FACE_H - 6, line_col)
-    # Diamond lattice across the interior (x=6..54, y=6..93)
-    for k in range(-90, 150, 8):
-        f.line(6, 6 + k, 54, 6 + k + 48, line_col)
-        f.line(6, 6 + k + 48, 54, 6 + k, line_col)
-    # Clip lattice outside (6..54, 6..93) and restore border
     for y in range(FACE_H):
         for x in range(FACE_W):
-            if not (6 <= x <= 54 and 6 <= y <= 93):
-                if f.in_interior(x, y):
-                    f.px[y][x] = WHITE
-    f.rect(1, 1, FACE_W - 2, FACE_H - 2, DARK_GRAY)
-    f.rect(3, 3, FACE_W - 4, FACE_H - 4, line_col)
-    f.rect(5, 5, FACE_W - 6, FACE_H - 6, line_col)
-    # Corner diamond studs
-    for cx, cy in [(9, 9), (51, 9), (9, 90), (51, 90)]:
-        f.fill_poly([(cx, cy - 3), (cx + 3, cy), (cx, cy + 3), (cx - 3, cy)], line_col, WHITE, outline=line_col)
-    # Central medallion framing 'O' and 'F'
-    f.fill_poly([(30, 32), (46, 49), (30, 66), (14, 49)], WHITE, WHITE, outline=line_col)
-    f.fill_poly([(30, 35), (43, 49), (30, 63), (17, 49)], line_col, WHITE, outline=DARK_GRAY, mode='checker')
-    # Shadowed 'O' and 'F' monogram
-    o_glyph = [
-        '.88888.',
-        '88fff88',
-        '8ff8ff8',
-        '8ff.ff8',
-        '8ff.ff8',
-        '8ff.ff8',
-        '8fffff8',
-        '.88888.',
-    ]
-    f_glyph = [
-        '8888888',
-        '8fffff8',
-        '8ff888.',
-        '8ffff8.',
-        '8ff888.',
-        '8ff8...',
-        '8ff8...',
-        '8888...',
-    ]
-    f.blit_sprite(o_glyph, 23, 40)
-    f.blit_sprite(f_glyph, 29, 49)
+            col = back_colour(line_col, x, y)
+            if col is not None:
+                f.put(x, y, col)
     return f
 
 
