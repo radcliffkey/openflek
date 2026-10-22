@@ -232,13 +232,17 @@ def draw_unter(c, suit):
             hair=YELLOW,
             hat=('beret', LIGHT_RED, WHITE, YELLOW),
         )
-        arms = (((23, 26), (31, 34), (39, 24), 'grip'), ((36, 26), (43, 33), (47, 24), 'grip'))
+        # Both elbows raised, hands on the flute; the hands are drawn with the flute.
+        arms = (((23, 26), (32, 27), (40, 21), None), ((36, 26), (45, 27), (49, 22), None))
         legs = (((28, 52), (27, 68), (25, 84), (30, 87)), ((34, 52), (36, 68), (38, 84), (44, 87)))
 
         def flute(r):
-            r.part().capsule(34, 22, 54, 22, 1.0).paint(YELLOW, None, outline=BROWN)
-            for x in (44, 47, 50):
-                r.put(x, 22, BROWN)
+            # Mouthpiece at the lips, the tube running sideways and a little down.
+            r.part().capsule(30, 18, 56, 22, 1.5).paint(YELLOW, None, outline=BROWN)
+            for x in (44, 53):
+                r.put(x, 18 + (x - 30) * 4 / 26, BROWN)
+            F.draw_hand(r, 40, 20, grip=True)
+            F.draw_hand(r, 49, 21, grip=True)
 
         _standing(c, True, look, arms, legs, front_props=flute)
         _tufts(c, suit, [21, 33])
