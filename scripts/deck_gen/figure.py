@@ -11,6 +11,7 @@ jewel), B/b hat band.
 
 from scripts.deck_gen.palette import (
     BROWN,
+    DARK_GRAY,
     LIGHT_CYAN,
     LIGHT_GRAY,
     WHITE,
@@ -244,11 +245,15 @@ def draw_head(rig, hx, hy, face='young', hair=BROWN, beard=None, hat=None):
 
 
 def draw_hand(rig, x, y, grip=False):
-    """A hand at the end of an arm; `grip` draws a closed fist."""
+    """A hand at the end of an arm; `grip` draws a closed fist.
+
+    A little wider than the sleeve end so the cuff doesn't show past it, and
+    edged in dark grey: light grey skin shading vanishes on the white card.
+    """
     if grip:
-        rig.part().ellipse(x, y, 2.1, 1.9).paint(SKIN, None)
+        rig.part().ellipse(x, y, 2.5, 2.2).paint(SKIN, None, outline=DARK_GRAY)
     else:
-        rig.part().ellipse(x, y + 0.5, 2.0, 2.6).paint(SKIN, None)
+        rig.part().ellipse(x, y + 0.5, 2.4, 2.9).paint(SKIN, None, outline=DARK_GRAY)
         rig.put(x - 1, y + 1, LIGHT_GRAY)
 
 
