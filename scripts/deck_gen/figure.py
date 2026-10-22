@@ -121,6 +121,61 @@ FACE_FORKED = [
     '......j...j....',
 ]
 
+# Kings sit facing the viewer, so their heads are turned only a little to the
+# right: both sides of the face show, hair falls on either side, and the nose
+# sits just right of the middle.
+FACE_KING = [
+    '....hHHHHHh....',
+    '..hHHHHHHHHHh..',
+    '.hHHHHHHHHHHHh.',
+    '.hHHffffffffHh.',
+    '.hHf88ff888fHh.',
+    '.hH8f0ff7f0fHh.',
+    '.hHfffff7fffHh.',
+    '.hHcfff878fcHh.',
+    '.hHJffffffJJHh.',
+    '.hHJJJ444JJJHh.',
+    '.hHhJJJJJJJjHh.',
+    '..hHhJJJJJjHh..',
+    '...hh.jJJj.hh..',
+]
+
+FACE_KING_OLD = [
+    '....hHHHHHh....',
+    '..hHHHHHHHHHh..',
+    '.hHHHHHHHHHHHh.',
+    '.hHHf7fffff8Hh.',
+    '.hHf88ff888fHh.',
+    '.hH8f0ff7f0fHh.',
+    '.hHff7ff7fffHh.',
+    '.hHJfff878fJHh.',
+    '.hJJJJJJJJJJJh.',
+    '.hJJJJ444JJJJh.',
+    '.hJJJJJJJJJJJh.',
+    '..jJJJJJJJJJj..',
+    '..jJJJJJJJJJj..',
+    '...jJJJJJJJj...',
+    '.....jJJJj.....',
+]
+
+FACE_KING_FORKED = [
+    '....hHHHHHh....',
+    '..hHHHHHHHHHh..',
+    '.hHHHHHHHHHHHh.',
+    '.hHHf7fffff8Hh.',
+    '.hHf88ff888fHh.',
+    '.hH8f0ff7f0fHh.',
+    '.hHfffff7fffHh.',
+    '.hHJfff878fJHh.',
+    '.hJJJJJJJJJJJh.',
+    '.hJJJJ444JJJJh.',
+    '.hJJJJJJJJJJJh.',
+    '..jJJJJJJJJJj..',
+    '...jJJJ.JJJj...',
+    '...jJJj.jJJj...',
+    '....jj...jj....',
+]
+
 FACES = {
     'young': FACE_YOUNG,
     'beard': FACE_BEARD,
@@ -128,6 +183,9 @@ FACES = {
     'moustache': FACE_MOUSTACHE,
     'goatee': FACE_GOATEE,
     'forked': FACE_FORKED,
+    'king': FACE_KING,
+    'king_old': FACE_KING_OLD,
+    'king_forked': FACE_KING_FORKED,
 }
 
 # Hats share the face template's columns; the first row sits `top` rows above it.

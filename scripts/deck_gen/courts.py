@@ -614,7 +614,6 @@ def _seated(c, flip, look, front_arm, back_arm, props_back=None, props_front=Non
         props_back(r)
     F.cape(r, j, look['mantle'], length=78, swing=-5)
     bsh, bel, bwr, bhand = back_arm
-    F.arm(r, bsh, bel, bwr, look['sleeve'], cuff=WHITE)
     # Feet set apart under the hem.
     for an, toe in (((27, 83), (31, 86)), ((40, 83), (45, 86))):
         r.part().capsule(an[0], an[1] - 4, *an, 2.3).capsule(*an, *toe, 2.1, 1.4).paint(look['shoe'])
@@ -645,11 +644,14 @@ def _seated(c, flip, look, front_arm, back_arm, props_back=None, props_front=Non
     body = r.part().poly([(23, 26), (36, 26), (35, 46), (24, 46)]).ellipse(31, 33, 6.5, 6.5)
     body.paint(look['tunic'], pattern=look.get('pattern'))
     r.part().rect(23, 45, 37, 47).paint(YELLOW)
+    # The resting arm lies in front of the body and robe, its forearm across
+    # the lap: drawn behind them, only a lone hand would show.
+    F.arm(r, bsh, bel, bwr, look['sleeve'], cuff=WHITE)
     # Ermine shoulder cape with a band down the front to the belt; a band running on
     # across the lap would read as a sword blade.
     stole = r.part().ellipse(30, 26.5, 9.5, 4).capsule(36, 27, 37, 45, 1.8)
     stole.paint(WHITE, None, outline=LIGHT_GRAY, pattern=_ermine)
-    F.draw_head(r, 30, 16, face=look.get('face', 'old'), hair=look['hair'], beard=look.get('beard'), hat=look['hat'])
+    F.draw_head(r, 30, 16, face=look.get('face', 'king'), hair=look['hair'], beard=look.get('beard'), hat=look['hat'])
     if bhand:
         F.draw_hand(r, *bwr, grip=bhand == 'grip')
     fsh, fel, fwr, fhand = front_arm
@@ -680,7 +682,7 @@ def draw_king(c, suit):
             pattern=_quarters(YELLOW),
             # A grey beard trimmed short of the cheeks: the full 'old' beard
             # leaves so little skin that the face reads as grey stone.
-            face='beard',
+            face='king',
             hair=LIGHT_GRAY,
             beard=LIGHT_GRAY,
             hat=('crown', LIGHT_RED, LIGHT_RED, YELLOW),
@@ -721,7 +723,7 @@ def draw_king(c, suit):
             pattern=_stripes(YELLOW, 4),
             hair=BROWN,
             beard=BROWN,
-            face='beard',
+            face='king',
             hat=('crown', GREEN, LIGHT_RED, YELLOW),
         )
 
@@ -754,7 +756,7 @@ def draw_king(c, suit):
             pattern=_quarters(YELLOW),
             hair=YELLOW,
             beard=YELLOW,
-            face='old',
+            face='king_old',
             hat=('crown', LIGHT_RED, CYAN, YELLOW),
         )
 
@@ -786,7 +788,7 @@ def draw_king(c, suit):
             tunic=YELLOW,
             pattern=_stripes(LIGHT_RED, 4),
             robe_pattern=_brocade(LIGHT_CYAN),
-            face='forked',
+            face='king_forked',
             hair=YELLOW,
             beard=YELLOW,
             hat=('crown', LIGHT_RED, LIGHT_MAGENTA, YELLOW),
