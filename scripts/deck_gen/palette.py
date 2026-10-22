@@ -361,7 +361,7 @@ def back_colour(line_col, x, y):
     if (a == 4 and b in (3, 5)) or (b == 4 and a in (3, 5)):
         return light
     # Every other cell is tinted, so the lattice reads as a chequer of diamonds.
-    if ((qx + qy) // 8 + (qx - qy) // 8) % 2 and (x + y) % 2:
+    if ((qx + qy) // 8 + (qx - qy) // 8) % 2 and (qx + qy) % 2:
         return light
     return WHITE
 
