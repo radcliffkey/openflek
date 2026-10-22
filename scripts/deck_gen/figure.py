@@ -70,7 +70,64 @@ FACE_OLD = [
     '.......jj......',
 ]
 
-FACES = {'young': FACE_YOUNG, 'beard': FACE_BEARD, 'old': FACE_OLD}
+FACE_MOUSTACHE = [
+    '.....hHHHh.....',
+    '...hHHHHHHHh...',
+    '..hHHHHHHHHHh..',
+    '..hHHHffffff7..',
+    '.hHHHff8fff87..',
+    '.hHHH7f0ff0f7..',
+    '.hHHH7ffffff87.',
+    '.hHHHcJffffff7.',
+    '.hHHHHfJJJJ8J7.',
+    '.hHHHHffff44...',
+    '..hHHH7ffff7...',
+    '..hHHHh7777....',
+    '...hHh.........',
+]
+
+FACE_GOATEE = [
+    '.....hHHHh.....',
+    '...hHHHHHHHh...',
+    '..hHHHHHHHHHh..',
+    '..hHHHffffff7..',
+    '.hHHHff8fff87..',
+    '.hHHH7f0ff0f7..',
+    '.hHHH7ffffff87.',
+    '.hHHHcfffffff7.',
+    '.hHHHHffJJJ877.',
+    '.hHHHHfff447...',
+    '..hHHH7fJJJ7...',
+    '..hHHHh.JJj....',
+    '...hHh...j.....',
+]
+
+FACE_FORKED = [
+    '.....hHHHh.....',
+    '...hHHHHHHHh...',
+    '..hHHHHHHHHHh..',
+    '..hHHHf7ffff7..',
+    '.hHHHff8ff887..',
+    '.hHHH7f0ff0f7..',
+    '.hHHH7ffffff87.',
+    '.hHHHJfffffff7.',
+    '.hHHHJJJJJJJ77.',
+    '.hHHHJJJJ44J...',
+    '..hHHJJJJJJj...',
+    '..hHHjJJjJJj...',
+    '...hh.JJ.JJ....',
+    '......Jj.jJ....',
+    '......j...j....',
+]
+
+FACES = {
+    'young': FACE_YOUNG,
+    'beard': FACE_BEARD,
+    'old': FACE_OLD,
+    'moustache': FACE_MOUSTACHE,
+    'goatee': FACE_GOATEE,
+    'forked': FACE_FORKED,
+}
 
 # Hats share the face template's columns; the first row sits `top` rows above it.
 HATS = {
