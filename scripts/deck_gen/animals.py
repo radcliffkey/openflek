@@ -255,6 +255,25 @@ def draw_peacock(c, flip=False, dx=0, scale=1.0):
     return r
 
 
+# Heraldic lion's head facing right (15x13): ear, heavy brow, open jaws with
+# white fangs and a red tongue curling out.
+LION_HEAD = [
+    '..888..........',
+    '.8ff7888.......',
+    '.8f7fff788.....',
+    '8ff8887ff88....',
+    '8ff80788fff88..',
+    '8fffffffffff788',
+    '87ffffffffffff8',
+    '877fff8888888f8',
+    '.877f8f4cccc8f8',
+    '.877ff84cccc48.',
+    '..877fff8f4cc48',
+    '...8877ff8.4c48',
+    '.....8888...448',
+]
+
+
 def draw_lion_rampant(c, flip=True, dx=0, dy=3, scale=1.0):
     """The silver double-tailed lion of Bohemia, rampant and crowned, for the Leaf Ace shield.
 
@@ -289,19 +308,13 @@ def draw_lion_rampant(c, flip=True, dx=0, dy=3, scale=1.0):
         a = math.radians(100 + k * 30)
         mane.ellipse(34 + math.cos(a) * 7, 35 + math.sin(a) * 7.5, 2, 2)
     mane.paint(hide, outline=DARK_GRAY, pattern=lambda x, y: LIGHT_GRAY if (x + 2 * y) % 5 == 0 else None)
-    # Head with open jaws and a lolling red tongue.
-    head = r.part().ellipse(38, 32, 5.2, 4.6).capsule(41, 31, 46, 32, 2.6, 2.2).capsule(40, 36, 45, 38, 1.8, 1.2)
-    head.paint(hide, outline=DARK_GRAY)
-    r.part().chain([(43, 35), (47, 37), (48, 40)], [0.9, 0.9, 0.8]).fill(RED)
-    r.put(41, 30, BLACK)
-    r.put(40, 29, DARK_GRAY)
-    r.put(41, 29, DARK_GRAY)
-    r.put(47, 31, DARK_GRAY)
+    # Head in profile, hand-pixelled: brow over the eye, open jaws, tongue out.
+    r.sprite(LION_HEAD, 38, 32, anchor=(5, 6))
     # Near legs: the standing hind leg and the raised foreleg, claws out.
     _legs(r, [[(23, 66), (27, 73), (21, 77), (24, 82)]], hide, upper=3.6, lower=2.0, outline=DARK_GRAY)
-    _legs(r, [[(36, 44), (43, 42), (47, 35)]], hide, upper=3.0, lower=2.0, outline=DARK_GRAY)
+    _legs(r, [[(36, 45), (44, 45), (49, 39)]], hide, upper=3.0, lower=2.0, outline=DARK_GRAY)
     paw(24, 82)
-    paw(47, 35)
+    paw(49, 39)
     # Crown.
     crown = r.part().rect(33, 25, 41, 27)
     for px in (33, 37, 41):
