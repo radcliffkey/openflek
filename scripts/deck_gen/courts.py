@@ -238,9 +238,9 @@ def draw_unter(c, suit):
 
         def flute(r):
             # Mouthpiece at the lips, the tube running sideways and a little down.
-            r.part().capsule(30, 18, 56, 22, 1.5).paint(YELLOW, None, outline=BROWN)
-            for x in (44, 53):
-                r.put(x, 18 + (x - 30) * 4 / 26, BROWN)
+            r.part().capsule(34, 18.5, 57, 22, 1.5).paint(YELLOW, None, outline=BROWN)
+            for x in (44, 54):
+                r.put(x, 18.5 + (x - 34) * 3.5 / 23, BROWN)
             F.draw_hand(r, 40, 20, grip=True)
             F.draw_hand(r, 49, 21, grip=True)
 
