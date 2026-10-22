@@ -10,7 +10,6 @@ import math
 
 from scripts.deck_gen import figure as F
 from scripts.deck_gen.palette import (
-    BLUE,
     BROWN,
     CYAN,
     DARK_GRAY,
@@ -51,15 +50,21 @@ def _ground_colour(suit, x, y, hill_y):
     h = _speckle(x, y)
     dither = (x + y) & 1
     if suit == 0:
-        if d <= 2:
-            return GREEN if dither else DARK_GRAY
-        if h < 5:
+        # A mossy edge over bare earth. Fallen leaves are two pixels wide so
+        # they read as leaves, not noise; dark clods are scattered singly
+        # rather than dithered, which would turn the earth to grey mud.
+        if d == 1:
+            return LIGHT_GREEN if dither else GREEN
+        if d == 2:
+            return GREEN if dither or h < 60 else BROWN
+        leaf = _speckle(x // 2, y)
+        if leaf < 5:
             return YELLOW
-        if h < 8:
-            return RED
-        if h < 10:
+        if leaf < 8:
             return LIGHT_RED
-        return BROWN if dither or h > 60 else DARK_GRAY
+        if leaf < 10:
+            return RED
+        return DARK_GRAY if h < 14 else BROWN
     if suit == 1:
         if h < 4 and d > 1:
             return YELLOW
@@ -79,11 +84,28 @@ def _ground_colour(suit, x, y, hill_y):
         return LIGHT_GRAY if (row + (x + (3 if row & 1 else 0)) // 6) % 3 else BROWN
     if d <= 2:
         return GREEN if dither else LIGHT_GREEN
-    if 14 <= x <= 46:
-        return YELLOW if dither else BROWN
-    if h < 12:
-        return LIGHT_RED if h < 8 else RED
+    # A gravel path widening towards the viewer, edged with clipped box.
+    half = _heart_path_half(y)
+    if abs(x - 30) <= half:
+        if h < 4:
+            return LIGHT_GRAY
+        return BROWN if h < 22 else YELLOW
+    if abs(x - 30) == half + 1:
+        return GREEN
+    # Roses in the beds: at most one per 5x4 cell, two by two pixels, lit on
+    # the upper left, and only where the whole bloom fits inside the bed.
+    cx, cy = x // 5, y // 4
+    k = _speckle(cx, cy + 300)
+    rx, ry = cx * 5 + k % 3, cy * 4 + (k // 3) % 2
+    if k < 50 and 0 <= x - rx <= 1 and 0 <= y - ry <= 1 and ry - hill_y >= 4:
+        if all(abs(px - 30) > _heart_path_half(py) + 2 for px in (rx, rx + 1) for py in (ry, ry + 1)):
+            return RED if (x, y) == (rx + 1, ry + 1) else LIGHT_RED
     return GREEN if dither else LIGHT_GREEN
+
+
+def _heart_path_half(y):
+    """Half the width of the Hearts' gravel path at row y."""
+    return 13 + max(y - 84, 0) // 3
 
 
 def _floor_colour(suit, x, y):
@@ -94,10 +116,14 @@ def _floor_colour(suit, x, y):
     """
     d = y - 90
     if suit == 0:
-        plank = (x + (d // 2) * 3) // 6
-        if d % 2 == 1 and (x + (d // 2) * 3) % 6 == 0:
+        # Oak boards two rows deep, lit on top and shadowed below, their butt
+        # joints staggered from row to row and a few knots in the grain.
+        board, r = divmod(d, 2)
+        if (x + board * 7) % 13 == 0:
             return DARK_GRAY
-        return YELLOW if plank % 2 else BROWN
+        if r:
+            return BROWN
+        return BROWN if _speckle(x, y) < 6 else YELLOW
     if suit == 1:
         # Lozenges eight wide and four tall, each row offset by half a lozenge.
         lx = (x + 4 * ((d // 4) % 2)) % 8 - 3.5
@@ -106,7 +132,13 @@ def _floor_colour(suit, x, y):
     if suit == 2:
         return DARK_GRAY if ((x - 2) // 5 + d // 3) % 2 else WHITE
     if abs(x - 30) <= 9:
-        return YELLOW if y == 97 and x % 2 else (LIGHT_RED if (x + y) % 4 else RED)
+        # The runner: a dark red border stripe and a scatter of woven dots, gold fringe at the end.
+        if y == 97 and x % 2:
+            return YELLOW
+        if abs(x - 30) == 8:
+            return RED
+        dot = (x - 30) % 4 == 0 and d % 4 == 1 or (x - 28) % 4 == 0 and d % 4 == 3
+        return RED if dot and abs(x - 30) < 7 else LIGHT_RED
     if abs(x - 30) <= 11:
         return YELLOW
     return LIGHT_GRAY if ((x // 4) + (d // 3)) % 2 else WHITE
@@ -150,8 +182,15 @@ def _ground_details(c, suit):
             y = 82 + int(round(math.sin((x + 9) * 0.22) * 2.0))
             c.line(x, y, x + (1 if x % 2 else -1), y - 3 - x % 2, GREEN if x % 2 else LIGHT_GREEN)
     elif suit == 3:  # clipped box hedges at the corners of the rose beds
+        r = Rig(c)
         for hx in (6, 54):
-            c.fill_ellipse(hx, 81, 4, 3, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='checker')
+            hedge = r.part().ellipse(hx, 81, 4.4, 3.4)
+            hedge.paint(
+                GREEN,
+                shade=None,
+                outline=DARK_GRAY,
+                pattern=lambda x, y, hx=hx: LIGHT_GREEN if (x - hx + 1.5) ** 2 + (y - 79.8) ** 2 <= 3 or _speckle(x, y) < 10 else None,
+            )
 
 
 def _tufts(c, suit, xs, y=87):
@@ -175,9 +214,57 @@ def _stripes(col, step=3):
     return lambda x, y: col if y % step == 0 else None
 
 
+def _brocade(col):
+    """Small woven crosses on a staggered six-pixel lattice, leaving room for the folds between them."""
+
+    def motif(x, y):
+        sx = (x + (3 if (y // 6) % 2 else 0)) % 6
+        sy = y % 6
+        return col if (sx, sy) in ((2, 1), (1, 2), (2, 2), (3, 2), (2, 3)) else None
+
+    return motif
+
+
 def _quarters(col):
     return lambda x, y: col if (x + y) % 4 == 0 else None
 
+
+# Heart Unter's halberd head as it shows on the card (blade to the left):
+# a spear point on the shaft, a broad crescent axe blade and a back hook.
+# Hand-pixelled because a shape outline swallows the two-pixel point and hook.
+HALBERD_HEAD = [
+    '.......1........',
+    '.......11.......',
+    '.......1b1......',
+    '.......1b1......',
+    '.1.....1bb1.....',
+    '.11...1bbb1..1..',
+    '.1b1111bbb1.1b1.',
+    '.1bbbbbbbb31b1..',
+    '.1bbbbbbbb331...',
+    '.1bbbbbbbb31....',
+    '.1bbbbbb3331....',
+    '.1b11111111.....',
+    '.11.............',
+    '.1..............',
+]
+
+# Heart King's chalice as it shows on the card, held up by its foot: a
+# jewelled bowl, a knop on the stem and a spreading foot, lit from the left.
+HEART_CHALICE = [
+    '888888888',
+    '8ffeeee68',
+    '8feecee68',
+    '.8feee68.',
+    '..8ee68..',
+    '...8e8...',
+    '..8ee68..',
+    '...8e8...',
+    '...8e8...',
+    '..8eee8..',
+    '.8feee68.',
+    '.8888888.',
+]
 
 # Obers wear a longer, fuller coat skirt than the Unters' short doublet.
 OBER_COAT = dict(hem=61, flare=10)
@@ -245,11 +332,13 @@ def draw_unter(c, suit):
 
         def flute(r):
             # Mouthpiece at the lips, the tube running sideways and a little down.
-            r.part().capsule(34, 18.5, 57, 22, 1.5).paint(YELLOW, None, outline=BROWN)
-            for x in (44, 54):
-                r.put(x, 18.5 + (x - 34) * 3.5 / 23, BROWN)
+            # It stops short of the card's border so the end reads as the end.
+            # The hands go under the tube, so it runs unbroken between the fingers.
             F.draw_hand(r, 40, 20, grip=True)
             F.draw_hand(r, 49, 21, grip=True)
+            r.part().capsule(34, 18.5, 55, 21.7, 1.5).paint(YELLOW, None, outline=BROWN)
+            for x in (44, 52, 54):
+                r.put(x, 18.5 + (x - 34) * 3.2 / 21, BROWN)
 
         _standing(c, suit, True, look, arms, legs, front_props=flute)
         draw_suit(c, 1, 10, 72, 'v')
@@ -271,11 +360,17 @@ def draw_unter(c, suit):
             hair=BROWN,
             hat=('cap', LIGHT_RED, YELLOW, CYAN),
         )
-        arms = (((23, 26), (16, 36), (23, 44), 'open'), ((36, 26), (40, 38), (45, 47), 'grip'))
+        arms = (((23, 26), (16, 36), (23, 44), 'open'), ((36, 26), (42, 37), (48, 46), 'grip'))
         legs = (((26, 52), (23, 68), (20, 84), (25, 87)), ((34, 52), (38, 68), (40, 84), (46, 87)))
 
         def planted(r):
-            F.sword(r, (45, 47), (47, 85))
+            # Plumb upright, so the long narrow blade keeps straight edges, its
+            # point on the cobbles beside the boot; the fist closes over the grip.
+            F.sword(r, (48, 46), (48, 87))
+            # Steel down the blade's core, leaving a glint under the guard, so
+            # it doesn't read as a hollow tube.
+            r.line(48, 55, 48, 85, LIGHT_CYAN)
+            F.draw_hand(r, 48, 46, grip=True)
 
         _standing(c, suit, False, look, arms, legs, front_props=planted)
         draw_suit(c, 2, 13, 72)
@@ -300,9 +395,9 @@ def draw_unter(c, suit):
         legs = (((26, 52), (22, 68), (17, 83), (22, 87)), ((34, 52), (40, 67), (43, 83), (49, 87)))
 
         def halberd(r):
-            F.pole(r, (24, 52), (52, 2))
-            r.part().poly([(46, 6), (50, 4), (55, 10), (52, 13)]).paint(LIGHT_CYAN, None, outline=BLUE)
-            r.part().poly([(50, 3), (53, 0), (52, 6)]).paint(LIGHT_CYAN, None, outline=BLUE)
+            F.pole(r, (24, 52), (48, 9))
+            # Pixelled in card space, as the mirrored figure shows it.
+            r.c.blit_sprite(HALBERD_HEAD, 2, 2)
 
         _standing(c, suit, True, look, arms, legs, back_props=halberd)
         draw_suit(c, 3, 9, 67)
@@ -319,9 +414,11 @@ def draw_ober(c, suit):
             lining=LIGHT_GREEN,
             sleeve_b=LIGHT_RED,
             sleeve_f=LIGHT_RED,
-            cuff=WHITE,
+            # Gold cuffs, so the bare fists don't merge into white ones.
+            cuff=YELLOW,
             puff=YELLOW,
-            hose=GREEN,
+            # Light green hose shade to green; green ones would dither into grey.
+            hose=LIGHT_GREEN,
             boot=YELLOW,
             tunic=LIGHT_RED,
             skirt=LIGHT_RED,
@@ -329,15 +426,18 @@ def draw_ober(c, suit):
             pattern=_stripes(YELLOW, 4),
             face='beard',
             hair=BROWN,
-            hat=('brim', LIGHT_RED, WHITE, YELLOW),
+            # An oak-green plume: a white one vanishes against the card.
+            hat=('brim', LIGHT_RED, GREEN, YELLOW),
         )
         arms = (((23, 26), (17, 35), (24, 43), 'grip'), ((36, 26), (43, 22), (49, 14), 'grip'))
         legs = (((26, 52), (22, 68), (19, 84), (24, 87)), ((34, 52), (40, 67), (42, 84), (48, 87)))
 
         def blade(r):
-            F.sword(r, (49, 14), (37, 1))
+            # The point stops short of the frame.
+            F.sword(r, (49, 14), (40, 4))
 
-        _standing(c, suit, False, look, arms, legs, front_props=blade, pose=OBER_COAT)
+        # Drawn behind the figure so the fist closes over the grip.
+        _standing(c, suit, False, look, arms, legs, back_props=blade, pose=OBER_COAT)
         draw_suit(c, 0, 12, 12, 'v')
 
     elif suit == 1:  # Leaf: drummer with the drum slung at his hip
@@ -362,12 +462,17 @@ def draw_ober(c, suit):
 
         def drum(r):
             d = r.part().ellipse(41, 52, 8, 3).rect(33, 52, 49, 63).ellipse(41, 63, 8, 2.5)
-            d.paint(YELLOW, pattern=lambda x, y: RED if (x + y) % 5 == 0 else None)
+            d.paint(YELLOW)
+            # Tension cords zigzagging from hoop to hoop.
+            for k in range(4):
+                r.line(33 + 4 * k, 62 if k % 2 == 0 else 53, 37 + 4 * k, 53 if k % 2 == 0 else 62, RED)
             r.part().rect(33, 51, 49, 53).paint(LIGHT_RED)
             r.part().rect(33, 62, 49, 64).paint(LIGHT_RED)
-            r.part().ellipse(41, 50, 7.5, 2.4).paint(WHITE, None, outline=LIGHT_GRAY)
+            # The drumhead edged dark: a pale rim would vanish on the white card.
+            r.part().ellipse(41, 50, 7.5, 2.4).paint(WHITE, None, outline=DARK_GRAY)
             F.pole(r, (34, 41), (39, 49))
-            F.pole(r, (50, 30), (45, 48))
+            # The raised stick's butt shows above the fist.
+            F.pole(r, (51, 27), (45, 48))
 
         _standing(c, suit, False, look, arms, legs, front_props=drum, pose=OBER_COAT)
         draw_suit(c, 1, 12, 12, 'v')
@@ -392,15 +497,23 @@ def draw_ober(c, suit):
             beard=YELLOW,
             hat=('brim', CYAN, LIGHT_RED, YELLOW),
         )
-        arms = (((23, 26), (19, 37), (22, 47), 'grip'), ((36, 26), (43, 30), (50, 25), 'open'))
+        # The greeting forearm is raised and the wrist set between pixels, so
+        # the open palm is four pixels wide and covers the end of the sleeve.
+        arms = (((23, 26), (19, 37), (22, 47), 'grip'), ((36, 26), (44, 33), (49.5, 24.5), 'open'))
         legs = (((26, 52), (24, 68), (21, 84), (26, 87)), ((34, 52), (37, 68), (39, 84), (45, 87)))
 
         def scabbard(r):
-            r.part().capsule(21, 49, 9, 71, 1.4).paint(BROWN)
-            r.part().capsule(22, 47, 23, 42, 0.7).fill(BROWN)
-            r.part().capsule(19, 48, 25, 46, 0.7).fill(YELLOW)
+            # Plain leather without the dithered shade, which spots a blade this narrow, and a gilt chape.
+            r.part().capsule(21, 49, 9, 71, 1.5).paint(BROWN, None, outline=DARK_GRAY)
+            r.part().capsule(11, 67.5, 9, 71, 1.5).paint(YELLOW, None, outline=BROWN)
 
-        _standing(c, suit, True, look, arms, legs, back_props=scabbard, pose=OBER_COAT)
+        def hilt(r):
+            # Crossguard and pommel in front of the coat, the fist closed on the grip between them.
+            r.part().capsule(18.5, 47.5, 23.5, 50.5, 0.9).fill(YELLOW)
+            r.part().ellipse(23.5, 44, 1.5, 1.5).paint(YELLOW, None, outline=BROWN)
+            F.draw_hand(r, 22, 47, grip=True)
+
+        _standing(c, suit, True, look, arms, legs, back_props=scabbard, front_props=hilt, pose=OBER_COAT)
         draw_suit(c, 2, 12, 12)
 
     else:  # Heart: spear upright in one hand, the other on his hip
@@ -424,8 +537,9 @@ def draw_ober(c, suit):
         legs = (((26, 52), (22, 68), (19, 84), (24, 87)), ((34, 52), (38, 68), (41, 84), (47, 87)))
 
         def spear(r):
-            F.pole(r, (47, 86), (47, 5))
-            r.part().poly([(47, -1), (49, 5), (47, 8), (45, 5)]).paint(LIGHT_CYAN, None, outline=BLUE)
+            F.pole(r, (47, 86), (47, 11))
+            # A leaf-shaped blade whose point stays clear of the card border.
+            r.c.blit_sprite(['..1..', '.1b1.', '.1b1.', '1bb31', '1bb31', '1b331', '.131.', '..1..'], 45, 3)
 
         _standing(c, suit, False, look, arms, legs, back_props=spear, pose=OBER_COAT)
         draw_suit(c, 3, 12, 12)
@@ -436,7 +550,8 @@ def _throne(r, wood, velvet, style):
 
     'round' has an arched back and gold ball finials, 'gothic' a pointed back
     and spires, 'canopy' a fringed valance with curtains falling to either
-    side, 'baroque' scroll volutes and a shell crest. Tops stay below y=21,
+    side, 'baroque' a low rounded back between scroll volutes (a crest
+    there would hide behind the king's head). Tops stay below y=21,
     clear of the corner pips.
     """
 
@@ -473,10 +588,6 @@ def _throne(r, wood, velvet, style):
     elif style == 'baroque':
         r.part().rect(12, 28, 48, 66).ellipse(30, 28, 15, 6).paint(wood, pattern=grain)
         r.part().rect(16, 30, 44, 66).ellipse(30, 30, 12, 4).paint(velvet, pattern=nap)
-        # A scallop shell on the crest, its ribs fanning from the hinge.
-        r.part().ellipse(30, 22, 5, 3.5).rect(25, 22, 35, 24).paint(YELLOW)
-        for k in (-4, -2, 0, 2, 4):
-            r.line(30, 25, 30 + k, 20 + abs(k) // 2, BROWN)
         for fx, turn in ((12, 1), (48, -1)):
             r.part().rect(fx - 2, 30, fx + 2, 70).paint(wood)
             r.part().ellipse(fx, 28, 3.4, 3.2).paint(YELLOW)
@@ -569,6 +680,9 @@ def draw_king(c, suit):
             shoe=BROWN,
             tunic=GREEN,
             pattern=_quarters(YELLOW),
+            # A grey beard trimmed short of the cheeks: the full 'old' beard
+            # leaves so little skin that the face reads as grey stone.
+            face='beard',
             hair=LIGHT_GRAY,
             beard=LIGHT_GRAY,
             hat=('crown', LIGHT_RED, LIGHT_RED, YELLOW),
@@ -580,9 +694,11 @@ def draw_king(c, suit):
             r.part().ellipse(54, 27, 2.2, 2.2).paint(LIGHT_GREEN)
 
         def orb(r):
-            r.part().ellipse(38, 52, 2.6, 2.6).paint(YELLOW)
-            r.put(38, 48, YELLOW)
-            r.put(38, 47, YELLOW)
+            # Resting on the open hand: a gold ball girdled in red, a cross on top.
+            r.part().ellipse(37, 49, 3.2, 3.0).paint(
+                YELLOW, None, outline=BROWN, pattern=lambda x, y: RED if y == 49 else (WHITE if (x, y) == (36, 47) else None)
+            )
+            r.sprite(['.6.', '6e6', '.e.'], 36, 44, anchor=(1, 0))
 
         _seated(
             c,
@@ -597,7 +713,8 @@ def draw_king(c, suit):
         look = dict(
             throne=BROWN,
             style='canopy',
-            cushion=GREEN,
+            # Pale green hangings, so the king's dark green robe stands out against them.
+            cushion=LIGHT_GREEN,
             mantle=LIGHT_RED,
             sleeve=GREEN,
             robe=GREEN,
@@ -611,8 +728,11 @@ def draw_king(c, suit):
         )
 
         def sceptre(r):
-            F.pole(r, (44, 46), (34, 20), YELLOW, outline=BROWN)
-            r.part().poly([(33, 16), (36, 19), (33, 22), (30, 19)]).paint(YELLOW)
+            # Leaning on the shoulder with the finial clear of the hair, and
+            # outlined dark so the gold doesn't melt into the brown hair.
+            F.pole(r, (44, 46), (39, 19), YELLOW, outline=BROWN)
+            r.part().poly([(39, 12), (41.5, 15.5), (39, 19), (36.5, 15.5)]).paint(YELLOW, outline=DARK_GRAY)
+            r.put(39, 15.5, LIGHT_RED)
 
         _seated(
             c,
@@ -641,14 +761,18 @@ def draw_king(c, suit):
         )
 
         def blade(r):
-            F.sword(r, (46, 44), (49, 9))
+            # Plumb, and short enough that the point stays under the corner bell.
+            F.sword(r, (46, 45), (46, 23))
+            r.line(46, 31, 46, 25, LIGHT_CYAN)
 
         _seated(
             c,
             False,
             look,
-            ((35, 27), (41, 39), (46, 44), 'grip'),
-            ((24, 27), (24, 41), (35, 51), 'open'),
+            ((35, 27), (41, 39), (46, 45), 'grip'),
+            # Hand on the thigh beside the body, just below where the sleeve
+            # shows, so it doesn't float in the middle of the robe.
+            ((24, 27), (22, 40), (23, 47), 'open'),
             props_front=blade,
         )
 
@@ -663,7 +787,7 @@ def draw_king(c, suit):
             shoe=LIGHT_RED,
             tunic=YELLOW,
             pattern=_stripes(LIGHT_RED, 4),
-            robe_pattern=_quarters(LIGHT_CYAN),
+            robe_pattern=_brocade(LIGHT_CYAN),
             face='forked',
             hair=YELLOW,
             beard=YELLOW,
@@ -671,9 +795,9 @@ def draw_king(c, suit):
         )
 
         def chalice(r):
-            r.part().poly([(44, 27), (52, 27), (50, 32), (46, 32)]).ellipse(48, 27, 4, 1.2).paint(YELLOW)
-            r.part().rect(47, 32, 48, 36).paint(YELLOW, None, outline=BROWN)
-            r.part().ellipse(48, 37, 2.5, 1).paint(YELLOW, None)
+            # Pixelled in card space over the throne post; a dark grey
+            # outline keeps the gold apart from the brown wood behind it.
+            r.c.blit_sprite(HEART_CHALICE, 8, 26)
 
         _seated(
             c,

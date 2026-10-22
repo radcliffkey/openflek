@@ -4,7 +4,9 @@ Each animal is posed facing right with its feet on the turf at y=86 and
 spans roughly x=10..50; `flip` mirrors it and `dx` shifts it. Body, neck and
 head share one outline so the silhouette reads as a single animal; the near
 legs get their own outline, and the far legs are drawn first in the shade
-colour to give the body depth.
+colour to give the body depth. The pheasant and boar are drawn at full scale
+in card coordinates with hand-pixelled heads, and the small hound is pixelled
+whole, where scaled shapes lost their features.
 """
 
 import math
@@ -17,7 +19,6 @@ from scripts.deck_gen.palette import (
     DARK_GRAY,
     GREEN,
     LIGHT_BLUE,
-    LIGHT_CYAN,
     LIGHT_GRAY,
     LIGHT_GREEN,
     LIGHT_RED,
@@ -87,100 +88,157 @@ def _eye(r, x, y, col=BLACK):
 
 
 def draw_horse(c, flip=False, dx=0, scale=1.0, coat=LIGHT_GRAY, mane=DARK_GRAY, cloth=LIGHT_RED):
-    """A saddled dapple-grey horse standing at rest, one hind hoof cocked."""
-    r = _rig(c, flip, dx, scale, shadow=(29, 14))
+    """A saddled dapple-grey horse standing at rest, one hind hoof cocked.
+
+    The horse is painted on a thin rig and outlined once as a silhouette: an
+    outline per part turns its slim legs and belly into solid dark grey.
+    The tack goes on afterwards with its own outlines.
+    """
+    r = Rig(c, flip=flip, dx=dx, scale=scale, thin=True)
+    _ground_shadow(r, 29, 14)
     far = darker(coat)
     _legs(r, [[(36, 72), (35, 79), (36, 85)], [(24, 71), (27, 77), (24, 80), (25, 85)]], far, hoof=DARK_GRAY)
     r.part().chain([(17, 66), (14, 71), (14, 79)], [1.8, 1.8, 1.2]).paint(mane)
     body = r.part().ellipse(29, 69, 11, 5.5).ellipse(38, 69, 5, 5.5).ellipse(21, 68, 5.5, 5.5)
     body.capsule(38, 67, 43, 58, 3.6, 2.6)
     body.capsule(43, 57, 49, 62, 2.5, 1.7)
-    body.paint(coat, outline=DARK_GRAY, pattern=lambda x, y: WHITE if (x * 3 + y * 5) % 11 == 0 else None)
+    body.paint(coat, pattern=lambda x, y: WHITE if (x * 3 + y * 5) % 11 == 0 else None)
     r.part().chain([(40, 55), (37, 60), (36, 65)], [1.3, 1.6, 1.0]).paint(mane)
-    r.part().poly([(42, 52), (44, 56), (41, 56)]).paint(coat, outline=DARK_GRAY)
-    _eye(r, 45, 58)
-    r.put(49, 62, DARK_GRAY)
-    # Bridle, saddle cloth and saddle.
-    r.line(43, 59, 48, 61, BROWN)
-    r.line(45, 58, 45, 62, BROWN)
-    r.part().poly([(24, 64), (34, 64), (33, 73), (25, 73)]).paint(cloth, pattern=lambda x, y: YELLOW if y % 4 == 0 else None)
-    r.part().ellipse(29, 64, 5, 1.8).paint(BROWN)
-    r.line(29, 66, 29, 76, BROWN)
-    _legs(r, [[(39, 72), (40, 79), (40, 85)], [(21, 71), (22, 77), (18, 80), (19, 85)]], coat, outline=DARK_GRAY, hoof=DARK_GRAY)
-    return _done(r, feet=[(36, 86), (25, 86), (40, 86), (19, 86)])
+    r.part().poly([(42, 52), (44, 56), (41, 56)]).paint(coat)
+    _legs(r, [[(39, 72), (40, 79), (40, 85)], [(21, 71), (22, 77), (18, 80), (19, 85)]], coat, hoof=DARK_GRAY)
+    _done(r, feet=[(36, 86), (25, 86), (40, 86), (19, 86)])
+    # Bridle, then the eye just in front of the cheek strap, saddle cloth and saddle.
+    tack = Rig(c, flip=flip, dx=dx, scale=scale)
+    tack.put(49, 62, DARK_GRAY)
+    tack.line(43, 59, 48, 61, BROWN)
+    tack.line(45, 58, 45, 62, BROWN)
+    _eye(tack, 46.5, 57.5)
+    tack.part().poly([(24, 64), (34, 64), (33, 73), (25, 73)]).paint(cloth, pattern=lambda x, y: YELLOW if y % 4 == 0 else None)
+    tack.part().ellipse(29, 64, 5, 1.8).paint(BROWN)
+    tack.line(29, 66, 29, 76, BROWN)
+    return r
 
 
 def draw_hound(c, flip=False, dx=0, scale=1.0, coat=WHITE, spots=LIGHT_GRAY, collar=RED):
-    """A lean coursing hound in full gallop: forelegs reaching, hind legs driving."""
-    r = _rig(c, flip, dx, scale, shadow=(30, 15))
-    far = darker(coat)
-    _legs(r, [[(37, 74), (43, 77), (48, 79)], [(20, 73), (14, 76), (9, 80)]], far, upper=1.8, lower=1.0)
-    r.part().chain([(17, 71), (12, 67), (8, 66)], [1.2, 0.9, 0.6]).paint(coat, outline=DARK_GRAY)
-    body = r.part().ellipse(29, 72, 10, 3.6, angle=-4).ellipse(37, 72, 4.2, 4.6).ellipse(20, 71, 4, 3.6)
-    body.capsule(38, 70, 42, 65, 2.4, 2.0)
-    body.ellipse(44, 64, 3, 2.4).capsule(45, 64, 51, 66, 1.8, 1.0)
+    """A lean coursing hound in full gallop: forelegs reaching, hind legs driving.
 
-    def coat_spots(x, y):
-        fx, _ = r.tx(29, 0)
-        return spots if ((x - fx) // 4 + y // 3) % 3 == 0 and y < 74 else None
+    A white coat on the white card needs an unbroken outline, so the tail,
+    body, head and far legs are painted on a thin rig and outlined once as a
+    silhouette; the near legs then go on top with their own outline, which
+    parts them from the belly.
+    """
+    r = Rig(c, flip=flip, dx=dx, scale=scale, thin=True)
+    _ground_shadow(r, 30, 15)
+    _legs(r, [[(36, 73), (43, 77), (49, 78)], [(20, 72), (14, 76), (8, 79)]], darker(coat), upper=2.2, lower=1.2)
+    r.part().chain([(17, 70), (12, 67), (7, 67)], [1.2, 0.9, 0.6]).paint(coat, None)
+    # Deep chest, tucked waist and a long narrow head.
+    body = r.part().ellipse(29, 71, 9.5, 3.2, angle=-4).ellipse(37, 71, 4.6, 5.0).ellipse(20, 70, 4.4, 3.9)
+    body.capsule(38, 69, 42, 64, 2.6, 2.1)
+    body.ellipse(44, 63, 3.2, 2.6).capsule(45, 63, 52, 65.5, 2.0, 1.1)
+    # One grey saddle patch rather than a scatter of spots, which reads as dirt.
+    sx, sy = r.tx(26, 68)
 
-    body.paint(coat, outline=DARK_GRAY, pattern=coat_spots)
-    r.part().poly([(41, 62), (44, 61), (42, 66)]).paint(spots, outline=DARK_GRAY)
-    _eye(r, 45, 63)
-    r.put(51, 66, BLACK)
-    r.part().capsule(39, 66, 41, 69, 1.0).fill(collar)
-    _legs(r, [[(39, 74), (46, 75), (52, 73)], [(19, 74), (16, 79), (11, 83)]], coat, upper=1.9, lower=1.0, outline=DARK_GRAY)
+    def saddle(x, y):
+        return spots if ((x - sx) / 5.5) ** 2 + ((y - sy) / 2.2) ** 2 <= 1 else None
+
+    body.paint(coat, None, pattern=saddle)
+    r.part().poly([(41, 61), (44, 60), (42.5, 65)]).paint(spots, None)
+    _eye(r, 45.5, 62)
+    r.put(52, 65.5, BLACK)
+    r.part().capsule(39, 65, 41, 68.5, 1.1).fill(collar)
+    _done(r)
+    near = Rig(c, flip=flip, dx=dx, scale=scale)
+    _legs(near, [[(39, 74), (46, 76), (53, 74)], [(19, 73), (13, 78), (8, 82)]], coat, upper=2.4, lower=1.4, outline=DARK_GRAY)
+    return r
+
+
+# A white hound with a liver head, ear and saddle, red collar, tail up
+# (20x15, facing right). Fill colours only: at this size shapes painted with
+# outlines leave a white dog as nothing but grey lines, so it is pixelled by
+# hand and gets one silhouette outline.
+DOG = [
+    '.............666....',
+    '............66606...',
+    '..6.........66666ff0',
+    '...6........6666fff.',
+    '...6........666cf...',
+    '....f.......6fcff...',
+    '....fff66666fffff...',
+    '....fff666666ffff...',
+    '....ffff66666fff....',
+    '....fffffffffff7....',
+    '.....f7.......f7....',
+    '.....f7.......f7....',
+    '.....f7.......f7....',
+    '.....f7.......f7....',
+    '....ff7......ff77...',
+]
+
+
+def draw_dog(c, flip=False, dx=0):
+    """A hound standing alert, tail up, in the box x=34..53 with its paws on row 86; `flip` turns it round in place."""
+    r = Rig(c, flip=flip, axis=43.5, dx=dx, thin=True)
+    r.sprite(DOG, 34, 72)
     return _done(r)
 
 
-def draw_dog(c, flip=False, dx=0, scale=1.0, coat=WHITE, patch=BROWN):
-    """A small spaniel standing alert, tail up."""
-    r = _rig(c, flip, dx, scale, shadow=(41, 8))
-    _legs(r, [[(43, 81), (43, 86)], [(36, 81), (35, 86)]], LIGHT_GRAY, upper=1.3, lower=1.0)
-    r.part().chain([(34, 78), (32, 74), (33, 71)], [1.0, 0.9, 0.6]).paint(coat, outline=DARK_GRAY)
-    body = r.part().ellipse(40, 79, 6, 3).capsule(44, 78, 46, 74, 2.0).ellipse(47, 73, 2.4, 2.2).capsule(48, 74, 51, 75, 1.2)
-    body.paint(coat, outline=DARK_GRAY, pattern=lambda x, y: patch if y < 79 and (x + y) % 5 < 2 else None)
-    r.part().ellipse(46, 75, 1.2, 2.2).paint(patch, outline=DARK_GRAY)
-    _eye(r, 48, 72)
-    r.put(51, 75, BLACK)
-    _legs(r, [[(44, 81), (45, 86)], [(37, 81), (37, 86)]], coat, upper=1.3, lower=1.0, outline=DARK_GRAY)
-    return _done(r, feet=[(44, 87), (36, 87)])
-
-
 def draw_boar(c, flip=False, dx=0, scale=1.0):
-    """A wild boar trotting, head low, bristled crest and white tusks."""
-    r = _rig(c, flip, dx, scale, shadow=(31, 15))
+    """A wild boar trotting, head low, bristled crest and white tusks.
+
+    Posed in card coordinates at full scale, so every part keeps its own
+    outline, and low enough that the crest stays under the Ten's lowest pips.
+    """
+    r = _rig(c, flip, dx, scale)
     hide = BROWN
-    _legs(r, [[(36, 76), (38, 81), (38, 86)], [(19, 76), (17, 81), (18, 86)]], DARK_GRAY, upper=2.4, lower=1.5, outline=DARK_GRAY)
-    r.part().chain([(13, 70), (10, 72), (11, 75)], [1.0, 0.8, 0.6]).paint(hide, outline=DARK_GRAY)
-    # Body rising to a heavy hump over the shoulders, rump lower.
-    body = r.part().ellipse(25, 72, 12, 6.5, angle=-6).ellipse(35, 70, 7.5, 7.5)
-    body.paint(hide, shade=DARK_GRAY, outline=DARK_GRAY)
-    # A dark crest of bristles along the spine, raised over the shoulders.
-    r.part().chain([(15, 67), (26, 64.5), (34, 62.5), (39, 63)], [1.0, 1.5, 1.8, 1.2]).paint(DARK_GRAY, None, outline=DARK_GRAY)
-    for x in (24, 29, 33):
-        r.line(x, 64, x - 1, 61, DARK_GRAY)
-    # Wedge-shaped head with its own outline so the jaw shows against the shoulder.
-    head = r.part().poly([(38, 64), (43, 65), (51, 73), (51, 78), (46, 79), (39, 75)])
-    head.paint(hide, shade=DARK_GRAY, outline=DARK_GRAY)
-    r.line(39, 75, 46, 79, DARK_GRAY)
-    r.part().poly([(39, 62), (43, 63), (41, 67)]).paint(hide, outline=DARK_GRAY)
-    _eye(r, 44, 69, BLACK)
-    r.put(45, 68, LIGHT_RED)
-    r.part().ellipse(51, 75.5, 1.2, 2.2).paint(LIGHT_RED, None, outline=DARK_GRAY)
-    r.part().chain([(46, 77), (48, 75), (48, 72)], [0.8, 0.7, 0.5]).fill(WHITE)
-    _legs(r, [[(40, 76), (41, 81), (42, 86)], [(23, 76), (22, 81), (23, 86)]], hide, upper=2.6, lower=1.6, outline=DARK_GRAY, hoof=BLACK)
-    return _done(r, feet=[(38, 87), (18, 87), (42, 87), (23, 87)])
+    # Far legs in shadow, then the tail with its tuft.
+    _legs(r, [[(36, 80), (36, 86)], [(25, 80), (25, 86)]], RED, upper=1.5, lower=1.5, outline=DARK_GRAY, hoof=BLACK)
+    r.line(17, 76, 14, 78, DARK_GRAY)
+    r.line(14, 78, 14, 80, DARK_GRAY)
+    r.put(13, 81, DARK_GRAY)
+    r.put(15, 81, DARK_GRAY)
+    # Body rising to a heavy hump over the shoulders, rump lower, flecked with dark bristles.
+    body = r.part().ellipse(26, 78.5, 10, 3.8).ellipse(34, 76.5, 7, 5.0)
+    body.paint(hide, shade=None, outline=DARK_GRAY, pattern=lambda x, y: DARK_GRAY if (x * 3 + y * 5) % 13 == 0 and y > 74 else None)
+    # A crest of bristles along the spine, rising over the shoulders.
+    for x, y in ((21, 73), (24, 72), (27, 72), (30, 71), (33, 71), (36, 71)):
+        r.put(x, y, DARK_GRAY)
+        r.put(x + 1, y + 1, DARK_GRAY)
+    # Head in profile, hand-pixelled: pointed ear, small eye under a brow, the
+    # snout running down to a pink disc and a white tusk curling up from the jaw.
+    r.sprite(
+        [
+            '..88..........',
+            '.8e68.........',
+            '.8e6688.......',
+            '.6666668......',
+            '.68666668.....',
+            '.666066668....',
+            '.6666666668...',
+            '.66666666668..',
+            '.666666666688.',
+            '.6666666f68c8.',
+            '.666666ff68c8.',
+            '.8666668888888',
+            '..88888.......',
+        ],
+        38,
+        71,
+    )
+    # Near legs, black hooves.
+    _legs(r, [[(40, 80), (40, 86)], [(20, 80), (20, 86)]], hide, upper=1.5, lower=1.5, outline=DARK_GRAY, hoof=BLACK)
+    return _done(r, feet=[(36, 87), (26, 87), (41, 87), (20, 87)])
 
 
 def draw_stag(c, flip=False, dx=0, scale=1.0):
     """A red stag leaping, forelegs tucked and hind legs stretched behind, antlers swept back."""
     r = _rig(c, flip, dx, scale, shadow=(28, 13))
+    # Leaping low, head stretched forward, so the antlers stay under the Nine's lowest pips.
+    r.dy = 2
     hide = BROWN
     belly = YELLOW
     _legs(r, [[(36, 70), (40, 74), (37, 77)], [(20, 71), (14, 75), (7, 79)]], darker(hide), upper=2.0, lower=1.0)
     body = r.part().ellipse(28, 69, 10.5, 4.5, angle=-10).ellipse(36, 67, 4.5, 4.8).ellipse(20, 70, 4.5, 4.5)
-    body.capsule(37, 65, 41, 58, 2.8, 2.0).ellipse(43, 56, 2.6, 2.2).capsule(44, 57, 48, 59, 1.6, 1.0)
+    body.capsule(37, 65, 42, 60, 2.8, 2.0).ellipse(45, 59, 2.6, 2.2).capsule(46, 60, 50, 62, 1.6, 1.0)
 
     def belly_patch(x, y):
         _, by = r.tx(0, 72)
@@ -189,18 +247,15 @@ def draw_stag(c, flip=False, dx=0, scale=1.0):
     body.paint(hide, shade=DARK_GRAY, outline=DARK_GRAY, pattern=belly_patch)
     # White rump patch and a flick of tail.
     r.part().ellipse(17, 69, 2.0, 2.2).paint(WHITE, outline=None)
-    r.part().poly([(41, 53), (43, 54), (40, 56)]).paint(hide, outline=DARK_GRAY)
-    _eye(r, 44, 56)
-    r.put(48, 59, BLACK)
-    # Antlers: two beams swept back with tines.
-    for bx in (42, 44):
-        pts = [(bx, 54), (bx - 2, 50), (bx - 4, 46), (bx - 7, 43)]
-        for i in range(len(pts) - 1):
-            r.line(*pts[i], *pts[i + 1], YELLOW if bx == 44 else BROWN)
-        for tx, ty in pts[1:]:
-            r.line(tx, ty, tx + 2, ty - 2, YELLOW if bx == 44 else BROWN)
+    r.part().poly([(42, 56), (44, 57), (41, 59)]).paint(hide, outline=DARK_GRAY)
+    _eye(r, 46, 59)
+    r.put(50, 62, BLACK)
     _legs(r, [[(38, 71), (43, 73), (41, 77)], [(19, 72), (12, 74), (5, 76)]], hide, upper=2.1, lower=1.0, outline=DARK_GRAY, hoof=BLACK)
-    return _done(r)
+    _done(r)
+    # Antlers swept back along the neck, pixelled at card size after the
+    # silhouette so the thin tines aren't swallowed by an outline.
+    r.sprite(['6.6.6...', '6.6.6.6.', '.66666.6', '.....666', '......6.'], 45, 57, anchor=(6, 4))
+    return r
 
 
 def draw_elephant(c, flip=False, dx=0, scale=1.0):
@@ -211,64 +266,110 @@ def draw_elephant(c, flip=False, dx=0, scale=1.0):
     r.part().chain([(12, 68), (9, 72), (9, 76)], [0.9, 0.7, 0.6]).paint(hide, outline=DARK_GRAY)
     body = r.part().ellipse(26, 70, 14, 9).ellipse(40, 66, 7, 7.5)
     body.chain([(45, 68), (48, 74), (48, 80), (46, 84)], [3.0, 2.2, 1.6, 1.3])
-    body.paint(hide, shade=DARK_GRAY, outline=DARK_GRAY, pattern=lambda x, y: WHITE if (x + 2 * y) % 9 == 0 and y < 68 else None)
+    body.paint(hide, shade=DARK_GRAY, outline=DARK_GRAY)
     r.part().ellipse(36, 67, 4.5, 6.5, angle=-10).paint(hide, shade=DARK_GRAY, outline=DARK_GRAY)
     _eye(r, 43, 64)
-    r.part().chain([(44, 71), (48, 73), (50, 71)], [1.2, 0.9, 0.6]).paint(WHITE, None, outline=LIGHT_GRAY)
-    # Saddle blanket of a royal menagerie elephant.
-    r.part().poly([(19, 61), (31, 61), (30, 72), (20, 72)]).paint(LIGHT_RED, pattern=lambda x, y: YELLOW if y % 3 == 0 else None)
+    # Ivory tusk, outlined dark so it stands out against the grey trunk.
+    r.part().chain([(44, 71), (48, 73), (51, 70)], [1.3, 1.0, 0.6]).paint(WHITE, None, outline=DARK_GRAY)
+    # Saddle blanket of a royal menagerie elephant, draped over the curve of
+    # the back inside the body's outline, with a gold fringe along its hem.
+    blanket = r.part().poly([(19, 55), (31, 55), (30, 72), (20, 72)])
+    inside = {(x, y) for x, y in body.mask if {(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)} <= body.mask}
+    blanket.mask &= inside
+    blanket.paint(LIGHT_RED, pattern=lambda x, y: YELLOW if y % 3 == 0 else None)
+    hem = {}
+    for x, y in blanket.mask:
+        hem[x] = max(hem.get(x, y), y)
+    for x, y in hem.items():
+        if x % 2 == 0:
+            c.put(x, y + 1, YELLOW)
     _legs(r, [[(33, 75), (34, 86)], [(16, 75), (16, 86)]], hide, upper=3.4, lower=3.0, outline=DARK_GRAY)
+    # Toenails along the front of each near foot.
     for fx in (34, 16):
-        r.line(fx - 2, 85, fx + 2, 85, WHITE)
+        for nx in (fx - 1.5, fx + 1):
+            r.put(nx, 85, WHITE)
     return _done(r, feet=[(37, 87), (21, 87), (34, 87), (16, 87)])
 
 
 def draw_lion(c, flip=False, dx=0, scale=1.0):
     """A lion couchant: lying with forepaws stretched out, head raised, tail curled over the haunch."""
-    r = _rig(c, flip, dx, scale, shadow=(30, 19))
+    # Posed at full size: it lies in the 16 rows left under the Ten's lowest pips.
+    r = _rig(c, flip, dx, scale, shadow=(31, 20))
     hide = YELLOW
     mane = BROWN
-    r.part().chain([(12, 80), (8, 76), (11, 71), (15, 70)], [1.1, 1.0, 0.9, 0.8]).paint(hide)
-    r.part().ellipse(16, 70, 1.8, 1.8).paint(mane)
-    body = r.part().ellipse(27, 80, 13, 5).ellipse(16, 78, 6, 6.5)
-    body.chain([(36, 83), (44, 84), (50, 84)], [2.2, 1.8, 1.6])
-    body.paint(hide, outline=BROWN)
-    # Mane swept back from the face in pointed locks, falling over the shoulders.
-    m = r.part().ellipse(36, 74, 6.5, 8, angle=-15)
-    for tip, base in (((25, 66), (33, 68)), ((23, 72), (31, 73)), ((25, 79), (32, 78)), ((30, 84), (35, 81)), ((31, 63), (37, 67))):
-        (tx, ty), (bx, by) = tip, base
-        m.poly([(tx, ty), (bx, by - 2.5), (bx + 2, by + 2.5)])
-    m.paint(mane, outline=DARK_GRAY, pattern=lambda x, y: RED if (x - y) % 4 == 0 else None)
-    # Head in profile with a squared muzzle, the ear tucked into the mane.
-    head = r.part().ellipse(40, 73, 4, 4.2).rect(41, 72, 47, 77).ellipse(40, 69, 1.4, 1.4)
-    head.paint(hide, outline=BROWN)
-    r.line(39, 71, 42, 71, BROWN)
-    _eye(r, 42, 72)
-    r.put(47, 73, BLACK)
-    r.put(47, 74, BLACK)
-    r.line(44, 76, 47, 76, BROWN)
-    r.put(45, 78, RED)
-    for x in (47, 49, 51):
-        r.put(x, 85, BROWN)
-    r.part().ellipse(17, 82, 4, 2.2).paint(hide, outline=BROWN)
+    # Tail curled up over the haunch, ending in a dark tuft.
+    for a, b in (((12, 80), (8, 78)), ((8, 78), (8, 74)), ((8, 74), (10, 72)), ((10, 72), (15, 72))):
+        r.line(*a, *b, BROWN)
+    r.part().ellipse(17, 72, 1.8, 1.3).paint(mane, None, outline=DARK_GRAY)
+    # Long low body, the haunch rounded up at the back; shaded only along the belly.
+    body = r.part().ellipse(26, 80, 13, 5).ellipse(17, 79, 6.5, 6)
+    body.paint(hide, shade=None, outline=DARK_GRAY, pattern=lambda x, y: BROWN if y == 84 and x % 2 else None)
+    # The folded hind leg: a thigh crease round the haunch and the paw on the turf.
+    for x, y in ((15, 77), (14, 78), (14, 79), (15, 80), (16, 81), (17, 81)):
+        r.put(x, y, BROWN)
+    r.part().ellipse(21, 83.5, 4, 1.6).paint(hide, None, outline=DARK_GRAY)
+    # Forelegs stretched out in front, paws together, claws marked.
+    r.part().capsule(34, 82.5, 50, 83.5, 2.2, 2.0).paint(hide, shade=None, outline=DARK_GRAY)
+    r.line(36, 83, 48, 83, BROWN)
+    for x in (50, 52):
+        r.put(x, 84, BROWN)
+    # Mane in jagged locks round the head and over the shoulders.
+    m = r.part().ellipse(37, 77, 5.5, 6.5)
+    for k in range(9):
+        a = math.radians(150 + k * 30)
+        m.ellipse(37 + math.cos(a) * 5.5, 77 + math.sin(a) * 6.5, 1.6, 1.6)
+    m.ellipse(42, 80, 2.5, 1.8)
+    m.paint(mane, shade=None, outline=DARK_GRAY, pattern=lambda x, y: RED if (x * 2 + y) % 7 == 0 else None)
+    # Head in profile with a squared muzzle, the round ear tucked into the mane.
+    r.part().ellipse(40, 72.5, 1.4, 1.4).paint(hide, None, outline=DARK_GRAY)
+    head = r.part().ellipse(42, 76, 3.5, 3.3).rect(44, 74, 47, 78)
+    head.paint(hide, shade=None, outline=DARK_GRAY)
+    r.line(41, 74, 42, 74, BROWN)
+    _eye(r, 43, 75)
+    r.put(46, 75, BLACK)
+    r.line(45, 77, 46, 77, BROWN)
     return _done(r)
 
 
 def draw_pheasant(c, flip=False, dx=0, scale=1.0):
-    """A cock pheasant on a bough: copper body, green head, red wattle, long barred tail."""
+    """A cock pheasant on a fallen oak bough: copper body, green head, red wattle, long barred tail.
+
+    Posed right of the tree trunk with its head below the lowest pips; the
+    tail sweeps back across the trunk.
+    """
     r = _rig(c, flip, dx, scale)
-    r.part().capsule(12, 84, 50, 82, 1.8, 1.4).paint(BROWN, outline=DARK_GRAY)
-    r.part().chain([(28, 74), (17, 70), (6, 66)], [2.8, 2.0, 0.8]).paint(YELLOW, pattern=lambda x, y: BROWN if x % 3 == 0 else None)
-    body = r.part().ellipse(33, 76, 7, 5, angle=-15).capsule(37, 73, 41, 67, 2.6, 2.0)
-    body.paint(BROWN, shade=RED, outline=DARK_GRAY, pattern=lambda x, y: YELLOW if (x + y) % 4 == 0 else None)
-    r.part().ellipse(31, 75, 5, 3, angle=-15).paint(YELLOW, pattern=lambda x, y: BROWN if (x * 2 + y) % 5 == 0 else None)
-    r.part().ellipse(42, 65, 2.6, 2.4).capsule(43, 65, 46, 66, 1.0, 0.5).paint(GREEN, outline=DARK_GRAY)
-    r.part().ellipse(43, 64, 1.2, 1.4).fill(LIGHT_RED)
-    r.put(43, 64, BLACK)
-    r.put(46, 66, YELLOW)
-    r.part().rect(39, 69, 42, 70).paint(WHITE, None, outline=None)
-    for fx in (32, 36):
-        r.line(fx, 80, fx + 1, 83, YELLOW)
+    # The bough lying in the grass, flecks of light on its bark and a broken twig at its end.
+    r.part().capsule(26, 85, 50, 84, 1.7, 1.5).paint(BROWN, shade=None, outline=DARK_GRAY, pattern=lambda x, y: YELLOW if x % 5 == 1 else None)
+    r.line(49, 83, 52, 80, DARK_GRAY)
+    r.put(50, 82, BROWN)
+    # Long golden tail crossed by brown bars, wide enough at the trunk not to read as part of it.
+    tail = r.part().chain([(35, 79), (21, 75), (6, 71)], [2.8, 2.0, 0.7])
+    tail.paint(YELLOW, shade=None, outline=DARK_GRAY, pattern=lambda x, y: BROWN if (4 * x + y) % 9 < 2 else None)
+    # Copper body scalloped with dark feather tips.
+    body = r.part().ellipse(39, 79, 6.5, 3.8, angle=-12).capsule(43, 77, 44, 74, 2.4, 1.8)
+    body.paint(LIGHT_RED, shade=RED, outline=DARK_GRAY, pattern=lambda x, y: RED if (x + 2 * y) % 5 == 0 and y > 76 else None)
+    # Buff wing coverts with a chevron of brown feather edges.
+    r.part().ellipse(37, 78, 4.2, 2.2, angle=-12).paint(
+        YELLOW, shade=None, outline=BROWN, pattern=lambda x, y: BROWN if (x + abs(y - 78)) % 3 == 0 else None
+    )
+    # Dark green head, a red wattle round the eye, a yellow bill and a white collar,
+    # kept a pixel clear of the pip above.
+    r.sprite(
+        [
+            '..8228...',
+            '.822cc8..',
+            '.82cc0c88',
+            '.822cc2ee',
+            '.8228888.',
+            '8ff8.....',
+        ],
+        43,
+        68,
+    )
+    # Legs gripping the bough.
+    for fx in (38, 41):
+        r.line(fx, 82, fx, 83, DARK_GRAY)
+        r.put(fx + 1, 83, DARK_GRAY)
     return _done(r)
 
 
@@ -282,26 +383,43 @@ def draw_peacock(c, flip=False, dx=0, scale=1.0):
         a = math.radians(deg)
         return ox + math.cos(a) * rad, oy + math.sin(a) * rad
 
-    # The wedge, its rim fringed by the feather tips.
+    def card(deg, rad):
+        x, y = r.tx(*polar(deg, rad))
+        return round(x), round(y)
+
+    # The wedge, its rim scalloped by the feather tips.
     fan = r.part().poly([(ox, oy)] + [polar(lo + (hi - lo) * k / 12, reach) for k in range(13)])
-    feathers = 11
+    feathers = 9
     for k in range(feathers):
-        fan.ellipse(*polar(lo + (hi - lo) * (k + 0.5) / feathers, reach - 0.5), 2.2, 2.2)
+        fan.ellipse(*polar(lo + (hi - lo) * (k + 0.5) / feathers, reach - 0.5), 2.4, 2.4)
     fan.paint(GREEN, shade=None, outline=DARK_GRAY)
-    # Shafts radiating from the rump, each ending in an eye.
+    # Shafts and eyes are kept off the outline so the train keeps a clean edge.
+    inside = fan.mask - fan.edge()
     for k in range(feathers):
         deg = lo + (hi - lo) * (k + 0.5) / feathers
-        r.line(*polar(deg, 5), *polar(deg, reach - 3), LIGHT_GREEN)
-        ex, ey = polar(deg, reach - 1.5)
-        r.part().ellipse(ex, ey, 1.9, 1.9).paint(CYAN, None, outline=YELLOW)
-        r.put(ex, ey, BLUE)
-    body = r.part().ellipse(30, 80, 4, 4.5).capsule(31, 77, 34, 68, 1.8, 1.3).ellipse(34, 67, 1.8, 1.6)
-    body.paint(BLUE, shade=DARK_GRAY, outline=DARK_GRAY, pattern=lambda x, y: LIGHT_BLUE if (x + y) % 3 == 0 else None)
-    r.put(36, 67, YELLOW)
-    r.put(34, 66, WHITE)
-    for k in (-1, 0, 1):
-        r.line(34, 65, 34 + k * 2, 62, CYAN)
-        r.put(34 + k * 2, 62, LIGHT_CYAN)
+        for rad in range(7, reach - 3):
+            if card(deg, rad) in inside:
+                r.plot(*card(deg, rad), LIGHT_GREEN)
+    # Eyes in two staggered rows, spaced so each reads on its own: a blue
+    # centre in a cyan ring, with a gold fleck towards the feather tip.
+    for row, (count, rad) in enumerate(((feathers, reach - 2), (feathers - 1, reach - 8))):
+        for k in range(count):
+            deg = lo + (hi - lo) * (k + 0.5 + row * 0.5) / feathers
+            x, y = card(deg, rad)
+            for px, py, col in ((x - 1, y, CYAN), (x + 1, y, CYAN), (x, y - 1, CYAN), (x, y + 1, CYAN), (*card(deg, rad + 1.6), YELLOW), (x, y, BLUE)):
+                if (px, py) in inside:
+                    r.plot(px, py, col)
+    body = r.part().ellipse(30, 80, 4, 4.5).capsule(31, 77, 34, 68, 1.8, 1.4).ellipse(34.5, 66.5, 2.2, 2.0)
+    body.paint(BLUE, shade=None, outline=DARK_GRAY, light=LIGHT_BLUE, pattern=lambda x, y: LIGHT_BLUE if (x * 5 + y * 3) % 7 == 0 else None)
+    # Head: a black eye over a white cheek stripe, and a horn-coloured beak.
+    r.put(35, 66, BLACK)
+    r.put(34, 67, WHITE)
+    r.put(37, 66, LIGHT_GRAY)
+    r.line(37, 67, 38, 67, DARK_GRAY)
+    # Crest: three bare shafts ending in dark blue tufts, clear of the train.
+    for tx, ty in ((35, 61), (37, 60), (39, 61)):
+        r.line(35, 64, tx, ty + 1, DARK_GRAY)
+        r.put(tx, ty, BLUE)
     r.line(29, 84, 28, 87, BROWN)
     r.line(32, 84, 33, 87, BROWN)
     return _done(r, feet=[(28, 88), (33, 88)])
@@ -360,7 +478,8 @@ def draw_lion_rampant(c, flip=True, dx=0, dy=3, scale=1.0):
     for k in range(11):
         a = math.radians(95 + k * 26)
         mane.ellipse(33 + math.cos(a) * 8.5, 36 + math.sin(a) * 9.5, 2.4, 2.4)
-    mane.paint(hide, outline=DARK_GRAY, pattern=lambda x, y: LIGHT_GRAY if (x + 2 * y) % 5 == 0 else None)
+    # Short slanting strokes for the locks rather than an even speckle.
+    mane.paint(hide, outline=DARK_GRAY, pattern=lambda x, y: LIGHT_GRAY if (x - y) % 4 == 0 and (x + y) % 6 < 3 else None)
     # Head in profile, hand-pixelled: brow over the eye, open jaws, tongue out.
     r.sprite(LION_HEAD, 38, 32, anchor=(5, 6))
     # Near legs: the standing hind leg and the raised foreleg, claws out.
