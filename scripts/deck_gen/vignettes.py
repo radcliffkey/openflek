@@ -3,11 +3,14 @@
 from scripts.deck_gen import animals, people
 from scripts.deck_gen.palette import (
     BROWN,
+    CYAN,
     DARK_GRAY,
     GREEN,
+    LIGHT_CYAN,
     LIGHT_GRAY,
     LIGHT_GREEN,
     LIGHT_RED,
+    RED,
     WHITE,
     YELLOW,
 )
@@ -44,89 +47,6 @@ SPRITE_COTTAGE = [
     '87777777777778666877778',
     '8f77877f77877866687f778',
     '87777777777778888877778',
-]
-
-# Bell 7: Ornate crimson-and-gold Renaissance garden urn with blooming rose bush (26x26)
-SPRITE_POTTED_ROSE = [
-    '...........4cc4...........',
-    '..........4cccc4..........',
-    '.........4ccfecc4.........',
-    '....2a2...4cccc4...2a2....',
-    '...2aaa2...8228...2aaa2...',
-    '....828..882aa288..828....',
-    '..4c4828822aaaa2288284c4..',
-    '.4ccc48222aa22aa22284ccc4.',
-    '..4c4..822a2882a228..4c4..',
-    '........8822882288........',
-    '......88eeeeeeeeee88......',
-    '.....8eeeeeeeeeeeeee8.....',
-    '....8844cccccccccc4488....',
-    '...8e4cccccccccccccc4e8...',
-    '...8e4cc44ee44ee44cc4e8...',
-    '....84cc4eee44eee4cc48....',
-    '.....84cc44cccc44cc48.....',
-    '......84cccccccccc48......',
-    '.......884cccccc488.......',
-    '.........88eeee88.........',
-    '........88eeeeee88........',
-    '.......84cccccccc48.......',
-    '......84cccccccccc48......',
-    '......88888888888888......',
-]
-
-# Heart 7: Large coopered wooden barrel/tub overflowing with rose foliage & heart bloom (28x27)
-SPRITE_HEART_TUB = [
-    '...........44..44...........',
-    '.........44cc44cc44.........',
-    '........4cccccccccc4........',
-    '........4cccccccccc4........',
-    '.........4cccccccc4.........',
-    '....2a2...4cccccc4...2a2....',
-    '...2aaa2...4cccc4...2aaa2...',
-    '..22aaa22...4444...22aaa22..',
-    '.8222a2228888228888222a2228.',
-    '822aaaaaaa22aaaa22aaaaaaa228',
-    '.8222aaa222aaaaaaa222aaa2228',
-    '..8822222aaaaaaaaaa2222288..',
-    '....88888888888888888888....',
-    '...866ee668ee66ee866ee668...',
-    '...8888888888888888888888...',
-    '...8e66e668ee66ee866e66e8...',
-    '....866e668ee66ee866e668....',
-    '....8e66e68ee66ee86e66e8....',
-    '....88888888888888888888....',
-    '.....866e68ee66ee86e668.....',
-    '.....8e66e8ee66ee8e66e8.....',
-    '.....866e68ee66ee86e668.....',
-    '.....888888888888888888.....',
-]
-
-# Heart 8: Grand tiered Baroque fountain with triple cyan water jets & carved basin (36x28)
-SPRITE_FOUNTAIN = [
-    '..........3b3....3b3....3b3.........',
-    '.........3b9b3..3b9b3..3b9b3........',
-    '........3b3.3b3..3b3..3b3.3b3.......',
-    '........3b3..3b3.3b3.3b3..3b3.......',
-    '........3b3...3b33b33b3...3b3.......',
-    '........3b3..887fffff788..3b3.......',
-    '........3b3.87fffffffff78.3b3.......',
-    '.........3b8877fffffff7788b3........',
-    '............88877fff77888...........',
-    '...............87fff78..............',
-    '...............87fff78..............',
-    '......888......87fff78......888.....',
-    '.....8fff8....887fff788....8fff8....',
-    '....8e8ff8..8833bbbbb3388..8ff8e8...',
-    '.....8ff888833bbbbbbbbb338888ff8....',
-    '....8ffffffffb3b3b3b3b3bffffffff8...',
-    '....87ffffff73b3b3b3b3b37ffffff78...',
-    '....88777777883333333338877777788...',
-    '.....8844ccccccccccccccccccc4488....',
-    '....84ccccccccccccccccccccccccc48...',
-    '....84cc44ee44ee44ee44ee44ee4cc48...',
-    '...84ccc4eee44eee44eee44eee4ccc48...',
-    '..84cccc44444444444444444444cccc48..',
-    '..88888888888888888888888888888888..',
 ]
 
 # Heart 10 left: Heart target on a post for Cupid to aim at (9x16)
@@ -234,6 +154,81 @@ def _draw_obelisk(c, cx, base_y):
     c.blit_centered(['.4.4.', '4cc44', '4ccc4', '.4c4.', '..4..'], cx, base_y - 23)
 
 
+def _water_arc(c, x0, y0, x1, y1, rise):
+    """A jet of water: a parabola from (x0, y0) up by `rise` and down to (x1, y1), with droplets."""
+    steps = int(abs(x1 - x0) * 2) + 8
+    for k in range(steps + 1):
+        t = k / steps
+        x = x0 + (x1 - x0) * t
+        y = y0 + (y1 - y0) * t - rise * 4 * t * (1 - t)
+        c.put(x, y, WHITE if k % 3 else LIGHT_CYAN)
+        c.put(x, y + 1, LIGHT_CYAN)
+    c.put(x1 + (1 if x1 > x0 else -1), y1 - 2, LIGHT_CYAN)
+
+
+def _draw_fountain(c, cx, base_y):
+    """A two-tiered stone fountain in a red brick pool, water arching from tier to tier."""
+    r = Rig(c)
+    # Brick pool wall and the water inside it.
+    r.part().rect(cx - 19, base_y - 6, cx + 19, base_y).paint(
+        LIGHT_RED, outline=DARK_GRAY, pattern=lambda x, y: RED if (y - base_y) % 3 == 0 or (x + ((y - base_y) // 3) * 3) % 6 == 0 else None
+    )
+    r.part().ellipse(cx, base_y - 7, 18, 2.2).paint(LIGHT_CYAN, None, outline=CYAN, pattern=lambda x, y: WHITE if (x + y) % 5 == 0 else None)
+    # Pedestal and the wide lower basin.
+    r.part().rect(cx - 2, base_y - 16, cx + 2, base_y - 7).paint(WHITE, LIGHT_GRAY, outline=DARK_GRAY)
+    r.part().poly([(cx - 12, base_y - 16), (cx + 12, base_y - 16), (cx + 7, base_y - 10), (cx - 7, base_y - 10)]).paint(
+        WHITE, LIGHT_GRAY, outline=DARK_GRAY
+    )
+    r.part().ellipse(cx, base_y - 16, 12, 1.6).paint(LIGHT_CYAN, None, outline=DARK_GRAY)
+    # Upper tier on a slimmer stem.
+    r.part().rect(cx - 1, base_y - 22, cx + 1, base_y - 16).paint(WHITE, LIGHT_GRAY, outline=DARK_GRAY)
+    r.part().poly([(cx - 6, base_y - 22), (cx + 6, base_y - 22), (cx + 3, base_y - 18), (cx - 3, base_y - 18)]).paint(
+        WHITE, LIGHT_GRAY, outline=DARK_GRAY
+    )
+    r.part().ellipse(cx, base_y - 22, 6, 1.2).paint(LIGHT_CYAN, None, outline=DARK_GRAY)
+    # Water: a jet from the top falling to the upper tier, then over its rim to the basin and pool.
+    c.line(cx, base_y - 23, cx, base_y - 25, WHITE)
+    for side in (-1, 1):
+        _water_arc(c, cx, base_y - 25, cx + side * 5, base_y - 22, 2)
+        _water_arc(c, cx + side * 6, base_y - 22, cx + side * 11, base_y - 16, 1.5)
+        _water_arc(c, cx + side * 12, base_y - 16, cx + side * 16, base_y - 8, 1.5)
+
+
+def _draw_urn(c, cx, base_y):
+    """A gilded garden urn with scrolled handles, planted with a flowering rose bush."""
+    r = Rig(c)
+    # The bush first, so the urn's rim sits in front of it.
+    bush = r.part().ellipse(cx, base_y - 19, 10, 5.5).ellipse(cx - 6, base_y - 16, 5, 3.5).ellipse(cx + 6, base_y - 16, 5, 3.5)
+    bush.paint(GREEN, outline=DARK_GRAY, pattern=lambda x, y: LIGHT_GREEN if (x * 2 + y) % 5 == 0 else None)
+    roses = {LIGHT_RED: ['.cc.', 'c4cc', '.cc.'], YELLOW: ['.ee.', 'e6ee', '.ee.']}
+    for rx, ry, col in ((-6, -20, LIGHT_RED), (0, -23, YELLOW), (6, -20, LIGHT_RED), (-3, -16, YELLOW), (4, -16, LIGHT_RED), (-9, -15, YELLOW), (9, -15, YELLOW)):
+        c.blit_centered(roses[col], cx + rx, base_y + ry)
+    for side in (-1, 1):
+        r.part().chain([(cx + side * 6, base_y - 11), (cx + side * 10, base_y - 11), (cx + side * 9, base_y - 7), (cx + side * 6, base_y - 7)], [0.8] * 4).fill(BROWN)
+    body = r.part().ellipse(cx, base_y - 9, 7, 5).rect(cx - 7, base_y - 13, cx + 7, base_y - 11)
+    body.paint(YELLOW, light=WHITE, outline=BROWN, pattern=lambda x, y: RED if y == base_y - 9 and x % 3 == 0 else None)
+    r.part().ellipse(cx, base_y - 13, 8, 1.5).paint(YELLOW, outline=BROWN)
+    r.part().rect(cx - 2, base_y - 5, cx + 2, base_y - 3).paint(YELLOW, outline=BROWN)
+    r.part().rect(cx - 5, base_y - 2, cx + 5, base_y).paint(YELLOW, light=WHITE, outline=BROWN)
+
+
+def _draw_heart_tub(c, cx, base_y):
+    """A hooped wooden tub holding a box tree clipped into a heart, studded with roses."""
+    r = Rig(c)
+    r.part().rect(cx - 1, base_y - 14, cx + 1, base_y - 9).paint(BROWN, outline=DARK_GRAY)
+    heart = r.part().ellipse(cx - 4.5, base_y - 20, 5, 4.5).ellipse(cx + 4.5, base_y - 20, 5, 4.5)
+    heart.poly([(cx - 9.5, base_y - 19), (cx + 9.5, base_y - 19), (cx, base_y - 11)])
+    heart.paint(GREEN, outline=DARK_GRAY, pattern=lambda x, y: LIGHT_GREEN if (x + 2 * y) % 4 == 0 else None)
+    for rx, ry in ((-5, -21), (4, -22), (0, -17), (-6, -17), (6, -18), (1, -13)):
+        c.put(cx + rx, base_y + ry, LIGHT_RED)
+        c.put(cx + rx + 1, base_y + ry, RED)
+    tub = r.part().poly([(cx - 9, base_y - 9), (cx + 9, base_y - 9), (cx + 7, base_y), (cx - 7, base_y)])
+    tub.paint(BROWN, shade=None, outline=DARK_GRAY, pattern=lambda x, y: YELLOW if (x - cx) % 3 == 0 else None)
+    for hy in (base_y - 7, base_y - 2):
+        c.line(cx - 8, hy, cx + 8, hy, DARK_GRAY)
+    r.part().ellipse(cx, base_y - 9, 9, 1.3).paint(BROWN, outline=DARK_GRAY)
+
+
 def draw_vignette_scene(c, suit, rank):
     """Draws one of the 16 large, grounded bottom scenes (y=60..91).
 
@@ -276,7 +271,7 @@ def draw_vignette_scene(c, suit, rank):
     elif (suit, rank) == (2, 0):  # Bell 7: Large ornate potted rose bush on mound
         draw_bush_or_flowers(c, 10, gy, YELLOW)
         draw_bush_or_flowers(c, 50, gy, YELLOW)
-        c.blit_sprite(SPRITE_POTTED_ROSE, 17, gy - 21)
+        _draw_urn(c, 30, gy)
     elif (suit, rank) == (2, 1):  # Bell 8: Coursing hound with red collar
         draw_bush_or_flowers(c, 9, gy, LIGHT_RED)
         draw_bush_or_flowers(c, 52, gy, YELLOW)
@@ -294,11 +289,11 @@ def draw_vignette_scene(c, suit, rank):
     elif (suit, rank) == (3, 0):  # Heart 7: Large coopered rose-tub with heart bloom
         draw_bush_or_flowers(c, 9, gy, YELLOW)
         draw_bush_or_flowers(c, 51, gy, YELLOW)
-        c.blit_sprite(SPRITE_HEART_TUB, 16, gy - 20)
+        _draw_heart_tub(c, 30, gy)
     elif (suit, rank) == (3, 1):  # Heart 8: Grand tiered Baroque fountain spraying water
         draw_bush_or_flowers(c, 8, gy, LIGHT_RED)
         draw_bush_or_flowers(c, 52, gy, LIGHT_RED)
-        c.blit_sprite(SPRITE_FOUNTAIN, 12, gy - 21)
+        _draw_fountain(c, 30, gy)
     elif (suit, rank) == (3, 2):  # Heart 9: Peacock in display beside a garden obelisk
         _draw_obelisk(c, 10, gy - 2)
         animals.draw_peacock(c, dx=10)
