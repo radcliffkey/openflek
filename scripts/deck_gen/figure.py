@@ -351,8 +351,10 @@ def sword(rig, hilt, tip, blade=LIGHT_CYAN, guard=YELLOW):
     rig.part().capsule(gx, gy, tx, ty, 1.8, 1.0).paint(blade, None, outline=darker(darker(blade)))
     rig.line(gx + ux, gy + uy, tx - ux * 2, ty - uy * 2, WHITE)
     rig.part().capsule(hx - ux * 2, hy - uy * 2, gx, gy, 0.8).fill(BROWN)
-    rig.part().capsule(gx - uy * 3.5, gy + ux * 3.5, gx + uy * 3.5, gy - ux * 3.5, 1.0).paint(guard, None)
-    rig.part().ellipse(hx - ux * 3, hy - uy * 3, 1.3, 1.3).paint(guard, None)
+    # The crossguard and pommel are too thin for an outline: painted, they'd come out all brown.
+    rig.part().capsule(gx - uy * 3.5, gy + ux * 3.5, gx + uy * 3.5, gy - ux * 3.5, 0.9).fill(guard)
+    rig.part().ellipse(hx - ux * 3, hy - uy * 3, 1.3, 1.3).fill(guard)
+    rig.put(hx - ux * 3, hy - uy * 3, darker(guard))
 
 
 def pole(rig, a, b, col=BROWN, outline=None):
@@ -407,9 +409,10 @@ def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose
     hx, hy = j['head']
     draw_head(rig, hx, hy, face=look.get('face', 'young'), hair=look['hair'], beard=look.get('beard'), hat=look['hat'])
     arm(rig, fsh, fel, fwr, look['sleeve_f'], cuff=look.get('cuff'), puff=look.get('puff'))
-    if fhand:
-        draw_hand(rig, *fwr, grip=fhand == 'grip')
+    # Props before the hand, so a fist closes over the grip of whatever it holds.
     if front_props:
         front_props(rig)
+    if fhand:
+        draw_hand(rig, *fwr, grip=fhand == 'grip')
     return rig
 
