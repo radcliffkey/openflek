@@ -1,11 +1,11 @@
-"""Small people for the number-card vignettes, drawn with the court-figure rig.
+"""Small people for the number-card vignettes and the wild man of the Acorn Ace.
 
-They use the same jointed poses as the courts, scaled down to the room left
-under the pips and painted on a thin rig: one dark silhouette outline instead
-of an outline per part, which would swallow limbs two pixels wide. The
-smallest, the forester and the hornblower, are pixelled by hand on the same
-thin rig with the `figure` vignette heads, since the rig's garments turn to
-grey mud at a third of court size.
+The vignette people are drawn on a thin rig: one dark silhouette outline
+instead of an outline per part, which would swallow limbs two pixels wide.
+The band and Cupid use the court figures' jointed poses scaled down; the
+forester, the horn-blower and the jester are pixelled by hand with the
+`figure` vignette heads, since the rig's garments turn to grey mud at a
+third of court size. The wild man is a full pose at two-thirds size.
 """
 
 from scripts.deck_gen import figure as F
@@ -21,21 +21,12 @@ from scripts.deck_gen.palette import (
     WHITE,
     YELLOW,
 )
-from scripts.deck_gen.rig import Rig, darker
+from scripts.deck_gen.rig import Rig
 
 
 def _rig(c, scale, x, flip=False):
     """A thin rig whose figure stands centred on card column `x`."""
     return Rig(c, flip=flip, dx=x - 30, scale=scale, thin=True)
-
-
-def _pixel_head(r, hx, hy, face, hair, hat):
-    """A vignette-size head from the `figure` templates, centred on card pixel (hx, hy) of an unscaled rig."""
-    r.sprite(F.SMALL_FACES[face], hx, hy, {'H': hair, 'h': darker(hair), 'J': hair, 'j': darker(hair)}, anchor=(3, 3))
-    kind, cloth, trim, band = hat
-    top, rows = F.SMALL_HATS[kind]
-    subst = {'C': cloth, 'c': darker(cloth), 'T': trim, 't': darker(trim), 'B': band, 'b': darker(band)}
-    r.sprite(rows, hx, hy, subst, anchor=(3, 3 - top))
 
 
 # The forester is too small for the rig's garments, whose pleats and seams
@@ -82,7 +73,7 @@ def draw_forester(c, x=19, foot_y=88):
     top = foot_y - len(FORESTER_BODY) + 1
     r.sprite(FORESTER_BODY, x - 8, top)
     hy = top + 3
-    _pixel_head(r, x, hy, 'young', BROWN, ('brim', GREEN, LIGHT_RED, BROWN))
+    F.draw_head(r, x, hy, 'young', BROWN, hat=('brim', GREEN, LIGHT_RED, BROWN), small=True)
     # The pipe: a stem from the lips and the bowl turned up.
     for px, py in ((x + 2, hy + 2), (x + 3, hy + 2), (x + 4, hy + 1), (x + 4, hy + 2)):
         r.plot(px, py, BROWN)
@@ -140,7 +131,7 @@ def draw_hornblower(c, x=16, seat_y=85):
     r = Rig(c, thin=True)
     top = seat_y - len(HORNBLOWER_BODY) + 1
     r.sprite(HORNBLOWER_BODY, x - 8, top)
-    _pixel_head(r, x, top + 5, 'young', BROWN, ('cap', GREEN, LIGHT_RED, YELLOW))
+    F.draw_head(r, x, top + 5, 'young', BROWN, hat=('cap', GREEN, LIGHT_RED, YELLOW), small=True)
     r.sprite(HORN, x + 2, top + 6, anchor=(0, 1))
     r.silhouette()
 
@@ -200,7 +191,7 @@ def draw_jester(c, x=30, foot_y=88):
     top = foot_y - len(JESTER_BODY) + 1
     r.sprite(JESTER_BODY, x - 8, top)
     hy = top + 3
-    r.sprite(F.SMALL_FACES['young'], x, hy, {'H': YELLOW, 'h': BROWN}, anchor=(3, 3))
+    F.draw_head(r, x, hy, 'young', YELLOW, small=True)
     r.sprite(JESTER_CAP, x, hy, anchor=(4, 7))
     r.silhouette()
 
@@ -221,12 +212,9 @@ FIDDLE_BOW = ['....7', '...7.', '..7..', '.7...', '7....']
 
 def _instrument(c, rows, x0, y0):
     """Blits a sprite with its top-left at (x0, y0), edged in dark grey wherever it meets the white card."""
-    c.blit_sprite(rows, x0, y0)
-    pix = {(x0 + dx, y0 + dy) for dy, row in enumerate(rows) for dx, ch in enumerate(row) if ch != '.'}
-    for x, y in pix:
-        for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
-            if (nx, ny) not in pix and c.get(nx, ny) == WHITE:
-                c.put(nx, ny, DARK_GRAY)
+    r = Rig(c, thin=True)
+    r.sprite(rows, x0, y0)
+    r.silhouette(where=lambda x, y: c.get(x, y) == WHITE)
 
 
 def draw_musicians(c):

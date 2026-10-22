@@ -34,9 +34,15 @@ from scripts.deck_gen.rig import Rig, darker
 THIN_SCALE = 0.75
 
 
-def _rig(c, flip, dx, scale, shadow=None):
-    """Starts an animal; `shadow` is (centre x, half length) of its shadow on the turf, in pose coordinates."""
-    r = Rig(c, flip=flip, dx=dx, scale=scale, thin=scale < THIN_SCALE)
+def _rig(c, flip, dx, scale, shadow=None, dy=0, thin=None):
+    """Starts an animal; `shadow` is (centre x, half length) of its shadow on the turf, in pose coordinates.
+
+    `thin` defaults to drawing small animals with one silhouette outline;
+    pass True for one that needs it at any size.
+    """
+    if thin is None:
+        thin = scale < THIN_SCALE
+    r = Rig(c, flip=flip, dx=dx, dy=dy, scale=scale, thin=thin)
     if shadow is not None:
         _ground_shadow(r, *shadow)
     return r
@@ -58,9 +64,11 @@ def _ground_shadow(r, cx, half, gy=87):
     """A flat dithered shadow on the ground under an animal so it doesn't float on the turf.
 
     Drawn straight on the card, outside the rig, so a thin rig's silhouette
-    doesn't outline it.
+    doesn't outline it. It stays on the ground when the animal is raised
+    with `dy`, as for a leap.
     """
     x0, y0 = r.tx(cx, gy)
+    y0 -= r.dy
     rx, ry = max(half * r.s, 2.0), 1.9
     for y in range(int(y0 - ry), int(y0 + ry) + 2):
         for x in range(int(x0 - rx), int(x0 + rx) + 2):
@@ -94,8 +102,7 @@ def draw_horse(c, flip=False, dx=0, scale=1.0, coat=LIGHT_GRAY, mane=DARK_GRAY, 
     outline per part turns its slim legs and belly into solid dark grey.
     The tack goes on afterwards with its own outlines.
     """
-    r = Rig(c, flip=flip, dx=dx, scale=scale, thin=True)
-    _ground_shadow(r, 29, 14)
+    r = _rig(c, flip, dx, scale, shadow=(29, 14), thin=True)
     far = darker(coat)
     _legs(r, [[(36, 72), (35, 79), (36, 85)], [(24, 71), (27, 77), (24, 80), (25, 85)]], far, hoof=DARK_GRAY)
     r.part().chain([(17, 66), (14, 71), (14, 79)], [1.8, 1.8, 1.2]).paint(mane)
@@ -127,8 +134,7 @@ def draw_hound(c, flip=False, dx=0, scale=1.0, coat=WHITE, spots=LIGHT_GRAY, col
     silhouette; the near legs then go on top with their own outline, which
     parts them from the belly.
     """
-    r = Rig(c, flip=flip, dx=dx, scale=scale, thin=True)
-    _ground_shadow(r, 30, 15)
+    r = _rig(c, flip, dx, scale, shadow=(30, 15), thin=True)
     _legs(r, [[(36, 73), (43, 77), (49, 78)], [(20, 72), (14, 76), (8, 79)]], darker(coat), upper=2.2, lower=1.2)
     r.part().chain([(17, 70), (12, 67), (7, 67)], [1.2, 0.9, 0.6]).paint(coat, None)
     # Deep chest, tucked waist and a long narrow head.
@@ -229,15 +235,13 @@ def draw_boar(c, flip=False, dx=0, scale=1.0):
     return _done(r, feet=[(36, 87), (26, 87), (41, 87), (20, 87)])
 
 
-def draw_stag(c, flip=False, dx=0, scale=1.0):
+def draw_stag(c, flip=False, dx=0, dy=0, scale=1.0):
     """A red stag leaping, forelegs reaching forward and hind legs stretched behind, antlers swept back.
 
     Forelegs folded under the chest, as a real stag jumps, shrink to stubs at
     this card's scale, so they reach out ahead instead.
     """
-    r = _rig(c, flip, dx, scale, shadow=(28, 13))
-    # Leaping low, head stretched forward, so the antlers stay under the Nine's lowest pips.
-    r.dy = 2
+    r = _rig(c, flip, dx, scale, shadow=(28, 13), dy=dy)
     hide = BROWN
     belly = YELLOW
     _legs(r, [[(36, 71), (42, 75), (46, 79)], [(20, 71), (14, 75), (7, 79)]], darker(hide), upper=2.0, lower=1.2)
@@ -278,8 +282,7 @@ def draw_elephant(c, flip=False, dx=0, scale=1.0):
     # Saddle blanket of a royal menagerie elephant, draped over the curve of
     # the back inside the body's outline, with a gold fringe along its hem.
     blanket = r.part().poly([(19, 55), (31, 55), (30, 72), (20, 72)])
-    inside = {(x, y) for x, y in body.mask if {(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)} <= body.mask}
-    blanket.mask &= inside
+    blanket.mask &= body.interior()
     blanket.paint(LIGHT_RED, pattern=lambda x, y: YELLOW if y % 3 == 0 else None)
     hem = {}
     for x, y in blanket.mask:
@@ -419,7 +422,7 @@ def draw_peacock(c, flip=False, dx=0, scale=1.0):
         fan.ellipse(*polar(lo + (hi - lo) * (k + 0.5) / feathers, reach - 0.5), 2.4, 2.4)
     fan.paint(GREEN, shade=None, outline=DARK_GRAY)
     # Shafts and eyes are kept off the outline so the train keeps a clean edge.
-    inside = fan.mask - fan.edge()
+    inside = fan.interior()
     for k in range(feathers):
         deg = lo + (hi - lo) * (k + 0.5) / feathers
         for rad in range(7, reach - 3):

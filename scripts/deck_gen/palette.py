@@ -151,8 +151,6 @@ class FaceCanvas:
             return c2 if ((x & 1) == 0 and (y & 1) == 0) else c1
         if mode == 'vstripe':
             return c1 if (x & 1) == 0 else c2
-        if mode == 'hstripe':
-            return c1 if (y & 1) == 0 else c2
         return c1
 
     def fill_ellipse(self, cx, cy, rx, ry, c1, c2=None, outline=None, mode='drape'):
@@ -181,16 +179,13 @@ class FaceCanvas:
                 oy = int(round(cy + ry * math.sin(a)))
                 self.put(ox, oy, outline)
 
-    def fill_poly(self, pts, c1, c2=None, outline=None, mode='drape'):
+    def fill_poly(self, pts, col, outline=None):
+        """Fills a polygon in one colour, optionally outlining its edges."""
         if len(pts) < 3:
             return
-        if c2 is None:
-            c2 = c1
         ys = [p[1] for p in pts]
-        y_min = int(math.floor(min(ys)))
-        y_max = int(math.ceil(max(ys)))
         n = len(pts)
-        for y in range(y_min, y_max + 1):
+        for y in range(int(math.floor(min(ys))), int(math.ceil(max(ys))) + 1):
             yc = y + 0.5
             xs = []
             for i in range(n):
@@ -200,20 +195,7 @@ class FaceCanvas:
                     xs.append(ax + (yc - ay) / (by - ay) * (bx - ax))
             xs.sort()
             for i in range(0, len(xs) - 1, 2):
-                x_start = int(math.ceil(xs[i] - 0.5))
-                x_end = int(math.floor(xs[i + 1] - 0.5))
-                span = max(1, x_end - x_start + 1)
-                for x in range(x_start, x_end + 1):
-                    if mode == 'drape' and c1 != c2:
-                        rel = (x - x_start) / span
-                        if rel > 0.78:
-                            col = c2 if ((x + y) & 1) == 0 else c1
-                        elif ((x - x_start + (y - y_min) // 2) % 6) == 0 and rel > 0.25:
-                            col = c2
-                        else:
-                            col = c1
-                    else:
-                        col = self._shade(x, y, c1, c2, mode)
+                for x in range(int(math.ceil(xs[i] - 0.5)), int(math.floor(xs[i + 1] - 0.5)) + 1):
                     self.put(x, y, col)
         if outline is not None:
             for i in range(n):

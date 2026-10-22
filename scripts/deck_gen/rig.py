@@ -90,15 +90,20 @@ class Rig:
         if self.thin:
             self.painted.add((x, y))
 
-    def silhouette(self, col=DARK_GRAY):
-        """Outlines the union of everything this rig has painted."""
+    def silhouette(self, col=DARK_GRAY, where=None):
+        """Outlines the union of everything this rig has painted.
+
+        `where(x, y)`, when given, limits the outline to the pixels it accepts,
+        e.g. only where the shape meets bare white card.
+        """
         ring = set()
         for x, y in self.painted:
             for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
                 if (nx, ny) not in self.painted:
                     ring.add((nx, ny))
         for x, y in ring:
-            self.c.put(x, y, col)
+            if where is None or where(x, y):
+                self.c.put(x, y, col)
 
     def tx(self, x, y):
         if self.s != 1.0:
@@ -235,6 +240,10 @@ class Part:
         return {
             (x, y) for x, y in m if (x - 1, y) not in m or (x + 1, y) not in m or (x, y - 1) not in m or (x, y + 1) not in m
         }
+
+    def interior(self):
+        """Mask pixels inside the outline: where details can go without breaking the rim."""
+        return self.mask - self.edge()
 
     def paint(self, base, shade=AUTO, outline=AUTO, light=None, pattern=None):
         """Fills the mask with `base`, dithers `shade` along the lower right and draws `outline` on the rim.

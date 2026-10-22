@@ -351,7 +351,6 @@ def draw_unter(c, suit):
             # Steel down the blade's core, leaving a glint under the guard, so
             # it doesn't read as a hollow tube.
             r.line(48, 55, 48, 85, LIGHT_CYAN)
-            F.draw_hand(r, 48, 46, grip=True)
 
         _standing(c, suit, False, look, arms, legs, front_props=planted)
         draw_suit(c, 2, 13, 72)
@@ -547,8 +546,9 @@ def _throne(r, wood, velvet, style):
     'round' has an arched back and gold ball finials, 'gothic' a pointed back
     and spires, 'canopy' a fringed valance with curtains falling to either
     side, 'baroque' a low rounded back between scroll volutes (a crest
-    there would hide behind the king's head). Tops stay below y=21,
-    clear of the corner pips.
+    there would hide behind the king's head). The parts beside the corner
+    pips (posts, finials, valance ends) stay below y=21; only the middle,
+    behind the king's head, rises higher.
     """
 
     def grain(x, y):
@@ -601,7 +601,7 @@ def _throne(r, wood, velvet, style):
     r.part().rect(10, 69, 50, 70).fill(YELLOW)
 
 
-def _seated(c, flip, look, front_arm, back_arm, props_back=None, props_front=None):
+def _seated(c, flip, look, front_arm, back_arm, props_front=None):
     """A crowned king on a throne, robe over the knees and an ermine stole.
 
     Arms are (shoulder, elbow, wrist, hand) as for standing figures; the
@@ -610,8 +610,6 @@ def _seated(c, flip, look, front_arm, back_arm, props_back=None, props_front=Non
     r = Rig(c, flip=flip)
     j = dict(head=(30, 16), neck=(30, 22), sh_b=(24, 27), sh_f=(35, 27), waist=(30, 46))
     _throne(r, look['throne'], look['cushion'], look['style'])
-    if props_back:
-        props_back(r)
     F.cape(r, j, look['mantle'], length=78, swing=-5)
     bsh, bel, bwr, bhand = back_arm
     # Feet set apart under the hem.

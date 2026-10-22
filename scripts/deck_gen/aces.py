@@ -168,7 +168,7 @@ def draw_ace_leaf(c):
     shield_inner = [(9, 24), (51, 24), (50, 57), (43, 72), (30, 82), (17, 72), (10, 57)]
     # A plain gold rim, shaded brown down its right side rather than hatched.
     Rig(c).part().poly(shield_outer).paint(YELLOW, shade=None, outline=DARK_GRAY)
-    c.fill_poly(shield_inner, RED, RED, outline=DARK_GRAY, mode='solid')
+    c.fill_poly(shield_inner, RED, outline=DARK_GRAY)
     for x in range(30, 56):
         for y in range(21, 86):
             if c.get(x, y) == YELLOW and c.get(x + 1, y) == DARK_GRAY and c.get(x - 1, y) == YELLOW:
@@ -185,13 +185,10 @@ def draw_ace_leaf(c):
     crown.part().poly([(19, 21), (18, 12), (24, 16), (30, 9), (36, 16), (42, 12), (41, 21)]).paint(YELLOW, outline=DARK_GRAY)
     crown.part().rect(18, 18, 42, 21).paint(YELLOW, shade=None, outline=DARK_GRAY)
     # Cross on top, edged so the thin gold reads against the white card.
-    cross = {(30, y) for y in range(4, 9)} | {(x, 6) for x in range(28, 33)}
-    for x, y in cross:
-        for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
-            if (nx, ny) not in cross and ny < 9:
-                c.put(nx, ny, DARK_GRAY)
-    for x, y in cross:
-        c.put(x, y, YELLOW)
+    cross = Rig(c, thin=True)
+    cross.line(30, 4, 30, 8, YELLOW)
+    cross.line(28, 6, 32, 6, YELLOW)
+    cross.silhouette(where=lambda x, y: y < 9)
     for jx, jcol in [(22, LIGHT_BLUE), (26, RED), (30, LIGHT_GREEN), (34, RED), (38, LIGHT_BLUE)]:
         c.put(jx, 19, jcol)
         c.put(jx, 20, darker(jcol))
@@ -314,7 +311,7 @@ def draw_ace_heart(c):
 
     # Rays of light behind the heart, kept inside the sky so they don't
     # streak across the wreath.
-    inside = sky.mask - sky.edge()
+    inside = sky.interior()
     for k in range(9):
         a = math.radians(200 + k * 17.5)
         for t in range(6, 14):

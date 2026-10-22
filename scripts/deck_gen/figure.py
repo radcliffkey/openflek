@@ -103,24 +103,6 @@ FACE_GOATEE = [
     '...hHh...j.....',
 ]
 
-FACE_FORKED = [
-    '.....hHHHh.....',
-    '...hHHHHHHHh...',
-    '..hHHHHHHHHHh..',
-    '..hHHHf7ffff8..',
-    '.hHHHff8ff888..',
-    '.hHHHff0ff0f8..',
-    '.hHHHfffffff88.',
-    '.hHHHJfffffff8.',
-    '.hHHHJJJJJJJ78.',
-    '.hHHHJJJJ44Jj..',
-    '..hHHJJJJJJj...',
-    '..hHHjJJjJJj...',
-    '...hh.JJ.JJj...',
-    '......Jj.jJj...',
-    '......j...j....',
-]
-
 # Kings sit facing the viewer, so their heads are turned only a little to the
 # right: both sides of the face show, hair falls on either side, and the nose
 # sits just right of the middle.
@@ -182,7 +164,6 @@ FACES = {
     'old': FACE_OLD,
     'moustache': FACE_MOUSTACHE,
     'goatee': FACE_GOATEE,
-    'forked': FACE_FORKED,
     'king': FACE_KING,
     'king_old': FACE_KING_OLD,
     'king_forked': FACE_KING_FORKED,
@@ -273,24 +254,24 @@ SMALL_FACES = {
         '..JJJ..',
     ],
 }
-SMALL_FACES['old'] = SMALL_FACES['beard']
 
 SMALL_HATS = {
     'cap': (-2, ['T.cCCc..', '.cCCCCCc', '.bBBBBBb']),
     'brim': (-3, ['..cCCc...', 'TcCCCCc..', 'cCCCCCCCc']),
     'beret': (-2, ['..cCCCT.', '.cCCCCCc', '..bBBBb.']),
-    'crown': (-3, ['.T.T.T.', 'bBbBbBb', 'bBBTBBb', '.bbbbb.']),
-    'jester': (-4, ['T.....T.', 'Cc...cC.', '.CcCcC..', '.bBBBBb.']),
 }
 
 
-def draw_head(rig, hx, hy, face='young', hair=BROWN, beard=None, hat=None):
+def draw_head(rig, hx, hy, face='young', hair=BROWN, beard=None, hat=None, small=None):
     """Draws a head in 3/4 view facing right with its face centred near (hx, hy).
 
     `hat` is (kind, cloth, trim, band) with kind from `HATS`. On a rig scaled
-    below `SMALL_SCALE` the small templates are used instead.
+    below `SMALL_SCALE` the small templates are used instead; `small=True`
+    asks for them on an unscaled rig, for figures pixelled by hand at
+    vignette size.
     """
-    small = rig.s < SMALL_SCALE
+    if small is None:
+        small = rig.s < SMALL_SCALE
     faces, hats, anchor = (SMALL_FACES, SMALL_HATS, (3, 3)) if small else (FACES, HATS, (8, 6))
     beard = beard if beard is not None else hair
     subst = {'H': hair, 'h': darker(hair), 'J': beard, 'j': darker(beard)}

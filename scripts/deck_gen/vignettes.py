@@ -27,10 +27,12 @@ from scripts.deck_gen.symbols import (
     draw_tree_trunk,
 )
 
-# The vignettes are drawn from shapes: people and animals by `people` and
-# `animals`, buildings and garden pieces by the helpers below. Only the
-# heart target on Cupid's post and the small obelisk beside the peacock are
-# hand-pixelled sprites: at their size a shape outline would eat the detail.
+# People and animals come from `people` and `animals`, buildings and garden
+# pieces from the helpers below. Most are built from rig shapes; the smallest
+# details (the heart target on Cupid's post, the obelisk beside the peacock,
+# and in the other modules the forester, horn-blower, jester, band
+# instruments and several animal heads) are hand-pixelled sprites, because
+# at their size a shape outline would eat the detail.
 
 # Heart 9 left: gilded obelisk with a heart finial on a stone plinth (11x27),
 # lit from the left; it stays below the lowest left pip.
@@ -303,7 +305,7 @@ def _draw_heart_tub(c, cx, base_y):
 
     heart.paint(GREEN, shade=None, outline=DARK_GRAY, pattern=leaves)
     # Roses: a light petal face over a dark red lower right, kept off the outline.
-    inside = heart.mask - heart.edge()
+    inside = heart.mask - outline
     for rx, ry in ((-6, 4), (3, 3), (-1, 7), (5, 7), (-5, 9), (0, 11)):
         x, y = cx + rx, top + ry
         if {(x, y), (x + 1, y), (x, y + 1), (x + 1, y + 1)} <= inside:
@@ -367,7 +369,8 @@ def draw_vignette_scene(c, suit, rank):
     elif (suit, rank) == (1, 2):  # Leaf 9: Red stag in mid-leap
         draw_bush_or_flowers(c, 9, gy, LIGHT_RED)
         draw_bush_or_flowers(c, 51, gy, YELLOW)
-        animals.draw_stag(c, dx=2, scale=0.62)
+        # Leaping low, head stretched forward, so the antlers stay under the lowest pips.
+        animals.draw_stag(c, dx=2, dy=2, scale=0.62)
     elif (suit, rank) == (1, 3):  # Leaf 10: Lion couchant facing right
         animals.draw_lion(c)
 
