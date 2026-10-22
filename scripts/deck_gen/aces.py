@@ -38,8 +38,16 @@ MINI_BELL = [
 
 
 def _fill_ace_ground(c, top_y=52, water=True):
-    """Fills the lower background with rolling green hills and optional river bank."""
-    fill_terrain(c, top_y, lambda x: top_y + 2 + (x - 30) ** 2 // 120, lambda x, y, crest: checker(x, y, GREEN, LIGHT_GREEN))
+    """Fills the lower background with rolling green hills and optional river bank.
+
+    The hills are distant, so they're paler than the foreground turf: light
+    green with sparse darker dots rather than the turf's even chequer.
+    """
+
+    def distant(x, y, crest):
+        return GREEN if x % 2 == 0 and y % 2 == 0 else LIGHT_GREEN
+
+    fill_terrain(c, top_y, lambda x: top_y + 2 + (x - 30) ** 2 // 120, distant)
     if water:
         for y in range(90, 98):
             for x in range(2, 59):
