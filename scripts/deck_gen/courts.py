@@ -521,8 +521,9 @@ def draw_king(c, suit):
         )
 
         def sceptre(r):
-            F.pole(r, (46, 50), (48, 22), YELLOW)
-            r.part().ellipse(48, 21, 2, 2).paint(LIGHT_GREEN)
+            # Angled across the gilded throne post so the two don't merge.
+            F.pole(r, (43, 53), (53, 29), YELLOW, outline=BROWN)
+            r.part().ellipse(54, 27, 2.2, 2.2).paint(LIGHT_GREEN)
 
         def orb(r):
             r.part().ellipse(38, 52, 2.6, 2.6).paint(YELLOW)
@@ -555,7 +556,7 @@ def draw_king(c, suit):
         )
 
         def sceptre(r):
-            F.pole(r, (44, 46), (34, 20), YELLOW)
+            F.pole(r, (44, 46), (34, 20), YELLOW, outline=BROWN)
             r.part().poly([(33, 16), (36, 19), (33, 22), (30, 19)]).paint(YELLOW)
 
         _seated(

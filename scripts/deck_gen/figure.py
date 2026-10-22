@@ -181,11 +181,11 @@ HATS = {
         -4,
         [
             '..T....T....T..',
-            '.BB...BTB...BB.',
-            '.BBB.BBBBB.BBBb',
-            '.BCBBBCCCBBBCBb',
-            '.BBBBBBBBBBBBBb',
-            '.BTBBBBTBBBBTBb',
+            '.bBb..bBb..bBb.',
+            '.bBBbbBBBbbBBb.',
+            'bBCBBBCCCBBBCBb',
+            'bBBBBBBBBBBBBBb',
+            'bBTBBBBTBBBBTBb',
             '.bbbbbbbbbbbbb.',
         ],
     ),
@@ -220,7 +220,7 @@ SMALL_HATS = {
     'cap': (-2, ['T.cCCc..', '.cCCCCCc', '.bBBBBBb']),
     'brim': (-3, ['..cCCc...', 'TcCCCCc..', 'cCCCCCCCc']),
     'beret': (-2, ['..cCCCT.', '.cCCCCCc', '..bBBBb.']),
-    'crown': (-3, ['.T.T.T.', '.BBBBB.', '.bBTBb.']),
+    'crown': (-3, ['.T.T.T.', 'bBbBbBb', 'bBBTBBb', '.bbbbb.']),
     'jester': (-4, ['T.....T.', 'Cc...cC.', '.CcCcC..', '.bBBBBb.']),
 }
 
@@ -350,9 +350,17 @@ def sword(rig, hilt, tip, blade=LIGHT_CYAN, guard=YELLOW):
     rig.part().ellipse(hx - ux * 3, hy - uy * 3, 1.3, 1.3).paint(guard, None)
 
 
-def pole(rig, a, b, col=BROWN):
-    """A staff or shaft from `a` to `b`."""
-    rig.part().capsule(*a, *b, 0.8).fill(col)
+def pole(rig, a, b, col=BROWN, outline=None):
+    """A staff or shaft from `a` to `b`.
+
+    A wooden shaft is a plain two-pixel line; pass `outline` for a pale one,
+    such as a gilded sceptre, so it gets a thicker shaft edged against the
+    white card.
+    """
+    if outline is None:
+        rig.part().capsule(*a, *b, 0.8).fill(col)
+    else:
+        rig.part().capsule(*a, *b, 1.4).paint(col, None, outline=outline)
 
 
 # Standing pose shared by Unters, Obers and the vignette people; each figure
