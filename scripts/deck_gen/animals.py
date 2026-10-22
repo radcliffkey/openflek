@@ -306,20 +306,21 @@ def draw_peacock(c, flip=False, dx=0, scale=1.0):
 
 # Heraldic lion's head facing right (15x13): ear, heavy brow, open jaws with
 # white fangs and a red tongue curling out.
+# The jaws and tongue are edged in black so they stand out on the red shield.
 LION_HEAD = [
     '..888..........',
     '.8ff7888.......',
     '.8f7fff788.....',
     '8ff8887ff88....',
     '8ff80788fff88..',
-    '8fffffffffff788',
+    '8ffffffffffff88',
     '87ffffffffffff8',
-    '877fff8888888f8',
-    '.877f8f4cccc8f8',
-    '.877ff84cccc48.',
-    '..877fff8f4cc48',
-    '...8877ff8.4c48',
-    '.....8888...448',
+    '877fff0000000f0',
+    '.877f0f4cccc0f0',
+    '.877ff04cccc40.',
+    '..877fff0f0cc40',
+    '...8877ff0.0cc0',
+    '.....8888...00.',
 ]
 
 
@@ -351,11 +352,11 @@ def draw_lion_rampant(c, flip=True, dx=0, dy=3, scale=1.0):
     # Body: haunch, a narrow waist and a deep chest, rearing on the hind leg.
     body = r.part().ellipse(24, 62, 6.5, 7.5, angle=-20).capsule(25, 58, 31, 47, 4.6, 5.2).ellipse(33, 43, 7, 7.5)
     body.paint(hide, outline=DARK_GRAY)
-    # Mane in jagged locks around the neck.
-    mane = r.part().ellipse(34, 35, 7, 7.5)
-    for k in range(9):
-        a = math.radians(100 + k * 30)
-        mane.ellipse(34 + math.cos(a) * 7, 35 + math.sin(a) * 7.5, 2, 2)
+    # A full mane in jagged locks, flowing from behind the head down onto the shoulders.
+    mane = r.part().ellipse(33, 36, 8.5, 9.5)
+    for k in range(11):
+        a = math.radians(95 + k * 26)
+        mane.ellipse(33 + math.cos(a) * 8.5, 36 + math.sin(a) * 9.5, 2.4, 2.4)
     mane.paint(hide, outline=DARK_GRAY, pattern=lambda x, y: LIGHT_GRAY if (x + 2 * y) % 5 == 0 else None)
     # Head in profile, hand-pixelled: brow over the eye, open jaws, tongue out.
     r.sprite(LION_HEAD, 38, 32, anchor=(5, 6))
