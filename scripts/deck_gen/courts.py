@@ -599,9 +599,10 @@ def _throne(r, wood, velvet, style):
         for fx in (12, 48):
             r.part().rect(fx - 2, 22, fx + 2, 70).paint(wood)
             r.part().ellipse(fx, 21, 2.4, 2.4).paint(YELLOW)
-    # Seat front and legs below the robe.
-    r.part().rect(11, 66, 49, 70).paint(wood)
-    r.part().rect(11, 70, 14, 86).paint(wood)
+    # A solid carved base under the seat, down to the dais: a lone leg beside the
+    # robe would read as a walking stick.
+    r.part().rect(10, 66, 50, 84).paint(wood, pattern=grain)
+    r.part().rect(10, 69, 50, 70).fill(YELLOW)
 
 
 def _seated(c, flip, look, front_arm, back_arm, props_back=None, props_front=None):
@@ -648,8 +649,9 @@ def _seated(c, flip, look, front_arm, back_arm, props_back=None, props_front=Non
     body = r.part().poly([(23, 26), (36, 26), (35, 46), (24, 46)]).ellipse(31, 33, 6.5, 6.5)
     body.paint(look['tunic'], pattern=look.get('pattern'))
     r.part().rect(23, 45, 37, 47).paint(YELLOW)
-    # Ermine stole over the shoulders and down the front edge of the robe.
-    stole = r.part().ellipse(30, 25, 8.5, 3).capsule(36, 26, 38, 46, 1.8).capsule(38, 46, 46, 56, 1.8)
+    # Ermine shoulder cape with a band down the front to the belt; a band running on
+    # across the lap would read as a sword blade.
+    stole = r.part().ellipse(30, 26.5, 9.5, 4).capsule(36, 27, 37, 45, 1.8)
     stole.paint(WHITE, None, outline=LIGHT_GRAY, pattern=_ermine)
     F.draw_head(r, 30, 16, face=look.get('face', 'old'), hair=look['hair'], beard=look.get('beard'), hat=look['hat'])
     if bhand:
