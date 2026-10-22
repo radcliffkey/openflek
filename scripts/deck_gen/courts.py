@@ -30,8 +30,14 @@ from scripts.deck_gen.symbols import draw_suit
 
 
 def _speckle(x, y):
-    """A fixed pseudo-random value per pixel for scattering leaves, flowers and pebbles."""
-    return (x * 73 + y * 151 + x * y * 7) % 97
+    """A fixed pseudo-random value in 0..96 per pixel for scattering leaves, flowers and pebbles.
+
+    A mixed integer hash: a plain linear formula repeats down some columns
+    and draws stripes across the ground.
+    """
+    h = (x * 73856093 ^ y * 19349663) & 0xFFFFFFFF
+    h = ((h ^ (h >> 13)) * 1274126177) & 0xFFFFFFFF
+    return (h ^ (h >> 16)) % 97
 
 
 def _ground_colour(suit, x, y, hill_y):
