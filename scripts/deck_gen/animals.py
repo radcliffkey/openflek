@@ -225,7 +225,7 @@ def draw_elephant(c, flip=False, dx=0, scale=1.0):
 
 def draw_lion(c, flip=False, dx=0, scale=1.0):
     """A lion couchant: lying with forepaws stretched out, head raised, tail curled over the haunch."""
-    r = _rig(c, flip, dx, scale)
+    r = _rig(c, flip, dx, scale, shadow=(30, 19))
     hide = YELLOW
     mane = BROWN
     r.part().chain([(12, 80), (8, 76), (11, 71), (15, 70)], [1.1, 1.0, 0.9, 0.8]).paint(hide)
@@ -233,18 +233,21 @@ def draw_lion(c, flip=False, dx=0, scale=1.0):
     body = r.part().ellipse(27, 80, 13, 5).ellipse(16, 78, 6, 6.5)
     body.chain([(36, 83), (44, 84), (50, 84)], [2.2, 1.8, 1.6])
     body.paint(hide, outline=BROWN)
-    m = r.part().ellipse(37, 74, 7, 8.5)
-    for k in range(8):
-        a = math.radians(100 + k * 25)
-        m.ellipse(37 + math.cos(a) * 7, 74 + math.sin(a) * 8, 1.8, 1.8)
+    # Mane swept back from the face in pointed locks, falling over the shoulders.
+    m = r.part().ellipse(36, 74, 6.5, 8, angle=-15)
+    for tip, base in (((25, 66), (33, 68)), ((23, 72), (31, 73)), ((25, 79), (32, 78)), ((30, 84), (35, 81)), ((31, 63), (37, 67))):
+        (tx, ty), (bx, by) = tip, base
+        m.poly([(tx, ty), (bx, by - 2.5), (bx + 2, by + 2.5)])
     m.paint(mane, outline=DARK_GRAY, pattern=lambda x, y: RED if (x - y) % 4 == 0 else None)
-    head = r.part().ellipse(41, 74, 3.8, 4.2).capsule(43, 76, 46, 77, 2.2, 1.6)
+    # Head in profile with a squared muzzle, the ear tucked into the mane.
+    head = r.part().ellipse(40, 73, 4, 4.2).rect(41, 72, 47, 77).ellipse(40, 69, 1.4, 1.4)
     head.paint(hide, outline=BROWN)
-    r.line(40, 71, 42, 71, BROWN)
+    r.line(39, 71, 42, 71, BROWN)
     _eye(r, 42, 72)
-    r.put(46, 76, BLACK)
-    r.put(44, 79, RED)
-    r.put(45, 79, RED)
+    r.put(47, 73, BLACK)
+    r.put(47, 74, BLACK)
+    r.line(44, 76, 47, 76, BROWN)
+    r.put(45, 78, RED)
     for x in (47, 49, 51):
         r.put(x, 85, BROWN)
     r.part().ellipse(17, 82, 4, 2.2).paint(hide, outline=BROWN)
