@@ -126,16 +126,18 @@ HEART_SYM = [
     '.......4.......',
 ]
 
-# Roman numeral X (11x9) for the 10 cards
+# Roman numeral X (11x9) for the 10 cards: black, a thick stroke falling to the
+# right crossed by a thin one, with serifs top and bottom
 ROMAN_X = [
-    '199b...b991',
-    '.19b1.1b91.',
-    '..19b1b91..',
-    '...19b91...',
-    '...19b91...',
-    '..19b1b91..',
-    '.19b1.1b91.',
-    '199b...b991',
+    '0000...000.',
+    '.00.....0..',
+    '..00...0...',
+    '...00.0....',
+    '....00.....',
+    '...0.00....',
+    '..0...00...',
+    '.0.....00..',
+    '000...0000.',
 ]
 
 
