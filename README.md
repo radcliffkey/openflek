@@ -64,19 +64,20 @@ A windowed run writes that file at start-up.
 ### In a web browser
 
 The game also builds to WebAssembly. Install the target once, then build the
-page into `target/web` and serve it over HTTP (the script needs `python3`):
+page into `target/web` with the Python 3 script and serve it over HTTP:
 
 ```bash
 rustup target add wasm32-unknown-unknown
-sh scripts/build_web.sh
+python3 scripts/build_web.py
 python3 -m http.server -d target/web
 ```
 
 Open <http://localhost:8000>. The browser needs WebGL. The page is plain static
 files, so any web server works. In the browser:
 
-* switches go in the query string, e.g. `?quick&iq=60&seed=7` (`--headless`
-  and `--shots` are ignored);
+* switches go in the query string, e.g. `?quick&iq=60&seed=7` or `?quick=1`.
+  Unknown names, bad values (logged to the console), `headless` and `shots`
+  are ignored;
 * settings are kept in the browser's `localStorage` instead of `openflek.cfg`;
 * when the game ends (Esc and quit, no further game, or an empty balance) the
   credits play and the page reloads, back at the title screen;
@@ -128,7 +129,7 @@ Keyboard, as in the original; the mouse works too.
 | `scripts/deck_gen/` | Python generator for the card faces: `python3 scripts/deck_gen/build_sheet.py` rewrites `deck_data.bin` |
 | `src/app/` | screens and dialogs, the game flow, options, title screen |
 | `src/config.rs`, `src/sound.rs` | settings file; square-wave "PC speaker" sounds |
-| `src/web.rs`, `web/` | browser build: Rust and JavaScript glue, the page; `scripts/build_web.sh` assembles it |
+| `src/web.rs`, `web/` | browser build: Rust and JavaScript glue, the page; `scripts/build_web.py` assembles it |
 | `examples/card_sheet.rs` | renders the deck to a PNG: `cargo run --example card_sheet -- out.png 2` |
 
 ## Testing

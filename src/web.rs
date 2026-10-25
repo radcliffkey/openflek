@@ -1,6 +1,7 @@
 //! Browser glue for the WebAssembly build: settings in `localStorage`, the
 //! page's query string, logging to the console and reloading the page. The
-//! JavaScript side is the miniquad plugin in `web/openflek.js`.
+//! JavaScript side is the miniquad plugin in `web/openflek.js`. Panics need
+//! nothing here: miniquad's own panic hook already prints them.
 
 use log::{Level, LevelFilter, Log, Metadata, Record};
 

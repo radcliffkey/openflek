@@ -2,9 +2,12 @@
 <html lang="cs">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>OpenFlek</title>
     <style>
+        html {
+            color-scheme: dark;
+        }
         html, body, canvas {
             margin: 0;
             padding: 0;
@@ -13,7 +16,19 @@
             overflow: hidden;
             position: absolute;
             background: black;
-            z-index: 0;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #boot-error {
+            position: absolute;
+            z-index: 2;
+            left: 16px;
+            top: 16px;
+            margin: 0;
+            color: white;
+            font: 16px sans-serif;
         }
     </style>
 </head>
@@ -22,6 +37,40 @@
     <script src="gl.js"></script>
     <script src="audio.js"></script>
     <script src="openflek.js"></script>
-    <script>load("openflek.wasm");</script>
+    <script>
+        // build_web.py adds a content hash to this and to the script names
+        // above, so a new build is not mixed with cached files of an old one.
+        var wasmUrl = "openflek.wasm";
+
+        // compileStreaming rejects the file unless the server sends
+        // application/wasm. Fetch it again and compile the bytes directly.
+        (function () {
+            var compileStreaming = WebAssembly.compileStreaming;
+            if (!compileStreaming) {
+                return;
+            }
+            WebAssembly.compileStreaming = function (source) {
+                return compileStreaming.call(WebAssembly, source).catch(function (err) {
+                    console.warn(err);
+                    return fetch(wasmUrl).then(function (response) {
+                        if (!response.ok) {
+                            throw new Error("HTTP " + response.status);
+                        }
+                        return response.arrayBuffer();
+                    }).then(function (bytes) {
+                        return WebAssembly.compile(bytes);
+                    });
+                }).catch(function (err) {
+                    console.error(err);
+                    var note = document.createElement("p");
+                    note.id = "boot-error";
+                    note.textContent = "OpenFlek se nepodařilo spustit.";
+                    document.body.appendChild(note);
+                    throw err;
+                });
+            };
+        })();
+        load(wasmUrl);
+    </script>
 </body>
 </html>

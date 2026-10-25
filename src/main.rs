@@ -6,7 +6,10 @@ fn window_conf() -> Conf {
         window_title: "OpenFlek".to_owned(),
         window_width: 1280,
         window_height: 960,
-        high_dpi: false,
+        // The page fills the browser window, so the framebuffer has to match
+        // the device pixels or the browser blurs the nearest-neighbour scale.
+        // The desktop window stays at a fixed size.
+        high_dpi: cfg!(target_arch = "wasm32"),
         ..Default::default()
     }
 }
@@ -38,10 +41,7 @@ fn main() {
 fn main() {
     use openflek::web;
     web::init_logger();
-    let mut opts = Options::from_query(&web::query()).unwrap_or_else(|e| {
-        log::error!("{e}");
-        Options::default()
-    });
+    let mut opts = Options::from_query(&web::query());
     // A page has no headless mode and no directory to save screenshots in.
     opts.headless = false;
     opts.shots = None;
