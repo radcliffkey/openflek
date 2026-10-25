@@ -27,7 +27,6 @@ be served over HTTP.
 import argparse
 import gzip
 import logging
-import os
 import platform
 import re
 import subprocess
@@ -101,8 +100,12 @@ def with_docs(files: Sequence[tuple[Path, str]]) -> list[tuple[Path, str]]:
 
 
 def file_mode(path: Path) -> int:
-    """755 for programs, 644 for everything else, whatever the builder's umask."""
-    return 0o755 if os.access(path, os.X_OK) else 0o644
+    """
+    755 for programs, 644 for everything else, whatever the builder's umask.
+    A program is a file with an execute bit; `os.access` would also say no
+    on a noexec mount.
+    """
+    return 0o755 if path.stat().st_mode & 0o111 else 0o644
 
 
 def pack_tar(dest: Path, stem: str, files: Sequence[tuple[Path, str]], mtime: int) -> Path:
@@ -122,34 +125,46 @@ def pack_tar(dest: Path, stem: str, files: Sequence[tuple[Path, str]], mtime: in
             info.mtime = mtime
             with open(path, 'rb') as content:
                 tar.addfile(info, content)
+    root = (0, 0, 'root', 'root')
+    expected = [(f'{stem}/{name}', path.stat().st_size, file_mode(path), mtime, root) for path, name in files]
     with tarfile.open(archive) as tar:
-        packed = [(member.name, member.size) for member in tar.getmembers()]
-    check_contents(archive, packed, stem, files)
+        packed = [
+            (member.name, member.size, member.mode, member.mtime, (member.uid, member.gid, member.uname, member.gname))
+            for member in tar.getmembers()
+        ]
+    check_contents(archive, packed, expected)
     return archive
 
 
 def pack_zip(dest: Path, stem: str, files: Sequence[tuple[Path, str]], mtime: int) -> Path:
     """Packs `files` as (path, name) into `stem`/ inside `stem`.zip."""
     archive = dest / f'{stem}.zip'
-    # Zip stores a local date and time without a zone; UTC keeps it stable.
-    date_time = time.gmtime(mtime)[:6]
+    # Zip stores a local date and time without a zone, to even seconds; UTC
+    # keeps it stable, and rounding makes the stored time the expected one.
+    date_time = time.gmtime(mtime - mtime % 2)[:6]
     with zipfile.ZipFile(archive, 'w') as zipped:
         for path, name in files:
             info = zipfile.ZipInfo(f'{stem}/{name}', date_time=date_time)
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = (0o100000 | file_mode(path)) << 16
             zipped.writestr(info, path.read_bytes())
+    expected = [(f'{stem}/{name}', path.stat().st_size, file_mode(path), date_time) for path, name in files]
     with zipfile.ZipFile(archive) as zipped:
         if zipped.testzip() is not None:
             raise SystemExit(f'{archive.name} is corrupt')
-        packed = [(info.filename, info.file_size) for info in zipped.infolist()]
-    check_contents(archive, packed, stem, files)
+        packed = [
+            (info.filename, info.file_size, info.external_attr >> 16 & 0o777, info.date_time)
+            for info in zipped.infolist()
+        ]
+    check_contents(archive, packed, expected)
     return archive
 
 
-def check_contents(archive: Path, packed: list[tuple[str, int]], stem: str, files: Sequence[tuple[Path, str]]):
-    """Stops unless `archive` holds exactly `files`, in order and at their full size."""
-    expected = [(f'{stem}/{name}', path.stat().st_size) for path, name in files]
+def check_contents(archive: Path, packed: list[tuple], expected: list[tuple]) -> None:
+    """
+    Stops unless `archive`, read back, holds exactly the expected entries in
+    order: name, full size, mode, time, and for a tar also the root owner.
+    """
     if packed != expected:
         raise SystemExit(f'{archive.name} holds {packed}, expected {expected}')
 
