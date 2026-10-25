@@ -12,7 +12,8 @@ pub fn pick(rng: &mut Rng, s: &'static str) -> &'static str {
 pub const TITLE_BY: &str = "AI Slop software";
 pub const TITLE_PRESENTS: &str = "uvádí";
 pub const TITLE: &str = "FLEK!";
-pub const VERSION: &str = "verze 0.2.0";
+/// Taken from Cargo.toml, so the title screen cannot fall behind a release.
+pub const VERSION: &str = concat!("verze ", env!("CARGO_PKG_VERSION"));
 pub const PRESS_ANY_KEY: &str = "Stiskni libovolnou klávesu";
 pub const PRESS_ANYTHING: &str = "Stiskni cokoli";
 pub const NOT_UNDERSTOOD: &str = "Nerozumím";
