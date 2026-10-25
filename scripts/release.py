@@ -1,6 +1,6 @@
 """Builds the release archives into dist/.
 
-Run it on Linux, from anywhere, on a committed tree:
+Run it on x86-64 Linux, from anywhere, on a committed tree:
 
     python3 scripts/release.py
 
@@ -9,27 +9,32 @@ It needs the MinGW toolchain and these rustup targets:
     rustup target add x86_64-pc-windows-gnu wasm32-unknown-unknown
 
 The version comes from Cargo.toml, and the dependencies are the ones in
-Cargo.lock (cargo runs with --locked). The script replaces the files in dist/
-with three archives, and only after every build has succeeded:
+Cargo.lock (cargo runs with --locked). Once every build has succeeded, three
+archives go into dist/ and replace any older openflek archives there:
 
 * openflek-<version>-linux-x86_64.tar.gz — the Linux binary
 * openflek-<version>-windows-x86_64.zip — the Windows binary
 * openflek-<version>-web.zip — the browser build, the files from target/web
 
 Each archive unpacks into a folder of the same name, which also holds LICENSE
-and README.md. The release profile strips the binaries. The Linux binary is
-checked with one headless deal before it is packed; the others are not run.
-The web folder is meant to be served over HTTP.
+and README.md. Files in them belong to root, have mode 755 or 644 and carry
+the time of the commit, not the builder's account or clock. The release
+profile strips the binaries. The Linux binary is checked with one headless
+deal before it is packed; the others are not run. The web folder is meant to
+be served over HTTP.
 """
 
 import argparse
+import gzip
 import logging
+import os
+import platform
 import re
-import shutil
 import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 import zipfile
 from collections.abc import Sequence
 from pathlib import Path
@@ -60,6 +65,14 @@ def crate_version() -> str:
     return found.group(1)
 
 
+def git(*args: str) -> str:
+    """Runs git in the repository and returns its output."""
+    result = subprocess.run(['git', *args], cwd=REPO_ROOT, stdout=subprocess.PIPE, text=True)
+    if result.returncode != 0:
+        raise SystemExit(f'git {args[0]} failed')
+    return result.stdout
+
+
 def run(cmd: list[str]) -> None:
     """Runs a command; a non-zero status stops the release."""
     result = subprocess.run(cmd)
@@ -69,16 +82,17 @@ def run(cmd: list[str]) -> None:
 
 def check_clean_tree() -> None:
     """Stops unless every tracked file is committed, so a release matches a commit."""
-    status = subprocess.run(
-        ['git', 'status', '--porcelain', '--untracked-files=no'],
-        cwd=REPO_ROOT,
-        stdout=subprocess.PIPE,
-        text=True,
-    )
-    if status.returncode != 0:
-        raise SystemExit('git status failed')
-    if status.stdout.strip():
-        raise SystemExit(f'commit these first, or pass --allow-dirty:\n{status.stdout.rstrip()}')
+    status = git('status', '--porcelain', '--untracked-files=no')
+    if status.strip():
+        raise SystemExit(f'commit these first, or pass --allow-dirty:\n{status.rstrip()}')
+
+
+def glibc_floor(binary: Path) -> str | None:
+    """The newest glibc symbol version `binary` asks for: the oldest glibc it runs on."""
+    versions = re.findall(rb'GLIBC_(\d+(?:\.\d+)+)', binary.read_bytes())
+    if not versions:
+        return None
+    return max(versions, key=lambda v: tuple(int(n) for n in v.split(b'.'))).decode()
 
 
 def with_docs(files: Sequence[tuple[Path, str]]) -> list[tuple[Path, str]]:
@@ -86,45 +100,74 @@ def with_docs(files: Sequence[tuple[Path, str]]) -> list[tuple[Path, str]]:
     return [*files, *((REPO_ROOT / name, name) for name in DOCS)]
 
 
-def pack_tar(dest: Path, stem: str, files: Sequence[tuple[Path, str]]) -> Path:
+def file_mode(path: Path) -> int:
+    """755 for programs, 644 for everything else, whatever the builder's umask."""
+    return 0o755 if os.access(path, os.X_OK) else 0o644
+
+
+def pack_tar(dest: Path, stem: str, files: Sequence[tuple[Path, str]], mtime: int) -> Path:
     """Packs `files` as (path, name) into `stem`/ inside `stem`.tar.gz."""
     archive = dest / f'{stem}.tar.gz'
-    with tarfile.open(archive, 'w:gz') as tar:
+    # The gzip header carries a time of its own, so the file is opened here.
+    with (
+        open(archive, 'wb') as raw,
+        gzip.GzipFile(fileobj=raw, mode='wb', mtime=mtime) as compressed,
+        tarfile.open(fileobj=compressed, mode='w') as tar,
+    ):
         for path, name in files:
-            tar.add(path, arcname=f'{stem}/{name}')
+            info = tar.gettarinfo(path, arcname=f'{stem}/{name}')
+            info.uid = info.gid = 0
+            info.uname = info.gname = 'root'
+            info.mode = file_mode(path)
+            info.mtime = mtime
+            with open(path, 'rb') as content:
+                tar.addfile(info, content)
     with tarfile.open(archive) as tar:
-        names = tar.getnames()
-    check_names(archive, names, stem, files)
+        packed = [(member.name, member.size) for member in tar.getmembers()]
+    check_contents(archive, packed, stem, files)
     return archive
 
 
-def pack_zip(dest: Path, stem: str, files: Sequence[tuple[Path, str]]) -> Path:
+def pack_zip(dest: Path, stem: str, files: Sequence[tuple[Path, str]], mtime: int) -> Path:
     """Packs `files` as (path, name) into `stem`/ inside `stem`.zip."""
     archive = dest / f'{stem}.zip'
-    with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED) as zipped:
+    # Zip stores a local date and time without a zone; UTC keeps it stable.
+    date_time = time.gmtime(mtime)[:6]
+    with zipfile.ZipFile(archive, 'w') as zipped:
         for path, name in files:
-            zipped.write(path, f'{stem}/{name}')
+            info = zipfile.ZipInfo(f'{stem}/{name}', date_time=date_time)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = (0o100000 | file_mode(path)) << 16
+            zipped.writestr(info, path.read_bytes())
     with zipfile.ZipFile(archive) as zipped:
-        names = zipped.namelist()
-    check_names(archive, names, stem, files)
+        if zipped.testzip() is not None:
+            raise SystemExit(f'{archive.name} is corrupt')
+        packed = [(info.filename, info.file_size) for info in zipped.infolist()]
+    check_contents(archive, packed, stem, files)
     return archive
 
 
-def check_names(archive: Path, names: list[str], stem: str, files: Sequence[tuple[Path, str]]) -> None:
-    expected = [f'{stem}/{name}' for _, name in files]
-    if names != expected:
-        raise SystemExit(f'{archive.name} should contain {", ".join(expected)}')
+def check_contents(archive: Path, packed: list[tuple[str, int]], stem: str, files: Sequence[tuple[Path, str]]):
+    """Stops unless `archive` holds exactly `files`, in order and at their full size."""
+    expected = [(f'{stem}/{name}', path.stat().st_size) for path, name in files]
+    if packed != expected:
+        raise SystemExit(f'{archive.name} holds {packed}, expected {expected}')
 
 
 def replace_dist(archives: list[Path]) -> None:
-    """Puts the finished archives into dist/, removing whatever files were there."""
-    DIST.mkdir(parents=True, exist_ok=True)
-    for old in DIST.iterdir():
-        if old.is_file():
-            old.unlink()
+    """
+    Moves the finished archives into dist/, then removes older openflek
+    archives. The archives are built inside dist/, so each move is a rename:
+    dist/ never holds a half-written file. Other files stay.
+    """
+    names = {archive.name for archive in archives}
     for archive in archives:
-        shutil.move(archive, DIST / archive.name)
-        LOG.info(f'{archive.name}')
+        archive.replace(DIST / archive.name)
+        LOG.info(f'dist/{archive.name}')
+    for old in sorted(DIST.glob('openflek-*')):
+        if old.name not in names and old.name.endswith(('.tar.gz', '.zip')):
+            old.unlink()
+            LOG.info(f'removed dist/{old.name}')
 
 
 def main():
@@ -136,11 +179,13 @@ def main():
     )
     args = argparser.parse_args()
     logging.basicConfig(level=logging.INFO, format='%(message)s')
-    if sys.platform != 'linux':
-        raise SystemExit('release.py builds the Linux and Windows archives, so it runs on Linux')
+    # The Linux archive is named x86_64 and holds a binary built for the host.
+    if sys.platform != 'linux' or platform.machine() != 'x86_64':
+        raise SystemExit('release.py runs on x86-64 Linux, which it builds the Linux binary for')
     if not args.allow_dirty:
         check_clean_tree()
     version = crate_version()
+    mtime = int(git('log', '-1', '--format=%ct').strip())
     build_web.cargo('build', '--release', '--locked')
     build_web.cargo('build', '--release', '--locked', '--target', WINDOWS)
     build_web.main()
@@ -151,15 +196,18 @@ def main():
     missing = [str(path) for path, _ in web if not path.is_file()]
     if missing:
         raise SystemExit(f'missing {", ".join(missing)}')
+    run([str(LINUX_BIN), '--headless', '--deals', '1', '--seed', '1', '--iq', '60', '--silent'])
+    LOG.info(f'the Linux binary needs ALSA (libasound2) and glibc {glibc_floor(LINUX_BIN) or "(any)"} or newer')
 
-    # dist/ is replaced only once every archive is packed and checked.
-    with tempfile.TemporaryDirectory() as tmp:
+    # Packed in a hidden folder inside dist/, so the final moves are renames;
+    # the archives appear in dist/ only once every one is packed and checked.
+    DIST.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=DIST, prefix='.packing-') as tmp:
         dest = Path(tmp)
-        run([str(LINUX_BIN), '--headless', '--deals', '1', '--seed', '1', '--iq', '60', '--silent'])
         archives = [
-            pack_tar(dest, f'openflek-{version}-linux-x86_64', with_docs([(LINUX_BIN, 'openflek')])),
-            pack_zip(dest, f'openflek-{version}-windows-x86_64', with_docs([(WINDOWS_BIN, 'openflek.exe')])),
-            pack_zip(dest, f'openflek-{version}-web', with_docs(web)),
+            pack_tar(dest, f'openflek-{version}-linux-x86_64', with_docs([(LINUX_BIN, 'openflek')]), mtime),
+            pack_zip(dest, f'openflek-{version}-windows-x86_64', with_docs([(WINDOWS_BIN, 'openflek.exe')]), mtime),
+            pack_zip(dest, f'openflek-{version}-web', with_docs(web), mtime),
         ]
         replace_dist(archives)
 

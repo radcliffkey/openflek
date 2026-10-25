@@ -85,7 +85,7 @@ files, so any web server works. In the browser:
 
 ### Releases
 
-On Linux, with the MinGW toolchain and the rustup targets
+On x86-64 Linux, with the MinGW toolchain and the rustup targets
 `x86_64-pc-windows-gnu` and `wasm32-unknown-unknown`:
 
 ```bash
@@ -94,10 +94,15 @@ python3 scripts/release.py
 
 It refuses to run while tracked files have uncommitted changes
 (`--allow-dirty` overrides that) and builds with the dependency versions in
-`Cargo.lock`. It replaces the files in `dist/` with three archives for the
-version in `Cargo.toml`: the Linux binary, the Windows binary, and the browser
-build. Each unpacks into a folder of its own name that also holds `LICENSE`
-and this README; serve the browser folder over HTTP.
+`Cargo.lock`. It puts three archives for the version in `Cargo.toml` into
+`dist/` (which git ignores), replacing older ones: the Linux binary, the
+Windows binary, and the browser build. Each unpacks into a folder of its own
+name that also holds `LICENSE` and this README; serve the browser folder over
+HTTP.
+
+The Linux binary needs ALSA at run time (`libasound2` on Debian and Ubuntu)
+and a glibc at least as new as the one it was built against; the script
+prints that version.
 
 ## Controls
 
