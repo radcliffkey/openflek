@@ -103,7 +103,7 @@ table in the README.
 - Avoid `unsafe` and avoid `unwrap()` outside tests. The one exception is the
   JavaScript FFI in `src/web.rs`; keep it there.
 - The browser build (`wasm32`) has no files, no process exit and no command
-  line: `config`, `ui::quit_prompt` and `main` branch on `target_arch` for it.
+  line: `config`, `Screen::exit` and `main` branch on `target_arch` for it.
   After touching those, check it with
   `cargo clippy --release --target wasm32-unknown-unknown`.
 - Commit messages are short, lowercase summaries (see `git log`).

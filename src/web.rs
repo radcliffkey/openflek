@@ -4,9 +4,10 @@
 //! nothing here: miniquad's own panic hook already prints them.
 
 use log::{Level, LevelFilter, Log, Metadata, Record};
+use macroquad::miniquad;
 
 /// Version of the JavaScript plugin this build expects.
-const PLUGIN_VERSION: u32 = 1;
+const PLUGIN_VERSION: u32 = 2;
 
 // Implemented in web/openflek.js. Strings cross as pointer and length into
 // wasm memory; a reader returns the full UTF-8 length (copying only if it
@@ -16,7 +17,6 @@ unsafe extern "C" {
     fn openflek_storage_get(key: *const u8, key_len: usize, buf: *mut u8, cap: usize) -> i32;
     fn openflek_storage_set(key: *const u8, key_len: usize, value: *const u8, value_len: usize);
     fn openflek_query(buf: *mut u8, cap: usize) -> i32;
-    fn openflek_console_log(level: u32, msg: *const u8, len: usize);
     fn openflek_reload();
 }
 
@@ -49,7 +49,8 @@ pub fn storage_set(key: &str, value: &str) {
     unsafe { openflek_storage_set(key.as_ptr(), key.len(), value.as_ptr(), value.len()) }
 }
 
-/// The page's query string, including the leading `?`, if any.
+/// The page's query parameters, decoded by the browser, one `name=value`
+/// per line.
 pub fn query() -> String {
     // SAFETY: the JavaScript side writes at most `cap` bytes into `buf`.
     read_string(|buf, cap| unsafe { openflek_query(buf, cap) }).unwrap_or_default()
@@ -61,19 +62,31 @@ pub fn reload() {
     unsafe { openflek_reload() }
 }
 
-/// Sends `log` records to the browser console.
+/// Hands `log` records to miniquad, which prints them on the browser console.
 struct ConsoleLogger;
 
 impl Log for ConsoleLogger {
-    fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level() <= Level::Info
+    /// `log::set_max_level` does the filtering.
+    fn enabled(&self, _: &Metadata) -> bool {
+        true
     }
 
     fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            let msg = record.args().to_string();
-            // SAFETY: `msg` stays alive for the call, which only reads it.
-            unsafe { openflek_console_log(record.level() as u32, msg.as_ptr(), msg.len()) }
+        let args = record.args();
+        // miniquad's macros end in `;`, so they have to stand as statements.
+        match record.level() {
+            Level::Error => {
+                miniquad::error!("{}", args);
+            }
+            Level::Warn => {
+                miniquad::warn!("{}", args);
+            }
+            Level::Info => {
+                miniquad::info!("{}", args);
+            }
+            Level::Debug | Level::Trace => {
+                miniquad::debug!("{}", args);
+            }
         }
     }
 
@@ -81,8 +94,7 @@ impl Log for ConsoleLogger {
 }
 
 pub fn init_logger() {
-    static LOGGER: ConsoleLogger = ConsoleLogger;
-    if log::set_logger(&LOGGER).is_ok() {
+    if log::set_logger(&ConsoleLogger).is_ok() {
         log::set_max_level(LevelFilter::Info);
     }
 }

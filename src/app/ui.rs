@@ -460,16 +460,7 @@ pub async fn quit_prompt(ctx: &mut Ctx) {
     let menu = yes_no_menu(1, 1, &title, false);
     if run_menu(ctx, &menu, color::LIGHT_RED, MenuMode::Lenient).await == 0 {
         Box::pin(super::title::credits(ctx)).await;
-        #[cfg(not(target_arch = "wasm32"))]
-        std::process::exit(0);
-        #[cfg(target_arch = "wasm32")]
-        {
-            crate::web::reload();
-            // Keep the credits on screen until the page goes away.
-            loop {
-                ctx.scr.frame().await;
-            }
-        }
+        ctx.scr.exit().await;
     }
 }
 

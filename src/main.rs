@@ -41,10 +41,7 @@ fn main() {
 fn main() {
     use openflek::web;
     web::init_logger();
-    let mut opts = Options::from_query(&web::query());
-    // A page has no headless mode and no directory to save screenshots in.
-    opts.headless = false;
-    opts.shots = None;
+    let opts = Options::from_query(&web::query());
     macroquad::Window::from_config(window_conf(), async move {
         app::run(opts).await;
         web::reload();

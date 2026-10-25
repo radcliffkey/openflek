@@ -102,21 +102,27 @@ impl Config {
         base.map(|b| b.join("openflek").join("openflek.cfg"))
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
     pub fn load() -> Config {
-        match Config::path().and_then(|p| std::fs::read_to_string(p).ok()) {
-            Some(text) => Config::from_text(&text),
-            None => Config::default(),
-        }
+        Config::read().map_or_else(Config::default, |text| Config::from_text(&text))
+    }
+
+    pub fn save(&self) {
+        Config::write(&self.to_text());
+    }
+
+    /// The stored settings text, if there is any.
+    #[cfg(not(target_arch = "wasm32"))]
+    fn read() -> Option<String> {
+        std::fs::read_to_string(Config::path()?).ok()
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn save(&self) {
+    fn write(text: &str) {
         let Some(path) = Config::path() else { return };
         let result = path
             .parent()
             .map_or(Ok(()), std::fs::create_dir_all)
-            .and_then(|_| std::fs::write(&path, self.to_text()));
+            .and_then(|_| std::fs::write(&path, text));
         match result {
             Ok(()) => log::info!("settings saved to {}", path.display()),
             Err(e) => log::warn!("cannot save settings to {}: {e}", path.display()),
@@ -124,13 +130,13 @@ impl Config {
     }
 
     #[cfg(target_arch = "wasm32")]
-    pub fn load() -> Config {
-        crate::web::storage_get(STORAGE_KEY).map_or_else(Config::default, |t| Config::from_text(&t))
+    fn read() -> Option<String> {
+        crate::web::storage_get(STORAGE_KEY)
     }
 
     #[cfg(target_arch = "wasm32")]
-    pub fn save(&self) {
-        crate::web::storage_set(STORAGE_KEY, &self.to_text());
+    fn write(text: &str) {
+        crate::web::storage_set(STORAGE_KEY, text);
     }
 }
 

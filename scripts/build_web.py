@@ -46,7 +46,7 @@ def crate_dirs(names: Sequence[str]) -> list[Path]:
     there. macroquad's prebuilt mq_js_bundle.js is not used: its quad-net part
     throws in strict mode, and the game needs neither that nor sapp-jsutils.
     """
-    meta = json.loads(cargo('metadata', '--format-version', '1', '--filter-platform', TARGET))
+    meta = json.loads(cargo('metadata', '--locked', '--format-version', '1', '--filter-platform', TARGET))
     dirs = {p['name']: Path(p['manifest_path']).parent for p in meta['packages']}
     return [dirs[name] for name in names]
 
@@ -73,7 +73,8 @@ def versioned(page: str, name: str, content: bytes) -> str:
 
 def main():
     logging.basicConfig(level=logging.INFO, format='%(message)s')
-    cargo('build', '--release', '--target', TARGET)
+    # --locked: build with the dependencies in Cargo.lock, never re-resolve them.
+    cargo('build', '--release', '--locked', '--target', TARGET)
     miniquad, quad_snd = crate_dirs(['miniquad', 'quad-snd'])
     audio_js = (quad_snd / 'js' / 'audio.js').read_text(encoding='utf-8')
     files = {

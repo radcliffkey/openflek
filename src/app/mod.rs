@@ -37,19 +37,56 @@ pub struct Options {
     pub deals: Option<u32>,
 }
 
-/// Every switch by its long name, and whether a value follows it. `parse`
-/// and `from_query` both look names up here.
-const SWITCHES: &[(&str, bool)] = &[
-    ("quick", false),
-    ("silent", false),
-    ("skip-intro", false),
-    ("autoplay", false),
-    ("headless", false),
-    ("iq", true),
-    ("seed", true),
-    ("shots", true),
-    ("deals", true),
+/// How a switch sets the options from its value (flags ignore the value).
+type Setter = fn(&mut Options, &str) -> Result<(), String>;
+
+/// Every switch: its long name, whether a value follows it, and how it sets
+/// the options. `parse` and `from_query` both look switches up here.
+const SWITCHES: &[(&str, bool, Setter)] = &[
+    ("quick", false, |o, _| {
+        o.quick = true;
+        Ok(())
+    }),
+    ("silent", false, |o, _| {
+        o.no_sound = true;
+        Ok(())
+    }),
+    ("skip-intro", false, |o, _| {
+        o.skip_intro = true;
+        Ok(())
+    }),
+    ("autoplay", false, |o, _| {
+        o.autoplay = true;
+        Ok(())
+    }),
+    ("headless", false, |o, _| {
+        o.headless = true;
+        Ok(())
+    }),
+    ("iq", true, |o, v| {
+        o.iq = Some(v.parse().map_err(|_| "--iq takes 0..255")?);
+        Ok(())
+    }),
+    ("seed", true, |o, v| {
+        o.seed = Some(v.parse().map_err(|_| "--seed takes a number")?);
+        Ok(())
+    }),
+    ("shots", true, |o, v| {
+        o.shots = Some(v.to_owned());
+        Ok(())
+    }),
+    ("deals", true, |o, v| {
+        o.deals = Some(v.parse().map_err(|_| "--deals takes a number")?);
+        Ok(())
+    }),
 ];
+
+fn switch(name: &str) -> Option<(bool, Setter)> {
+    SWITCHES
+        .iter()
+        .find(|s| s.0 == name)
+        .map(|&(_, takes_value, set)| (takes_value, set))
+}
 
 impl Options {
     pub fn parse(args: &[String]) -> Result<Options, String> {
@@ -61,7 +98,7 @@ impl Options {
                 "-s" => "silent",
                 _ => a.strip_prefix("--").unwrap_or_default(),
             };
-            let Some(takes_value) = takes_value(name) else {
+            let Some((takes_value, set)) = switch(name) else {
                 return Err(format!("unknown option {a}"));
             };
             let value = if takes_value {
@@ -69,85 +106,48 @@ impl Options {
             } else {
                 ""
             };
-            o.set(name, value)?;
+            set(&mut o, value)?;
         }
         Ok(o)
     }
 
-    /// Applies one switch from [`SWITCHES`]; flags ignore `value`.
-    fn set(&mut self, name: &str, value: &str) -> Result<(), String> {
-        match name {
-            "quick" => self.quick = true,
-            "silent" => self.no_sound = true,
-            "skip-intro" => self.skip_intro = true,
-            "autoplay" => self.autoplay = true,
-            "headless" => self.headless = true,
-            "iq" => self.iq = Some(value.parse().map_err(|_| "--iq takes 0..255")?),
-            "seed" => self.seed = Some(value.parse().map_err(|_| "--seed takes a number")?),
-            "shots" => self.shots = Some(value.to_owned()),
-            "deals" => self.deals = Some(value.parse().map_err(|_| "--deals takes a number")?),
-            other => return Err(format!("unknown option --{other}")),
-        }
-        Ok(())
-    }
-
-    /// Reads the switches from a URL query string such as `?quick&iq=60`,
-    /// which stands in for the command line in the browser.
+    /// Reads the switches from the page's query parameters, which stand in
+    /// for the command line in the browser. They come decoded by the
+    /// browser, one `name=value` per line (see `web::query`).
     ///
-    /// Names and values are percent-decoded. A flag may be written `quick`
-    /// or `quick=1`; `quick=0` leaves it off. Unknown names are ignored, so
-    /// a link can carry extra parameters, and a bad pair is logged and
-    /// skipped without dropping the switches next to it.
-    pub fn from_query(query: &str) -> Options {
+    /// A flag may be written `quick` or `quick=1`; `quick=0` leaves it off.
+    /// Unknown names are ignored, so a link can carry extra parameters, and
+    /// so are `headless` and `shots`, which a page cannot honour. A bad pair
+    /// is logged and skipped without dropping the switches next to it.
+    pub fn from_query(params: &str) -> Options {
         let mut o = Options::default();
-        for pair in query.trim_start_matches('?').split('&') {
-            let (name, value) = pair.split_once('=').unwrap_or((pair, ""));
-            let (name, value) = (query_decode(name), query_decode(value));
-            let result = match takes_value(&name) {
-                None => continue,
-                Some(true) if value.is_empty() => Err(format!("--{name} needs a value")),
-                Some(true) => o.set(&name, &value),
-                Some(false) => match value.to_ascii_lowercase().as_str() {
-                    "" | "1" | "true" | "yes" | "on" => o.set(&name, ""),
+        for param in params.lines() {
+            let (name, value) = param.split_once('=').unwrap_or((param, ""));
+            if matches!(name, "headless" | "shots") {
+                continue;
+            }
+            let Some((takes_value, set)) = switch(name) else {
+                continue;
+            };
+            let result = if takes_value {
+                if value.is_empty() {
+                    Err(format!("--{name} needs a value"))
+                } else {
+                    set(&mut o, value)
+                }
+            } else {
+                match value.to_ascii_lowercase().as_str() {
+                    "" | "1" | "true" | "yes" | "on" => set(&mut o, ""),
                     "0" | "false" | "no" | "off" => Ok(()),
                     _ => Err(format!("--{name} takes no value")),
-                },
+                }
             };
             if let Err(e) = result {
-                log::warn!("ignoring {pair:?} in the query: {e}");
+                log::warn!("ignoring {param:?} in the query: {e}");
             }
         }
         o
     }
-}
-
-/// Whether switch `name` takes a value, or `None` if there is no such switch.
-fn takes_value(name: &str) -> Option<bool> {
-    SWITCHES
-        .iter()
-        .find(|&&(n, _)| n == name)
-        .map(|&(_, value)| value)
-}
-
-/// Percent-decodes one query component. `+` is a space, as in a form query.
-fn query_decode(raw: &str) -> String {
-    let spaced = raw.replace('+', " ");
-    let bytes = spaced.as_bytes();
-    let mut out = Vec::with_capacity(bytes.len());
-    let mut i = 0;
-    while i < bytes.len() {
-        if bytes[i] == b'%' && i + 2 < bytes.len() {
-            let hex = std::str::from_utf8(&bytes[i + 1..i + 3]).unwrap_or("");
-            if let Ok(v) = u8::from_str_radix(hex, 16) {
-                out.push(v);
-                i += 3;
-                continue;
-            }
-        }
-        out.push(bytes[i]);
-        i += 1;
-    }
-    String::from_utf8_lossy(&out).into_owned()
 }
 
 /// Everything the game needs while it runs.
@@ -319,37 +319,20 @@ mod tests {
     }
 
     #[test]
-    fn every_switch_is_handled() {
-        for &(name, _) in SWITCHES {
-            assert!(Options::default().set(name, "1").is_ok(), "--{name}");
-        }
-        assert!(Options::parse(&args("quick")).is_err());
-    }
-
-    #[test]
-    fn parses_query_string() {
-        let o = Options::from_query("?quick&iq=60&seed=7&skip-intro=");
+    fn parses_query_parameters() {
+        let o = Options::from_query("quick=\niq=60\nseed=7\nskip-intro=");
         assert!(o.quick && o.skip_intro && !o.no_sound);
         assert_eq!((o.iq, o.seed), (Some(60), Some(7)));
         let o = Options::from_query("");
         assert!(!o.quick && o.iq.is_none());
         // Tracking parameters and bad pairs leave the other switches alone.
-        let o = Options::from_query("?quick=1&fbclid=abc&iq=%36%30&silent=0&seed");
+        let o = Options::from_query("quick=1\nfbclid=abc\niq=60\nsilent=0\nseed=");
         assert!(o.quick && !o.no_sound && o.seed.is_none());
         assert_eq!(o.iq, Some(60));
-        let o = Options::from_query("?iq=300&quick=TRUE&silent=banana&shots");
-        assert!(o.quick && !o.no_sound && o.iq.is_none() && o.shots.is_none());
-    }
-
-    #[test]
-    fn decodes_query_components() {
-        assert_eq!(query_decode("a+b%20c"), "a b c");
-        assert_eq!(query_decode("%C4%9B"), "ě");
-        assert_eq!(query_decode("%2B%3D%26"), "+=&");
-        // Malformed escapes stay as they are.
-        assert_eq!(query_decode("%"), "%");
-        assert_eq!(query_decode("%4"), "%4");
-        assert_eq!(query_decode("%zz%4"), "%zz%4");
-        assert_eq!(query_decode("%C4"), "\u{FFFD}");
+        let o = Options::from_query("iq=300\nquick=TRUE\nsilent=banana");
+        assert!(o.quick && !o.no_sound && o.iq.is_none());
+        // A page cannot run headless or save screenshots.
+        let o = Options::from_query("headless\nshots=/tmp");
+        assert!(!o.headless && o.shots.is_none());
     }
 }
