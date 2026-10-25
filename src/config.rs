@@ -1,6 +1,8 @@
-//! User settings, stored as `key=value` lines in the platform config directory.
+//! User settings, stored as `key=value` lines in the platform config directory
+//! (in `localStorage` in the browser).
 
 use crate::gfx::Pattern;
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -86,6 +88,7 @@ impl Config {
         c
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     fn path() -> Option<PathBuf> {
         let base = if cfg!(target_os = "windows") {
             std::env::var_os("APPDATA").map(PathBuf::from)
@@ -99,6 +102,7 @@ impl Config {
         base.map(|b| b.join("openflek").join("openflek.cfg"))
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn load() -> Config {
         match Config::path().and_then(|p| std::fs::read_to_string(p).ok()) {
             Some(text) => Config::from_text(&text),
@@ -106,6 +110,7 @@ impl Config {
         }
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn save(&self) {
         let Some(path) = Config::path() else { return };
         let result = path
@@ -117,7 +122,21 @@ impl Config {
             Err(e) => log::warn!("cannot save settings to {}: {e}", path.display()),
         }
     }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn load() -> Config {
+        crate::web::storage_get(STORAGE_KEY).map_or_else(Config::default, |t| Config::from_text(&t))
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn save(&self) {
+        crate::web::storage_set(STORAGE_KEY, &self.to_text());
+    }
 }
+
+/// The `localStorage` entry holding the settings in the browser.
+#[cfg(target_arch = "wasm32")]
+const STORAGE_KEY: &str = "openflek.cfg";
 
 #[cfg(test)]
 mod tests {

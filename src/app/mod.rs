@@ -74,6 +74,23 @@ impl Options {
         }
         Ok(o)
     }
+
+    /// Reads the switches from a URL query string such as `?quick&iq=60`,
+    /// which stands in for the command line in the browser.
+    pub fn from_query(query: &str) -> Result<Options, String> {
+        let mut args = Vec::new();
+        for pair in query.trim_start_matches('?').split('&') {
+            let (name, value) = pair.split_once('=').unwrap_or((pair, ""));
+            if name.is_empty() {
+                continue;
+            }
+            args.push(format!("--{name}"));
+            if !value.is_empty() {
+                args.push(value.to_owned());
+            }
+        }
+        Options::parse(&args)
+    }
 }
 
 /// Everything the game needs while it runs.
@@ -242,5 +259,15 @@ mod tests {
         assert_eq!((o.iq, o.seed), (Some(120), Some(7)));
         assert!(Options::parse(&args("--iq 300")).is_err());
         assert!(Options::parse(&args("--bogus")).is_err());
+    }
+
+    #[test]
+    fn parses_query_string() {
+        let o = Options::from_query("?quick&iq=60&seed=7&skip-intro=").unwrap();
+        assert!(o.quick && o.skip_intro && !o.no_sound);
+        assert_eq!((o.iq, o.seed), (Some(60), Some(7)));
+        assert!(Options::from_query("").is_ok_and(|o| !o.quick && o.iq.is_none()));
+        assert!(Options::from_query("?iq=300").is_err());
+        assert!(Options::from_query("?bogus").is_err());
     }
 }

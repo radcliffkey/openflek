@@ -9,6 +9,9 @@ license = "MIT"
 macroquad = "0.4"
 font8x8 = "0.3"
 log = "0.4"
+
+# The browser build logs to the console instead (see `web`).
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = { version = "0.11", default-features = false, features = ["auto-color"] }
 
 [features]

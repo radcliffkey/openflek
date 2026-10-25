@@ -11,6 +11,7 @@ fn window_conf() -> Conf {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn main() {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -30,4 +31,22 @@ fn main() {
     } else {
         macroquad::Window::from_config(window_conf(), app::run(opts));
     }
+}
+
+/// In the browser the switches come from the query string, e.g. `?quick&iq=60`.
+#[cfg(target_arch = "wasm32")]
+fn main() {
+    use openflek::web;
+    web::init_logger();
+    let mut opts = Options::from_query(&web::query()).unwrap_or_else(|e| {
+        log::error!("{e}");
+        Options::default()
+    });
+    // A page has no headless mode and no directory to save screenshots in.
+    opts.headless = false;
+    opts.shots = None;
+    macroquad::Window::from_config(window_conf(), async move {
+        app::run(opts).await;
+        web::reload();
+    });
 }
