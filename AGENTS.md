@@ -40,6 +40,8 @@ Before you hand work back, run `cargo fmt`, `cargo clippy --all-targets` and
 | `scripts/deck_gen/` | Python generator for the card faces in `deck_data.bin` |
 | `src/app/` | game flow (`flow`), dialogs (`ui`), table drawing, options, title screen, all UI strings (`text`) |
 | `src/config.rs`, `src/sound.rs` | settings file; square-wave PC-speaker sounds |
+| `src/web.rs`, `web/`, `scripts/build_web.py` | browser build: `localStorage`, query string and console glue (Rust side and miniquad JS plugin), the page, the build script |
+| `scripts/release.py` | packs `dist/` from a committed tree: Linux tar.gz, Windows zip, browser zip, each with LICENSE and README |
 | `tests/headless.rs` | plays full deals through the real flow without a window |
 
 Only `src/app/mod.rs`, `src/app/screen.rs`, `src/gfx/png.rs` and `src/main.rs`
@@ -99,5 +101,10 @@ table in the README.
   decision (betl, durch, seven, re, flek). If an AI change breaks
   `human_seat_takes_every_kind_of_decision`, pick new seeds that cover every
   case again. Don't weaken the assertions.
-- Avoid `unsafe` and avoid `unwrap()` outside tests.
+- Avoid `unsafe` and avoid `unwrap()` outside tests. The one exception is the
+  JavaScript FFI in `src/web.rs`; keep it there.
+- The browser build (`wasm32`) has no files, no process exit and no command
+  line: `config`, `Screen::exit` and `main` branch on `target_arch` for it.
+  After touching those, check it with
+  `cargo clippy --release --target wasm32-unknown-unknown`.
 - Commit messages are short, lowercase summaries (see `git log`).

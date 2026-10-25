@@ -460,7 +460,7 @@ pub async fn quit_prompt(ctx: &mut Ctx) {
     let menu = yes_no_menu(1, 1, &title, false);
     if run_menu(ctx, &menu, color::LIGHT_RED, MenuMode::Lenient).await == 0 {
         Box::pin(super::title::credits(ctx)).await;
-        std::process::exit(0);
+        ctx.scr.exit().await;
     }
 }
 

@@ -61,6 +61,49 @@ Settings (sound, table colour, table pattern, menu colour, IQ) are saved to
 `openflek.cfg` in the platform config directory (`~/.config/openflek` on Linux).
 A windowed run writes that file at start-up.
 
+### In a web browser
+
+The game also builds to WebAssembly. Install the target once, then build the
+page into `target/web` with the Python 3 script and serve it over HTTP:
+
+```bash
+rustup target add wasm32-unknown-unknown
+python3 scripts/build_web.py
+python3 -m http.server -d target/web
+```
+
+Open <http://localhost:8000>. The browser needs WebGL. The page is plain static
+files, so any web server works. In the browser:
+
+* switches go in the query string, e.g. `?quick&iq=60&seed=7` or `?quick=1`.
+  Unknown names, bad values (logged to the console), `headless` and `shots`
+  are ignored;
+* settings are kept in the browser's `localStorage` instead of `openflek.cfg`;
+* when the game ends (Esc and quit, no further game, or an empty balance) the
+  credits play and the page reloads, back at the title screen;
+* sound starts after the first key press or click, as browsers require.
+
+### Releases
+
+On x86-64 Linux, with the MinGW toolchain and the rustup targets
+`x86_64-pc-windows-gnu` and `wasm32-unknown-unknown`:
+
+```bash
+python3 scripts/release.py
+```
+
+It refuses to run while tracked files have uncommitted changes
+(`--allow-dirty` overrides that) and builds with the dependency versions in
+`Cargo.lock`. It puts three archives for the version in `Cargo.toml` into
+`dist/` (which git ignores), replacing older ones: the Linux binary, the
+Windows binary, and the browser build. Each unpacks into a folder of its own
+name that also holds `LICENSE` and this README; serve the browser folder over
+HTTP.
+
+The Linux binary needs ALSA at run time (`libasound2` on Debian and Ubuntu)
+and a glibc at least as new as the one it was built against; the script
+prints that version.
+
 ## Controls
 
 Keyboard, as in the original; the mouse works too.
@@ -107,6 +150,7 @@ Keyboard, as in the original; the mouse works too.
 | `scripts/deck_gen/` | Python generator for the card faces: `python3 scripts/deck_gen/build_sheet.py` rewrites `deck_data.bin` |
 | `src/app/` | screens and dialogs, the game flow, options, title screen |
 | `src/config.rs`, `src/sound.rs` | settings file; square-wave "PC speaker" sounds |
+| `src/web.rs`, `web/` | browser build: Rust and JavaScript glue, the page; `scripts/build_web.py` assembles it |
 | `examples/card_sheet.rs` | renders the deck to a PNG: `cargo run --example card_sheet -- out.png 2` |
 
 ## Testing

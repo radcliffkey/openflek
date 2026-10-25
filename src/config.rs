@@ -1,6 +1,8 @@
-//! User settings, stored as `key=value` lines in the platform config directory.
+//! User settings, stored as `key=value` lines in the platform config directory
+//! (in `localStorage` in the browser).
 
 use crate::gfx::Pattern;
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -86,6 +88,7 @@ impl Config {
         c
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     fn path() -> Option<PathBuf> {
         let base = if cfg!(target_os = "windows") {
             std::env::var_os("APPDATA").map(PathBuf::from)
@@ -100,24 +103,46 @@ impl Config {
     }
 
     pub fn load() -> Config {
-        match Config::path().and_then(|p| std::fs::read_to_string(p).ok()) {
-            Some(text) => Config::from_text(&text),
-            None => Config::default(),
-        }
+        Config::read().map_or_else(Config::default, |text| Config::from_text(&text))
     }
 
     pub fn save(&self) {
+        Config::write(&self.to_text());
+    }
+
+    /// The stored settings text, if there is any.
+    #[cfg(not(target_arch = "wasm32"))]
+    fn read() -> Option<String> {
+        std::fs::read_to_string(Config::path()?).ok()
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn write(text: &str) {
         let Some(path) = Config::path() else { return };
         let result = path
             .parent()
             .map_or(Ok(()), std::fs::create_dir_all)
-            .and_then(|_| std::fs::write(&path, self.to_text()));
+            .and_then(|_| std::fs::write(&path, text));
         match result {
             Ok(()) => log::info!("settings saved to {}", path.display()),
             Err(e) => log::warn!("cannot save settings to {}: {e}", path.display()),
         }
     }
+
+    #[cfg(target_arch = "wasm32")]
+    fn read() -> Option<String> {
+        crate::web::storage_get(STORAGE_KEY)
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn write(text: &str) {
+        crate::web::storage_set(STORAGE_KEY, text);
+    }
 }
+
+/// The `localStorage` entry holding the settings in the browser.
+#[cfg(target_arch = "wasm32")]
+const STORAGE_KEY: &str = "openflek.cfg";
 
 #[cfg(test)]
 mod tests {

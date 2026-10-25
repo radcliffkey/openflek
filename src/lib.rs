@@ -6,3 +6,5 @@ pub mod config;
 pub mod game;
 pub mod gfx;
 pub mod sound;
+#[cfg(target_arch = "wasm32")]
+pub mod web;

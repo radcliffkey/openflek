@@ -300,6 +300,20 @@ impl Screen {
         }
     }
 
+    /// Ends the program. A page cannot close itself, so in the browser this
+    /// reloads it and keeps the last screen up until the page goes away.
+    pub async fn exit(&mut self) {
+        #[cfg(not(target_arch = "wasm32"))]
+        std::process::exit(0);
+        #[cfg(target_arch = "wasm32")]
+        {
+            crate::web::reload();
+            loop {
+                self.frame().await;
+            }
+        }
+    }
+
     /// Plays a tune without waiting for it to finish.
     #[cfg(feature = "sound")]
     pub async fn play(&mut self, tune: &[Tone]) {

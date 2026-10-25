@@ -1,0 +1,5 @@
+# quad-snd declares its JavaScript imports without a wasm import module, and
+# newer Rust no longer lets such symbols through by default. Let the linker
+# turn them into imports from "env", which quad-snd's audio.js provides.
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "link-arg=--allow-undefined"]

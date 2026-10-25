@@ -1,6 +1,6 @@
 [package]
 name = "openflek"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 description = "Open-source remake of the 1992 Czech DOS card game Flek!"
 license = "MIT"
@@ -9,12 +9,23 @@ license = "MIT"
 macroquad = "0.4"
 font8x8 = "0.3"
 log = "0.4"
+
+# The browser build logs to the console instead (see `web`).
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = { version = "0.11", default-features = false, features = ["auto-color"] }
 
 [features]
 default = ["sound"]
 # PC-speaker style sound; on Linux it needs the ALSA development package.
 sound = ["macroquad/audio"]
+
+# Smaller binaries: the wasm shrinks by about a fifth, and the Windows exe
+# loses its symbol table. `cargo test` and plain `cargo run` use dev.
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
 
 [profile.dev]
 opt-level = 1
