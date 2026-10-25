@@ -83,6 +83,22 @@ files, so any web server works. In the browser:
   credits play and the page reloads, back at the title screen;
 * sound starts after the first key press or click, as browsers require.
 
+### Releases
+
+On Linux, with the MinGW toolchain and the rustup targets
+`x86_64-pc-windows-gnu` and `wasm32-unknown-unknown`:
+
+```bash
+python3 scripts/release.py
+```
+
+It refuses to run while tracked files have uncommitted changes
+(`--allow-dirty` overrides that) and builds with the dependency versions in
+`Cargo.lock`. It replaces the files in `dist/` with three archives for the
+version in `Cargo.toml`: the Linux binary, the Windows binary, and the browser
+build. Each unpacks into a folder of its own name that also holds `LICENSE`
+and this README; serve the browser folder over HTTP.
+
 ## Controls
 
 Keyboard, as in the original; the mouse works too.

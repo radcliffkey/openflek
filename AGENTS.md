@@ -41,6 +41,7 @@ Before you hand work back, run `cargo fmt`, `cargo clippy --all-targets` and
 | `src/app/` | game flow (`flow`), dialogs (`ui`), table drawing, options, title screen, all UI strings (`text`) |
 | `src/config.rs`, `src/sound.rs` | settings file; square-wave PC-speaker sounds |
 | `src/web.rs`, `web/`, `scripts/build_web.py` | browser build: `localStorage`, query string and console glue (Rust side and miniquad JS plugin), the page, the build script |
+| `scripts/release.py` | packs `dist/` from a committed tree: Linux tar.gz, Windows zip, browser zip, each with LICENSE and README |
 | `tests/headless.rs` | plays full deals through the real flow without a window |
 
 Only `src/app/mod.rs`, `src/app/screen.rs`, `src/gfx/png.rs` and `src/main.rs`
