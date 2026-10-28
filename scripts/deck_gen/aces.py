@@ -20,7 +20,7 @@ from scripts.deck_gen.palette import (
 from scripts.deck_gen import animals, people
 from scripts.deck_gen.palette import checker, fill_terrain
 from scripts.deck_gen.rig import Rig, darker
-from scripts.deck_gen.symbols import draw_shrub, draw_suit
+from scripts.deck_gen.symbols import draw_shrub, draw_suit, draw_suit_leaning
 
 
 # Small round hawk-bell (7x8) charged on the Bell Ace shield: a loop on top,
@@ -79,9 +79,9 @@ def draw_ace_acorn(c):
     """Draws the Acorn Ace with arched OPENFLEK ribbon, top acorns & woodland crest."""
     _fill_ace_ground(c, top_y=54, water=True)
 
-    # Top left & right acorns with oak-leaf garlands
-    draw_suit(c, 0, 10, 12, 'v')
-    draw_suit(c, 0, 50, 12, 'v')
+    # Top left & right acorns with oak-leaf garlands, leaning outwards, their stems under the ribbon
+    draw_suit_leaning(c, 0, 15, 22, -30)
+    draw_suit_leaning(c, 0, 45, 22, 30)
 
     # Top central floral jewel & oak sprigs (x=23..37, y=4..19)
     c.fill_ellipse(30, 9, 4, 4, LIGHT_RED, RED, outline=DARK_GRAY)
@@ -150,9 +150,9 @@ def draw_ace_leaf(c):
     """Draws the Leaf Ace: Crowned Bohemian Double-Tailed Lion inside a Linden Wreath."""
     _fill_ace_ground(c, top_y=52, water=True)
 
-    # Top-left and top-right leaves
-    draw_suit(c, 1, 10, 11, 'v')
-    draw_suit(c, 1, 50, 11, 'v')
+    # Top-left and top-right leaves, leaning outwards from behind the shield
+    draw_suit_leaning(c, 1, 15, 19, -32, size=0.95, width=1.2)
+    draw_suit_leaning(c, 1, 45, 19, 32, size=0.95, width=1.2)
 
     # Lush linden & oak wreath wrapping around the shield (center=(30, 50), rx=27, ry=29)
     c.fill_ellipse(30, 50, 27, 29, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='checker')

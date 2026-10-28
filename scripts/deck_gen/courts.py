@@ -251,10 +251,10 @@ HEART_CHALICE = [
 OBER_COAT = dict(hem=61, flare=10)
 
 
-def _standing(c, suit, flip, look, arms, legs, back_props=None, front_props=None, pose=None):
+def _standing(c, suit, flip, look, arms, legs, back_props=None, front_props=None, pose=None, back_over=False):
     """Draws a standing court figure and grounds it: grass (or a shadow on cobbles) under each boot sole."""
     r = Rig(c, flip=flip)
-    F.draw_standing(r, look, arms, legs, back_props=back_props, front_props=front_props, pose=pose)
+    F.draw_standing(r, look, arms, legs, back_props=back_props, front_props=front_props, pose=pose, back_over=back_over)
     # The middle of each sole, halfway from ankle to toe, wherever mirroring put it.
     _tufts(c, suit, [round(r.tx((ankle[0] + toe[0]) / 2, 0)[0]) for _, _, ankle, toe in legs])
     return r
@@ -314,12 +314,13 @@ def draw_unter(c, suit):
         def flute(r):
             # Mouthpiece at the lips, the tube running sideways and a little down.
             # It stops short of the card's border so the end reads as the end.
-            # The hands go under the tube, so it runs unbroken between the fingers.
-            F.draw_hand(r, 40, 20, grip=True)
-            F.draw_hand(r, 49, 21, grip=True)
             r.part().capsule(34, 18.5, 55, 21.7, 1.5).paint(YELLOW, None, outline=BROWN)
             for x in (44, 52, 54):
                 r.put(x, 18.5 + (x - 34) * 3.2 / 21, BROWN)
+            # The hands hold the tube from below, fingers curled over its near
+            # side: drawn under it, they were all but hidden.
+            F.draw_hand(r, 39.5, 21.5, grip=True, toward=(32, 27))
+            F.draw_hand(r, 48.5, 23, grip=True, toward=(45, 27))
 
         _standing(c, suit, True, look, arms, legs, front_props=flute)
         draw_suit(c, 1, 10, 72, 'v')
@@ -352,7 +353,7 @@ def draw_unter(c, suit):
             # it doesn't read as a hollow tube.
             r.line(48, 55, 48, 85, LIGHT_CYAN)
 
-        _standing(c, suit, False, look, arms, legs, front_props=planted)
+        _standing(c, suit, False, look, arms, legs, front_props=planted, back_over=True)
         draw_suit(c, 2, 13, 72)
 
     else:  # Heart: halberd over the shoulder, walking left
@@ -371,7 +372,8 @@ def draw_unter(c, suit):
             hair=YELLOW,
             hat=('cap', CYAN, LIGHT_RED, YELLOW),
         )
-        arms = (((23, 26), (21, 38), (27, 46), 'open'), ((36, 26), (41, 33), (40, 23), 'grip'))
+        # The free hand rests on the hip, over the coat, where the body can't hide it.
+        arms = (((23, 26), (16, 36), (23, 44), 'open'), ((36, 26), (41, 33), (40, 23), 'grip'))
         legs = (((26, 52), (22, 68), (17, 83), (22, 87)), ((34, 52), (40, 67), (43, 83), (49, 87)))
 
         def halberd(r):
@@ -394,7 +396,7 @@ def draw_unter(c, suit):
             r.part().poly([at(-1.5, -1), at(-3, -5), at(-4.5, -1)]).paint(LIGHT_CYAN, None, outline=BLUE)
             r.part().ellipse(*at(-9, 0), 1.6, 1.6).paint(LIGHT_RED)
 
-        _standing(c, suit, True, look, arms, legs, back_props=halberd)
+        _standing(c, suit, True, look, arms, legs, back_props=halberd, back_over=True)
         draw_suit(c, 3, 9, 67)
 
 
@@ -432,7 +434,7 @@ def draw_ober(c, suit):
             F.sword(r, (49, 14), (40, 4))
 
         # Drawn behind the figure so the fist closes over the grip.
-        _standing(c, suit, False, look, arms, legs, back_props=blade, pose=OBER_COAT)
+        _standing(c, suit, False, look, arms, legs, back_props=blade, pose=OBER_COAT, back_over=True)
         draw_suit(c, 0, 12, 12, 'v')
 
     elif suit == 1:  # Leaf: drummer with the drum slung at his hip
@@ -452,7 +454,9 @@ def draw_ober(c, suit):
             hair=BROWN,
             hat=('brim', LIGHT_RED, YELLOW, GREEN),
         )
-        arms = (((23, 26), (24, 39), (34, 41), 'grip'), ((36, 26), (44, 34), (50, 30), 'grip'))
+        # The lower stick's arm reaches across the belly to the drumhead; its
+        # fist is drawn with the drum, closing over the stick.
+        arms = (((23, 26), (22, 38), (32, 42), None), ((36, 26), (44, 34), (50, 30), 'grip'))
         legs = (((26, 52), (23, 68), (20, 84), (25, 87)), ((34, 52), (38, 68), (40, 84), (46, 87)))
 
         def drum(r):
@@ -465,11 +469,12 @@ def draw_ober(c, suit):
             r.part().rect(33, 62, 49, 64).paint(LIGHT_RED)
             # The drumhead edged dark: a pale rim would vanish on the white card.
             r.part().ellipse(41, 50, 7.5, 2.4).paint(WHITE, None, outline=DARK_GRAY)
-            F.pole(r, (34, 41), (39, 49))
+            F.pole(r, (31, 40), (38, 49))
+            F.draw_hand(r, 32, 42, grip=True, toward=(22, 38))
             # The raised stick's butt shows above the fist.
             F.pole(r, (51, 27), (45, 48))
 
-        _standing(c, suit, False, look, arms, legs, front_props=drum, pose=OBER_COAT)
+        _standing(c, suit, False, look, arms, legs, front_props=drum, pose=OBER_COAT, back_over=True)
         draw_suit(c, 1, 12, 12, 'v')
 
     elif suit == 2:  # Bell: hand on sword hilt at his side, the other open in greeting, facing left
@@ -479,7 +484,8 @@ def draw_ober(c, suit):
             lining=LIGHT_CYAN,
             sleeve_b=LIGHT_RED,
             sleeve_f=LIGHT_RED,
-            cuff=WHITE,
+            # Gold cuffs: white ones merge with the raised hand into one big white blob.
+            cuff=YELLOW,
             puff=YELLOW,
             hose=YELLOW,
             boot=LIGHT_RED,
@@ -536,7 +542,7 @@ def draw_ober(c, suit):
             # A leaf-shaped blade whose point stays clear of the card border.
             r.c.blit_sprite(['..1..', '.1b1.', '.1b1.', '1bb31', '1bb31', '1b331', '.131.', '..1..'], 45, 3)
 
-        _standing(c, suit, False, look, arms, legs, back_props=spear, pose=OBER_COAT)
+        _standing(c, suit, False, look, arms, legs, back_props=spear, pose=OBER_COAT, back_over=True)
         draw_suit(c, 3, 12, 12)
 
 
