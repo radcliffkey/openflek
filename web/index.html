@@ -20,6 +20,7 @@
             user-select: none;
             -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
         }
         #boot-error {
             position: absolute;
@@ -38,6 +39,12 @@
     <script src="audio.js"></script>
     <script src="openflek.js"></script>
     <script>
+        // A long press (or a right click) would open the browser's menu over
+        // the game, e.g. while holding the IQ slider.
+        document.getElementById("glcanvas").addEventListener("contextmenu", function (event) {
+            event.preventDefault();
+        });
+
         // build_web.py adds a content hash to this and to the script names
         // above, so a new build is not mixed with cached files of an old one.
         var wasmUrl = "openflek.wasm";
