@@ -66,7 +66,8 @@ pub async fn options_dialog(ctx: &mut Ctx) {
         color::YELLOW,
     );
     ctx.scr.flush_keys();
-    loop {
+    // Whether to ask about quitting once the panel is closed.
+    let quit = loop {
         ctx.scr.frame().await;
         let mut sel = cur;
         let mut act = false;
@@ -81,13 +82,15 @@ pub async fn options_dialog(ctx: &mut Ctx) {
             }
             Some(Key::Down | Key::Right) => sel = (cur + 1) % text::OPTIONS.len(),
             Some(Key::Enter) => act = true,
-            Some(Key::Esc) => break,
+            Some(Key::Esc) => break false,
             Some(Key::Click(x, y)) => {
                 if let Some(i) = (0..text::OPTIONS.len()).find(|&i| row_rect(i).contains(x, y)) {
                     sel = i;
                     act = true;
                 } else if !panel.contains(x, y) {
-                    break;
+                    // The table's Konec button stays visible beside the
+                    // panel; a tap on it quits, as it does on the table.
+                    break super::table::shortcut_key(Key::Click(x, y)) == Key::Esc;
                 }
             }
             Some(Key::Char(ch)) => {
@@ -132,12 +135,15 @@ pub async fn options_dialog(ctx: &mut Ctx) {
             }
             _ => {
                 ctx.cfg.save();
-                break;
+                break false;
             }
         }
         draw_preview(ctx);
-    }
+    };
     restore(&mut ctx.scr.canvas, &saved);
+    if quit {
+        Box::pin(ui::quit_prompt(ctx)).await;
+    }
 }
 
 /// Lets the user set the computer players' IQ (0..=255) on a slider.

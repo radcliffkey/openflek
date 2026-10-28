@@ -112,6 +112,9 @@ Keyboard, as in the original; the mouse works too.
 * In menus: arrows to move, **Enter** to choose, or press a button's first letter.
 * **F10** opens the options (sound, table colour, pattern, menu colour, IQ, save).
 * **Esc** asks whether to quit.
+* The **Nastavení** and **Konec** buttons in the top corners of the table do
+  the same as F10 and Esc, for touch screens. They work while you choose a
+  card or answer a menu. These buttons are new; the original had none.
 
 ## Rules as implemented
 
