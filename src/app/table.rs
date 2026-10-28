@@ -369,7 +369,7 @@ pub async fn select_card(
             {
                 next = i;
             }
-            match ctx.scr.take_key() {
+            match ctx.scr.take_key().map(shortcut_key) {
                 Some(Key::Left) => {
                     next = if cur == 0 {
                         scene.hand.len() - 1
@@ -420,8 +420,36 @@ pub async fn select_card(
     chosen
 }
 
-/// Paints the bevelled, patterned table; the image is cached until the
-/// table colour or pattern changes.
+// ------------------------------------------------------------ shortcut buttons
+
+/// The Nastavení (F10) and Konec (Esc) buttons in the top corners of the
+/// table, for touch screens, which have neither key. The strip above the
+/// won-trick piles is free during play; hands laid open at the end of a
+/// deal may cover the buttons' lower edge.
+fn shortcut_buttons() -> [(Rect, &'static str, Key); 2] {
+    // Both as wide as the longer caption, 6 pixels in from the corners.
+    let (hw, hh) = ui::button_half_size(1, 0, text::SETTINGS_BUTTON);
+    let at = |cx| Rect::centered(cx, 5 + hh, hw, hh);
+    [
+        (at(6 + hw), text::SETTINGS_BUTTON, Key::F10),
+        (at(MAX_X - 6 - hw), text::QUIT_BUTTON, Key::Esc),
+    ]
+}
+
+/// The key that a click on one of the table's shortcut buttons stands for;
+/// any other key is returned as it is.
+pub fn shortcut_key(key: Key) -> Key {
+    match key {
+        Key::Click(x, y) => shortcut_buttons()
+            .iter()
+            .find(|(r, ..)| r.contains(x, y))
+            .map_or(key, |&(.., k)| k),
+        k => k,
+    }
+}
+
+/// Paints the bevelled, patterned table and its shortcut buttons; the table
+/// image is cached until the table colour or pattern changes.
 pub fn clear_table(ctx: &mut Ctx) {
     let key = (ctx.cfg.table_color, ctx.cfg.table_pattern);
     if ctx.table_bg.as_ref().is_none_or(|(k, _)| *k != key) {
@@ -431,6 +459,9 @@ pub fn clear_table(ctx: &mut Ctx) {
     }
     if let Some((_, bg)) = &ctx.table_bg {
         ctx.scr.canvas.blit(bg, 0, 0, None);
+    }
+    for (r, s, _) in shortcut_buttons() {
+        draw_button(&mut ctx.scr.canvas, r, s, ctx.cfg.menu_color);
     }
 }
 
@@ -454,6 +485,30 @@ mod tests {
             }
             if n >= 3 {
                 assert!(pos[n / 2].1 < pos[0].1, "middle card is higher");
+            }
+        }
+    }
+
+    #[test]
+    fn shortcut_buttons_stand_for_f10_and_esc() {
+        let [(settings, ..), (quit, ..)] = shortcut_buttons();
+        let at = |r: Rect| shortcut_key(Key::Click(r.cx(), r.cy()));
+        assert_eq!(at(settings), Key::F10);
+        assert_eq!(at(quit), Key::Esc);
+        let elsewhere = Key::Click(MAX_X / 2, settings.cy());
+        assert_eq!(shortcut_key(elsewhere), elsewhere);
+        assert_eq!(shortcut_key(Key::Enter), Key::Enter);
+    }
+
+    #[test]
+    fn shortcut_buttons_fit_above_the_piles() {
+        for (r, s, _) in shortcut_buttons() {
+            // Inside the table's bevel and wide enough for the caption.
+            assert!(r.x1 >= 4 && r.y1 >= 4 && r.x2 <= MAX_X - 4, "{s}");
+            assert!(r.x2 - r.x1 >= crate::gfx::font::text_width(s) + 16, "{s}");
+            // Pile cards land at least 5 pixels below the pile origin.
+            for p in 0..3 {
+                assert!(r.y2 < pile_origin(p).1 + 5, "{s} overlaps pile {p}");
             }
         }
     }

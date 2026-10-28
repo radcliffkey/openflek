@@ -66,7 +66,8 @@ pub async fn options_dialog(ctx: &mut Ctx) {
         color::YELLOW,
     );
     ctx.scr.flush_keys();
-    loop {
+    // Whether to ask about quitting once the panel is closed.
+    let quit = loop {
         ctx.scr.frame().await;
         let mut sel = cur;
         let mut act = false;
@@ -81,13 +82,15 @@ pub async fn options_dialog(ctx: &mut Ctx) {
             }
             Some(Key::Down | Key::Right) => sel = (cur + 1) % text::OPTIONS.len(),
             Some(Key::Enter) => act = true,
-            Some(Key::Esc) => break,
+            Some(Key::Esc) => break false,
             Some(Key::Click(x, y)) => {
                 if let Some(i) = (0..text::OPTIONS.len()).find(|&i| row_rect(i).contains(x, y)) {
                     sel = i;
                     act = true;
                 } else if !panel.contains(x, y) {
-                    break;
+                    // The table's Konec button stays visible beside the
+                    // panel; a tap on it quits, as it does on the table.
+                    break super::table::shortcut_key(Key::Click(x, y)) == Key::Esc;
                 }
             }
             Some(Key::Char(ch)) => {
@@ -132,15 +135,19 @@ pub async fn options_dialog(ctx: &mut Ctx) {
             }
             _ => {
                 ctx.cfg.save();
-                break;
+                break false;
             }
         }
         draw_preview(ctx);
-    }
+    };
     restore(&mut ctx.scr.canvas, &saved);
+    if quit {
+        Box::pin(ui::quit_prompt(ctx)).await;
+    }
 }
 
 /// Lets the user set the computer players' IQ (0..=255) on a slider.
+/// Enter or the OK button confirms; the button is the only way on a touch screen.
 pub async fn iq_slider(ctx: &mut Ctx) {
     let scale = text::IQ_SCALE;
     let width = scale.chars().count() as i32 + 2;
@@ -150,11 +157,13 @@ pub async fn iq_slider(ctx: &mut Ctx) {
         (MAX_Y / 17) * 8,
         text::IQ_TITLE,
         color::BROWN,
-        6,
+        7,
         width.max(32),
     )
     .await;
     tb.line(&mut ctx.scr.canvas, 5, scale, ui::Justify::Center);
+    let ok = ui::button_rect(tb.rect.cx(), tb.rect.y2 - 24, 1, 0, text::OK);
+    draw_button(&mut ctx.scr.canvas, ok, text::OK, color::YELLOW);
     let row = |n: i32| tb.rect.y1 + 12 * (n + 3);
     let groove_y = (row(1) + row(2)) / 2;
     let groove = Rect {
@@ -179,6 +188,9 @@ pub async fn iq_slider(ctx: &mut Ctx) {
     let bg = save(&ctx.scr.canvas, area);
     ctx.scr.flush_keys();
     let mut redraw = true;
+    // The knob follows the pointer only while a press that began on the
+    // slider is held, so tapping OK does not move it first.
+    let mut dragging = false;
     loop {
         if redraw {
             redraw = false;
@@ -203,11 +215,6 @@ pub async fn iq_slider(ctx: &mut Ctx) {
         }
         ctx.scr.frame().await;
         let old = pos;
-        if let Some((mx, _)) = ctx.scr.take_mouse()
-            && ctx.scr.mouse_down()
-        {
-            pos = mx;
-        }
         match ctx.scr.take_key() {
             Some(Key::Home) => pos = lo,
             Some(Key::End) => pos = hi,
@@ -215,9 +222,19 @@ pub async fn iq_slider(ctx: &mut Ctx) {
             Some(Key::Right) => pos += 3,
             Some(Key::Down | Key::PageDown) => pos -= 20,
             Some(Key::Up | Key::PageUp) => pos += 20,
-            Some(Key::Click(x, y)) if area.contains(x, y) => pos = x,
+            Some(Key::Click(x, y)) if area.contains(x, y) => {
+                pos = x;
+                dragging = true;
+            }
+            Some(Key::Click(x, y)) if ok.contains(x, y) => break,
             Some(Key::Enter) => break,
             _ => {}
+        }
+        dragging &= ctx.scr.mouse_down();
+        if let Some((mx, _)) = ctx.scr.take_mouse()
+            && dragging
+        {
+            pos = mx;
         }
         pos = pos.clamp(lo, hi);
         if pos != old {

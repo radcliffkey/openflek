@@ -206,7 +206,7 @@ pub fn card_thud() -> Vec<Tone> {
 // ----------------------------------------------------------------- widgets
 
 /// Half width and height of a one-line button with the given padding (in characters).
-fn button_half_size(pad_x: i32, pad_y: i32, s: &str) -> (i32, i32) {
+pub(super) fn button_half_size(pad_x: i32, pad_y: i32, s: &str) -> (i32, i32) {
     (
         (TW * (pad_x + 2) + text_width(s)) / 2,
         (TW * (pad_y + 2) + TW) / 2,
@@ -365,7 +365,7 @@ async fn run_menu(ctx: &mut Ctx, m: &Menu<'_>, col: u8, mode: MenuMode) -> usize
         {
             sel = i;
         }
-        if let Some(key) = ctx.scr.take_key() {
+        if let Some(key) = ctx.scr.take_key().map(super::table::shortcut_key) {
             match key {
                 Key::Left | Key::Up => sel = if sel == 0 { items.len() - 1 } else { sel - 1 },
                 Key::Right | Key::Down => sel = (sel + 1) % items.len(),

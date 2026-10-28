@@ -18,6 +18,9 @@ pub const PRESS_ANY_KEY: &str = "Stiskni libovolnou klávesu";
 pub const PRESS_ANYTHING: &str = "Stiskni cokoli";
 pub const NOT_UNDERSTOOD: &str = "Nerozumím";
 pub const QUIT: &str = "Skončit";
+/// The table's buttons for F10 and Esc.
+pub const SETTINGS_BUTTON: &str = "Nastavení";
+pub const QUIT_BUTTON: &str = "Konec";
 pub const YES: &str = "Ano";
 pub const NO: &str = " Ne ";
 pub const OK: &str = " OK ";
