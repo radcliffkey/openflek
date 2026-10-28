@@ -15,6 +15,7 @@ from scripts.deck_gen.palette import (
     CYAN,
     DARK_GRAY,
     GREEN,
+    LIGHT_BLUE,
     LIGHT_CYAN,
     LIGHT_GRAY,
     LIGHT_GREEN,
@@ -307,8 +308,11 @@ def draw_unter(c, suit):
             hair=YELLOW,
             hat=('beret', LIGHT_RED, WHITE, YELLOW),
         )
-        # Both elbows raised, hands on the flute; the hands are drawn with the flute.
-        arms = (((23, 26), (32, 27), (40, 21), None), ((36, 26), (45, 27), (49, 22), None))
+        # Both elbows raised, hands on the flute; the hands are drawn with the
+        # flute. The elbow of the arm reaching furthest along the tube is
+        # tucked up under it, so that forearm runs from the puffed sleeve to
+        # the fist: lower, its end hung below the fist as a stray green blob.
+        arms = (((23, 26), (32, 27), (40, 21), None), ((36, 26), (44, 24), (49, 22), None))
         legs = (((28, 52), (27, 68), (25, 84), (30, 87)), ((34, 52), (36, 68), (38, 84), (44, 87)))
 
         def flute(r):
@@ -320,7 +324,7 @@ def draw_unter(c, suit):
             # The hands hold the tube from below, fingers curled over its near
             # side: drawn under it, they were all but hidden.
             F.draw_hand(r, 39.5, 21.5, grip=True, toward=(32, 27))
-            F.draw_hand(r, 48.5, 23, grip=True, toward=(45, 27))
+            F.draw_hand(r, 48.5, 23, grip=True, toward=(44, 24))
 
         _standing(c, suit, True, look, arms, legs, front_props=flute)
         draw_suit(c, 1, 10, 72, 'v')
@@ -584,9 +588,11 @@ def _throne(r, wood, velvet, style):
         valance = r.part().rect(9, 21, 51, 25)
         for sx in range(11, 51, 5):
             valance.ellipse(sx + 1.5, 25, 2.6, 2)
-        valance.paint(velvet, pattern=lambda x, y: YELLOW if y == 22 else None)
+        # Gold braid and tassels, in brown on gold hangings so they still show.
+        trim = BROWN if velvet == YELLOW else YELLOW
+        valance.paint(velvet, pattern=lambda x, y: trim if y == 22 else None)
         for sx in range(11, 51, 5):
-            r.put(sx + 1.5, 28, YELLOW)
+            r.put(sx + 1.5, 28, trim)
     elif style == 'baroque':
         r.part().rect(12, 28, 48, 66).ellipse(30, 28, 15, 6).paint(wood, pattern=grain)
         r.part().rect(16, 30, 44, 66).ellipse(30, 30, 12, 4).paint(velvet, pattern=nap)
@@ -717,8 +723,9 @@ def draw_king(c, suit):
         look = dict(
             throne=BROWN,
             style='canopy',
-            # Pale green hangings, so the king's dark green robe stands out against them.
-            cushion=LIGHT_GREEN,
+            # A gold cloth of honour: pale green hangings left the green robe,
+            # sleeves and corner leaves one green mass at card size.
+            cushion=YELLOW,
             mantle=LIGHT_RED,
             sleeve=GREEN,
             robe=GREEN,
@@ -733,8 +740,9 @@ def draw_king(c, suit):
 
         def sceptre(r):
             # Leaning on the shoulder with the finial clear of the hair, and
-            # outlined dark so the gold doesn't melt into the brown hair.
-            F.pole(r, (44, 46), (39, 19), YELLOW, outline=BROWN)
+            # outlined dark so the gold doesn't melt into the brown hair or
+            # the gold hangings.
+            F.pole(r, (44, 46), (39, 19), YELLOW, outline=DARK_GRAY)
             r.part().poly([(39, 12), (41.5, 15.5), (39, 19), (36.5, 15.5)]).paint(YELLOW, outline=DARK_GRAY)
             r.put(39, 15.5, LIGHT_RED)
 
@@ -753,10 +761,12 @@ def draw_king(c, suit):
             style='baroque',
             cushion=CYAN,
             mantle=CYAN,
-            sleeve=LIGHT_RED,
-            robe=LIGHT_RED,
-            shoe=CYAN,
-            tunic=CYAN,
+            # A blue robe over a red tunic: in the Acorn King's red robe he
+            # read as the same card at game size.
+            sleeve=LIGHT_BLUE,
+            robe=LIGHT_BLUE,
+            shoe=LIGHT_RED,
+            tunic=LIGHT_RED,
             pattern=_quarters(YELLOW),
             hair=YELLOW,
             beard=YELLOW,

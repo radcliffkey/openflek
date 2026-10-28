@@ -41,19 +41,22 @@ ACORN_V = [
     '......4......',
 ]
 
-# Horizontal Acorn pointing LEFT (19x13): nut on left, cupule + stem on right
+# Horizontal Acorn pointing LEFT (19x11): `ACORN_V` turned on its side so the
+# pips match, nut on the left, then the red cupule rim, the scaled cup with
+# its leaflets and the stem on the right. The highlight is moved to the top
+# of the nut, and the cup's outermost tips are trimmed to fit 11 rows.
 ACORN_H_LEFT = [
-    '.........8822......',
-    '........82a282a....',
-    '...666682a28.2a2...',
-    '..6efee8a28........',
-    '.6eefee82a28.......',
-    '6eeeeec8a2a86eeeeee',
-    '6eceeec82a284cccccc',
-    '.4cc6648a28..4444..',
-    '..4444482a28.2a2...',
-    '........82a282a....',
-    '.........8822......',
+    '.........8288..2...',
+    '........82a2282a...',
+    '...666448a28a8a2...',
+    '..6effe44882828....',
+    '.6efeccc42aa286664.',
+    '6eeeee664a2286eeec4',
+    '.6eeeee642aa286664.',
+    '..6eeee44882828....',
+    '...666448a28a8a2...',
+    '........82a2282a...',
+    '.........8288..2...',
 ]
 
 # Vertical Leaf (15x17): serrated linden leaf with yellow-green midrib & dual-tone halves
@@ -92,7 +95,9 @@ LEAF_H_LEFT = [
     '.......8888........',
 ]
 
-# Bell (15x15): golden hawk-bell with crimson-and-gold jewelled band and keyhole slit
+# Bell (15x15): golden hawk-bell with crimson-and-gold jewelled band and one
+# short sound slot with round ends low in the plain lower half. Any more
+# marks there, or a slot as wide as the band, read as a face under it.
 BELL_SYM = [
     '......6e6......',
     '.....68.86.....',
@@ -102,11 +107,11 @@ BELL_SYM = [
     '.444c4c4c4c444.',
     '4ce4ce4ce4ce4c4',
     '444c4c4c4c4c444',
-    '6eeeee888eeeee6',
-    '6eee8e888e8eee6',
-    '.6ee8ee8ee8ee6.',
-    '.6eee8e8e8eee6.',
-    '..6eee888eee6..',
+    '6eeeeeeeeeeeee6',
+    '6eeeeeeeeeeee66',
+    '.6ee88eee88ee6.',
+    '.6ee8888888e66.',
+    '..6e88eee8866..',
     '....66eee66....',
     '......666......',
 ]

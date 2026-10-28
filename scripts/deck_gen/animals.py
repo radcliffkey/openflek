@@ -26,6 +26,7 @@ from scripts.deck_gen.palette import (
     WHITE,
     YELLOW,
 )
+from scripts.deck_gen.palette import bresenham
 from scripts.deck_gen.rig import Rig, darker
 
 
@@ -361,11 +362,13 @@ def draw_pheasant(c, flip=False, dx=0, scale=1.0):
     """A cock pheasant standing in ripe wheat: copper body, green head, red wattle, long barred tail.
 
     Posed right of the tree trunk with its head below the lowest pips; the
-    tail sweeps back across the trunk. A taller row of wheat stands behind
-    it and a shorter one in front of its legs, every ear below the pips.
+    tail sweeps back across the trunk. Wheat stands behind the tail and to
+    the right of the bird, a taller row behind and a shorter one in front,
+    every ear below the pips. None crosses the body: golden ears there hide
+    it, since they share the tail's colours.
     """
     r = _rig(c, flip, dx, scale)
-    for wx, wy in ((24, 72), (27, 75), (33, 71), (47, 72), (51, 74), (54, 76)):
+    for wx, wy in ((24, 72), (27, 75), (33, 71), (54, 73), (57, 76)):
         _wheat(c, r.tx(wx, 0)[0], wy)
     # Long golden tail crossed by brown bars, wide enough at the trunk not to read as part of it.
     tail = r.part().chain([(35, 79), (21, 75), (6, 71)], [2.8, 2.0, 0.7])
@@ -373,9 +376,10 @@ def draw_pheasant(c, flip=False, dx=0, scale=1.0):
     # Copper body scalloped with dark feather tips.
     body = r.part().ellipse(39, 79, 6.5, 3.8, angle=-12).capsule(43, 77, 44, 74, 2.4, 1.8)
     body.paint(LIGHT_RED, shade=RED, outline=DARK_GRAY, pattern=lambda x, y: RED if (x + 2 * y) % 5 == 0 and y > 76 else None)
-    # Buff wing coverts with a chevron of brown feather edges.
+    # Brown wing coverts with a chevron of buff feather edges: buff ones
+    # merged with the tail and the wheat.
     r.part().ellipse(37, 78, 4.2, 2.2, angle=-12).paint(
-        YELLOW, shade=None, outline=BROWN, pattern=lambda x, y: BROWN if (x + abs(y - 78)) % 3 == 0 else None
+        BROWN, shade=None, outline=DARK_GRAY, pattern=lambda x, y: YELLOW if (x + abs(y - 78)) % 3 == 0 else None
     )
     # Dark green head, a red wattle round the eye, a yellow bill and a white collar,
     # kept a pixel clear of the pip above.
@@ -396,7 +400,7 @@ def draw_pheasant(c, flip=False, dx=0, scale=1.0):
         r.line(fx, 82, fx, 86, DARK_GRAY)
         r.put(fx + 1, 86, DARK_GRAY)
     _done(r)
-    for wx, wy in ((31, 81), (36, 82), (46, 82), (50, 81)):
+    for wx, wy in ((29, 81), (33, 82), (52, 82)):
         _wheat(c, r.tx(wx, 0)[0], wy)
     return r
 
@@ -453,72 +457,106 @@ def draw_peacock(c, flip=False, dx=0, scale=1.0):
     return _done(r, feet=[(28, 88), (33, 88)])
 
 
-# Heraldic lion's head facing right (15x13): ear, heavy brow, open jaws with
-# white fangs and a red tongue curling out.
-# The jaws and tongue are edged in black so they stand out on the red shield.
+# Heraldic lion's head facing right (12x11): a heavy brow over a black eye,
+# a short muzzle ending in a black nose, and open jaws with a white fang and
+# a red tongue. Small against the body, as on the Bohemian arms: a big head
+# makes the lion a cub. The jaws are kept short, or it reads as a dog's.
 LION_HEAD = [
-    '..888..........',
-    '.8ff7888.......',
-    '.8f7fff788.....',
-    '8ff8887ff88....',
-    '8ff80788fff88..',
-    '8ffffffffffff88',
-    '87ffffffffffff8',
-    '877fff0000000f0',
-    '.877f0f4cccc0f0',
-    '.877ff04cccc40.',
-    '..877fff0f0cc40',
-    '...8877ff0.0cc0',
-    '.....8888...00.',
+    '..8888......',
+    '.8ffff888...',
+    '8fff888ff8..',
+    '8fff7f0fff8.',
+    '8fffffffff08',
+    '87ffffffff88',
+    '877fff88888.',
+    '877ff8f44c8.',
+    '.877f8cccc8.',
+    '.877ff8888..',
+    '..8888......',
 ]
 
+# The head's top left in pose coordinates: sunk into the mane, close over
+# the chest. Set further forward and up, it juts out on a long neck.
+LION_HEAD_AT = (32, 33)
 
-def draw_lion_rampant(c, flip=True, dx=0, dy=3, scale=1.0):
+# The crown's band (left, top, right) relative to the head's top left; it
+# sits back on the crown of the head, its points rising above the mane.
+LION_CROWN = (-1, -3, 6)
+
+# Pointed locks of the lion's mane as (angle round the mane, length, sweep),
+# angles clockwise from the muzzle side: a beard falling from the throat onto
+# the chest and a ruff sweeping back and down from the nape.
+LION_LOCKS = [(30, 5, 40), (55, 6, 30), (85, 5, 25), (140, 5, -20), (165, 6, -20), (190, 6, -20), (215, 6, -15), (240, 5, -10), (265, 4, -10)]
+
+
+def draw_lion_rampant(c, flip=True, dx=0, dy=0, scale=1.0):
     """The silver double-tailed lion of Bohemia, rampant and crowned, for the Leaf Ace shield.
 
     Posed facing right and mirrored by default, as heraldic beasts face the
-    shield's dexter side (the viewer's left). It fills roughly x=8..50,
-    y=24..82 of a card before the `dy` shift.
+    shield's dexter side (the viewer's left). It fills roughly x=10..50,
+    y=22..78 of a card before the `dy` shift.
     """
     r = Rig(c, flip=flip, dx=dx, dy=dy, scale=scale)
-    hide, claw = WHITE, YELLOW
+    hide, far, claw = WHITE, LIGHT_GRAY, YELLOW
 
     def paw(x, y):
-        for k in (-1, 0, 1):
-            r.put(x + 2, y + k * 1.5, claw)
+        # Two claws spread in a V from the end of the paw.
+        for k in (-1, 1):
+            r.put(x + 2, y + k, claw)
+            r.put(x + 3, y + 2 * k, claw)
 
-    # Forked double tail rising behind the back, each end in a flame-shaped tuft.
-    tail = r.part().chain([(20, 62), (14, 56), (12, 48), (15, 42)], [2.2, 2.0, 1.8, 1.6])
-    tail.chain([(12, 49), (7, 45), (7, 38)], [1.8, 1.6, 1.5])
-    for tx, ty, ang in ((16, 37, 20), (8, 33, -15)):
-        tail.ellipse(tx, ty, 2.4, 4.0, angle=ang)
-    tail.paint(hide, outline=DARK_GRAY, pattern=lambda x, y: LIGHT_GRAY if (x + y) % 3 == 0 and y < 40 + dy else None)
-    # Far legs, shaded.
-    _legs(r, [[(30, 64), (38, 66), (35, 72), (40, 74)]], LIGHT_GRAY, upper=3.4, lower=2.0, outline=DARK_GRAY)
-    _legs(r, [[(33, 46), (40, 51), (46, 48)]], LIGHT_GRAY, upper=2.8, lower=2.0, outline=DARK_GRAY)
-    paw(40, 74)
-    paw(46, 48)
+    # Forked double tail rising behind the back, each branch ending in a
+    # flame-shaped tuft kept clear of the shield's rim; the far one is shaded.
+    r.part().chain([(14, 50), (13, 44), (14, 38), (14, 33), (13, 28)], [2.0, 1.8, 1.6, 2.6, 0.7]).paint(far, outline=DARK_GRAY)
+    tail = r.part().chain([(18, 63), (13, 57), (14, 50), (18, 43), (19, 37), (20, 32), (22, 27)], [2.2, 2.1, 2.0, 1.8, 1.6, 2.6, 0.7])
+    tail.paint(hide, outline=DARK_GRAY)
+    # Far legs, shaded: the raised hind leg and the lower foreleg. Slimmer
+    # than the near ones and tucked behind the body, with a lit upper edge,
+    # so their grey doesn't outweigh the white limbs in front.
+    for pts, radii in (
+        ([(28, 64), (35, 66), (34, 70), (39, 72)], [2.8, 2.2, 1.6, 1.6]),
+        ([(31, 50), (36, 55), (42, 55)], [2.6, 2.0, 1.6]),
+    ):
+        r.part().chain(pts, radii).paint(far, outline=DARK_GRAY, light=WHITE)
+        paw(*pts[-1])
     # Body: haunch, a narrow waist and a deep chest, rearing on the hind leg.
-    body = r.part().ellipse(24, 62, 6.5, 7.5, angle=-20).capsule(25, 58, 31, 47, 4.6, 5.2).ellipse(33, 43, 7, 7.5)
+    # Kept lean so red shows between the limbs: a broad body and mane fill
+    # the shield with one white mass.
+    body = r.part().ellipse(21, 62, 5.5, 6.5, angle=-20).capsule(23, 58, 29, 49, 3.8, 4.4).ellipse(31, 46, 5.5, 6)
     body.paint(hide, outline=DARK_GRAY)
-    # A full mane in jagged locks, flowing from behind the head down onto the shoulders.
-    mane = r.part().ellipse(33, 36, 8.5, 9.5)
-    for k in range(11):
-        a = math.radians(95 + k * 26)
-        mane.ellipse(33 + math.cos(a) * 8.5, 36 + math.sin(a) * 9.5, 2.4, 2.4)
-    # Short slanting strokes for the locks rather than an even speckle.
-    mane.paint(hide, outline=DARK_GRAY, pattern=lambda x, y: LIGHT_GRAY if (x - y) % 4 == 0 and (x + y) % 6 < 3 else None)
-    # Head in profile, hand-pixelled: brow over the eye, open jaws, tongue out.
-    r.sprite(LION_HEAD, 38, 32, anchor=(5, 6))
-    # Near legs: the standing hind leg and the raised foreleg, claws out.
-    _legs(r, [[(23, 66), (27, 73), (21, 77), (24, 82)]], hide, upper=3.6, lower=2.0, outline=DARK_GRAY)
-    _legs(r, [[(36, 45), (44, 45), (49, 39)]], hide, upper=3.0, lower=2.0, outline=DARK_GRAY)
-    paw(24, 82)
-    paw(49, 39)
-    # Crown.
-    crown = r.part().rect(33, 25, 41, 27)
-    for px in (33, 37, 41):
-        crown.poly([(px - 1.5, 26), (px, 21), (px + 1.5, 26)])
-    crown.paint(YELLOW)
-    r.put(37, 26, RED)
+    # The mane: a ruff of pointed locks round the nape and down the throat,
+    # each with a stroke along it. A smooth round mane reads as a dog's or a
+    # bear's neck.
+    mane = r.part().ellipse(30, 37, 6.5, 8)
+
+    def rim(deg, out=0.0):
+        a = math.radians(deg)
+        return 30 + math.cos(a) * (6.5 + out), 37 + math.sin(a) * (8 + out)
+
+    for deg, length, bend in LION_LOCKS:
+        mane.poly([rim(deg - 12, -1), rim(deg + bend, length), rim(deg + 12, -1)])
+    mane.paint(hide, outline=DARK_GRAY)
+    inside = mane.interior()
+    for deg, length, bend in LION_LOCKS:
+        for x, y in bresenham(*r.tx(*rim(deg, -2)), *r.tx(*rim(deg + bend, length - 2))):
+            if (x, y) in inside:
+                c.put(x, y, LIGHT_GRAY)
+    hx, hy = LION_HEAD_AT
+    r.sprite(LION_HEAD, hx, hy)
+    # Near legs: the standing hind leg and the raised foreleg, its paw well
+    # below the jaw and clear of the rim, its shoulder low enough to leave
+    # the locks under the jaw showing.
+    _legs(r, [[(22, 66), (27, 71), (23, 74), (27, 77)]], hide, upper=3.6, lower=2.0, outline=DARK_GRAY)
+    _legs(r, [[(32, 50), (39, 52), (44, 47)]], hide, upper=3.0, lower=2.0, outline=DARK_GRAY)
+    paw(27, 77)
+    paw(44, 47)
+    # Crown sitting on the brow, plain gold: a shade dither turns a crown
+    # this small brown.
+    cl, ct, cr = LION_CROWN
+    cl, ct, cr = hx + cl, hy + ct, hx + cr
+    crown = r.part().rect(cl, ct, cr, ct + 2)
+    for px in (cl, (cl + cr) / 2, cr):
+        crown.poly([(px - 1.5, ct + 1), (px, ct - 3), (px + 1.5, ct + 1)])
+    crown.paint(YELLOW, shade=None, outline=BROWN)
+    r.put((cl + cr) / 2, ct + 1, RED)
     return _done(r)

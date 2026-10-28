@@ -107,7 +107,10 @@ FACE_GOATEE = [
 
 # Kings sit facing the viewer, so their heads are turned only a little to the
 # right: both sides of the face show, hair falls on either side, and the nose
-# sits just right of the middle.
+# sits just right of the middle. A full beard gets a moustache drooping past
+# the mouth and a few strands in the shade colour: in flat yellow it reads
+# as a clean-shaven chin. The forked beard is long enough for its notch to
+# show against the ermine below.
 FACE_KING = [
     '....hHHHHHh....',
     '..hHHHHHHHHHh..',
@@ -133,13 +136,13 @@ FACE_KING_OLD = [
     '.hH8f0ff7f0fHh.',
     '.hHff7ff7fffHh.',
     '.hHJfff878fJHh.',
-    '.hJJJJJJJJJJJh.',
-    '.hJJJJ444JJJJh.',
-    '.hJJJJJJJJJJJh.',
-    '..jJJJJJJJJJj..',
-    '..jJJJJJJJJJj..',
-    '...jJJJJJJJj...',
-    '.....jJJJj.....',
+    '.hJJjjjfjjjJJh.',
+    '.hJjJJ444JJjJh.',
+    '.hJjJJJJJJJjJh.',
+    '..jJJJjJJJjJj..',
+    '..jJJjJJJjJjj..',
+    '...jJJJjJjjj...',
+    '.....jJJjj.....',
 ]
 
 FACE_KING_FORKED = [
@@ -151,13 +154,15 @@ FACE_KING_FORKED = [
     '.hH8f0ff7f0fHh.',
     '.hHfffff7fffHh.',
     '.hHJfff878fJHh.',
-    '.hJJJJJJJJJJJh.',
-    '.hJJJJ444JJJJh.',
-    '.hJJJJJJJJJJJh.',
-    '..jJJJJJJJJJj..',
-    '...jJJJ.JJJj...',
-    '...jJJj.jJJj...',
-    '....jj...jj....',
+    '.hJJjjjfjjjJJh.',
+    '.hJjJJ444JJjJh.',
+    '.hJjJJJJJJJjJh.',
+    '..jJJJJjJJJjj..',
+    '..jJJjJJJjJjj..',
+    '...jJJJ..JJj...',
+    '...jJJj..jJj...',
+    '....jJj..jj....',
+    '.....j....j....',
 ]
 
 FACES = {
