@@ -69,8 +69,11 @@ pub fn table_fill(ctx: &Ctx) -> Fill {
 pub struct Scene {
     /// Cards of the trick in play: card and position.
     pub trick: Vec<(Card, i32, i32)>,
-    /// Face-down cards on each player's won-trick pile.
-    pub piles: [Vec<(i32, i32, u8)>; 3],
+    /// Line colour of every card back in the deal, chosen once per deal so the
+    /// hand, the piles and the trump card match and redraws leave the RNG alone.
+    pub back: u8,
+    /// Positions of the face-down cards on each player's won-trick pile.
+    pub piles: [Vec<(i32, i32)>; 3],
     pub label: Option<Label>,
     /// The human's cards in display order.
     pub hand: Vec<Card>,
@@ -184,7 +187,7 @@ fn label_texts(l: &Label) -> (String, Option<String>) {
     (title, seven)
 }
 
-fn draw_label(ctx: &mut Ctx, l: &Label) {
+fn draw_label(ctx: &mut Ctx, l: &Label, back: u8) {
     let (x, y) = label_origin(l.player);
     let (title, seven) = label_texts(l);
     let r = Rect {
@@ -215,9 +218,7 @@ fn draw_label(ctx: &mut Ctx, l: &Label) {
             (x + 76, y)
         };
         if l.trump_face_down {
-            // A fixed back colour: `back_color` would draw from the game's RNG.
-            let line = if ctx.cfg.table_color == 1 { 2 } else { 1 };
-            draw_back(ctx, cx, cy, line);
+            draw_back(ctx, cx, cy, back);
         } else {
             draw_face(ctx, tc, cx, cy);
         }
@@ -228,12 +229,12 @@ fn draw_label(ctx: &mut Ctx, l: &Label) {
 pub fn redraw(ctx: &mut Ctx, scene: &Scene) {
     clear_table(ctx);
     for p in 0..3 {
-        for &(x, y, c) in &scene.piles[p] {
-            draw_back(ctx, x, y, c);
+        for &(x, y) in &scene.piles[p] {
+            draw_back(ctx, x, y, scene.back);
         }
     }
     if let Some(l) = &scene.label {
-        draw_label(ctx, l);
+        draw_label(ctx, l, scene.back);
     }
     for p in [1, 2] {
         let cards = &scene.revealed[p];
@@ -258,10 +259,9 @@ pub fn redraw(ctx: &mut Ctx, scene: &Scene) {
 
 pub fn draw_hand(ctx: &mut Ctx, scene: &Scene) {
     let positions = hand_positions(scene.hand.len());
-    let back = back_color(ctx);
     for (&c, &(x, y)) in scene.hand.iter().zip(&positions) {
         if scene.hidden.contains(c) {
-            draw_back(ctx, x, y, back);
+            draw_back(ctx, x, y, scene.back);
         } else {
             draw_face(ctx, c, x, y);
         }
@@ -284,7 +284,6 @@ pub fn collect_trick(ctx: &mut Ctx, scene: &mut Scene, winner: Player) {
         let pos = (
             ox + ctx.rng.below(20) as i32,
             oy + ctx.rng.below(10) as i32 + 5,
-            back_color(ctx),
         );
         scene.piles[winner].push(pos);
     }

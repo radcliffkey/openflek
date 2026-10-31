@@ -359,9 +359,10 @@ def draw_vignette_scene(c, suit, rank):
         animals.draw_boar(c)
 
     elif (suit, rank) == (1, 0):  # Leaf 7: Jester dancing on one foot, his marotte held high
-        # Right of the trunk, so his yellow standing leg doesn't merge with it.
+        # Right of the trunk, so his yellow standing leg doesn't merge with it,
+        # and far enough that his outstretched hand doesn't touch it.
         draw_bush_or_flowers(c, 10, gy, YELLOW)
-        people.draw_jester(c, x=37)
+        people.draw_jester(c, x=42)
     elif (suit, rank) == (1, 1):  # Leaf 8: Elephant walking, trunk curled
         draw_bush_or_flowers(c, 9, gy, LIGHT_RED)
         draw_bush_or_flowers(c, 52, gy, YELLOW)

@@ -24,9 +24,9 @@ from scripts.deck_gen.palette import (
 from scripts.deck_gen.rig import Rig
 
 
-def _rig(c, scale, x, flip=False):
-    """A thin rig whose figure stands centred on card column `x`."""
-    return Rig(c, flip=flip, dx=x - 30, scale=scale, thin=True)
+def _rig(c, scale, x, flip=False, dy=0):
+    """A thin rig whose figure stands centred on card column `x`, lowered by `dy`."""
+    return Rig(c, flip=flip, dx=x - 30, dy=dy, scale=scale, thin=True)
 
 
 # The forester is too small for the rig's garments, whose pleats and seams
@@ -84,8 +84,11 @@ def draw_forester(c, x=19, foot_y=88):
 
 
 # The sitting huntsman, pixelled by hand like the forester: fill colours only.
-# He leans back on his far arm, his near knee drawn up over the far leg; the
-# hand under his chin holds the horn, drawn separately as `HORN`.
+# He leans back on his far arm, his near knee drawn up over the far leg. His
+# near sleeve rises to the hand gripping the horn, drawn separately as
+# `HORN`. A belt breaks up the red coat, and the buckskin breeches are
+# yellow: green ones made the raised knee read as a bush in the grass. The
+# gap under the knee lets the silhouette outline the thigh and shin.
 HORNBLOWER_BODY = [
     '......................',
     '......................',
@@ -94,32 +97,33 @@ HORNBLOWER_BODY = [
     '......................',
     '......................',
     '......................',
-    '...........ff.........',
-    '....cccccc4ff.........',
-    '...cccccc4cc..........',
-    '...ccccce4c...........',
+    '......................',
+    '....cccccc4cc.........',
+    '...cccccc4cccc........',
+    '...ccccce4cc..........',
     '..cc.cccc4c...........',
-    '..cc.cccce4..a........',
-    '..cc.cccc4c.aa2.......',
-    '..cc.22222a2a22.......',
-    '.cc.cccccca22.22......',
-    '.cc.ccccca22...22.....',
-    '.cc.cccccc2.....666...',
-    '.cc.cccccc......6666..',
-    '.ff.ccccccaa22222666..',
-    '.ff.......a2222226666.',
+    '..cc.666e66...ee......',
+    '..cc.cccc4c..eeee.....',
+    '..cc.cccc4c.eee.ee....',
+    '.cc.ccccc4.eee..eee...',
+    '.cc.cccc4.eee....ee...',
+    '.cc.cccc.eee....666...',
+    '.cc.ccccceee....6666..',
+    '.ff.ccccceeeeee66666..',
+    '.ff.......eeeee666666.',
 ]
 
 
 # A long straight hunting horn held level from the lips, as in the 1992 deck:
-# gold with a brown underside and a hand round the middle; it passes in front
-# of the tree trunk and its flared bell stops short of the dog. The
-# mouthpiece is row 1, column 0.
+# gold with a brown underside; it passes in front of the tree trunk and its
+# flared bell stops short of the dog. His fist grips it from below, a few
+# pixels from his mouth, with the sleeve cuff behind it: a hand laid over the
+# tube reads as a gap in the horn. The mouthpiece is row 1, column 0.
 HORN = [
     '............6e',
-    'eeeeffeeeeeeee',
+    'eeeeeeeeeeeeee',
     '.666ff666666ee',
-    '............6e',
+    '...cff7.....6e',
 ]
 
 
@@ -196,8 +200,8 @@ def draw_jester(c, x=30, foot_y=88):
     r.silhouette()
 
 
-def _musician(c, x, scale, flip, look, arms, legs):
-    r = _rig(c, scale, x, flip)
+def _musician(c, x, scale, flip, look, arms, legs, dy=0):
+    r = _rig(c, scale, x, flip, dy)
     F.draw_standing(r, look, arms, legs)
     r.silhouette()
 
@@ -220,6 +224,9 @@ def _instrument(c, rows, x0, y0):
 def draw_musicians(c):
     """A village band: a trumpeter, a drummer and a fiddler."""
     s = 0.22
+    # Two rows lower than the other vignettes, so the hats clear the Ten's
+    # lowest bells.
+    dy = 2
     stand = (((27, 52), (25, 68), (24, 84), (29, 87)), ((33, 52), (37, 68), (38, 84), (44, 87)))
 
     _musician(
@@ -231,6 +238,7 @@ def draw_musicians(c):
              belt=YELLOW, hair=BROWN, hat=('cap', GREEN, WHITE, YELLOW)),
         (((23, 26), (30, 34), (38, 24), 'grip'), ((36, 26), (43, 28), (46, 14), 'grip')),
         stand,
+        dy,
     )
     _musician(
         c,
@@ -241,6 +249,7 @@ def draw_musicians(c):
              face='beard', hair=BROWN, hat=('brim', LIGHT_RED, YELLOW, GREEN)),
         (((23, 26), (30, 36), (40, 34), 'grip'), ((36, 26), (44, 32), (48, 34), 'grip')),
         stand,
+        dy,
     )
     _musician(
         c,
@@ -251,16 +260,17 @@ def draw_musicians(c):
              hair=YELLOW, hat=('beret', BLUE, LIGHT_RED, YELLOW)),
         (((23, 26), (34, 32), (44, 33), 'grip'), ((36, 26), (36, 38), (40, 30), 'grip')),
         stand,
+        dy,
     )
     # A straight herald's trumpet level from the lips, a drum slung at the hip
     # with one stick raised and one on the skin, and a fiddle under the chin
     # with the bow across its strings.
-    _instrument(c, TRUMPET, 15, 68)
-    _instrument(c, DRUM, 31, 75)
+    _instrument(c, TRUMPET, 15, 68 + dy)
+    _instrument(c, DRUM, 31, 75 + dy)
     for x, y in ((31, 72), (30, 71), (35, 74)):
-        c.put(x, y, BROWN)
-    _instrument(c, FIDDLE_BOW, 40, 71)
-    _instrument(c, FIDDLE, 39, 68)
+        c.put(x, y + dy, BROWN)
+    _instrument(c, FIDDLE_BOW, 40, 71 + dy)
+    _instrument(c, FIDDLE, 39, 68 + dy)
 
 
 def draw_wild_man(c, x=28, scale=0.66):

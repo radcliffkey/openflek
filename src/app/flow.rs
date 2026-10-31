@@ -1,7 +1,7 @@
 //! The game itself: one deal from shuffling to settlement, with the human
 //! in seat 0 and two computer players.
 
-use super::table::{self, Label, Scene, place_card, redraw, select_card, sorted_hand};
+use super::table::{self, Label, Scene, back_color, place_card, redraw, select_card, sorted_hand};
 use super::ui::{self, MAX_X, MAX_Y, Menu, TextBox, say, yes_no};
 use super::{Ctx, text};
 use crate::game::ai;
@@ -979,10 +979,14 @@ pub async fn play_deal(ctx: &mut Ctx, dealer: Player, seats: [Seat; 3]) -> DealS
         "only the viewer's seat can be human"
     );
     let r = Round::deal(&mut ctx.deck, dealer, &mut ctx.rng);
+    let scene = Scene {
+        back: back_color(ctx),
+        ..Scene::default()
+    };
     let mut deal = Deal {
         ctx,
         r,
-        scene: Scene::default(),
+        scene,
         seats,
         raised_by: [0; 3],
     };

@@ -20,7 +20,7 @@ from scripts.deck_gen.palette import (
 from scripts.deck_gen import animals, people
 from scripts.deck_gen.palette import checker, fill_terrain
 from scripts.deck_gen.rig import Rig, darker
-from scripts.deck_gen.symbols import draw_shrub, draw_suit
+from scripts.deck_gen.symbols import draw_shrub, draw_suit, draw_suit_leaning
 
 
 # Small round hawk-bell (7x8) charged on the Bell Ace shield: a loop on top,
@@ -31,8 +31,8 @@ MINI_BELL = [
     '.8efe8.',
     '8eeeee8',
     '8444448',
-    '8eeeee8',
-    '.8e8e8.',
+    '8e888e8',
+    '.8eee8.',
     '..888..',
 ]
 
@@ -79,9 +79,9 @@ def draw_ace_acorn(c):
     """Draws the Acorn Ace with arched OPENFLEK ribbon, top acorns & woodland crest."""
     _fill_ace_ground(c, top_y=54, water=True)
 
-    # Top left & right acorns with oak-leaf garlands
-    draw_suit(c, 0, 10, 12, 'v')
-    draw_suit(c, 0, 50, 12, 'v')
+    # Top left & right acorns with oak-leaf garlands, leaning outwards, their stems under the ribbon
+    draw_suit_leaning(c, 0, 15, 22, -30)
+    draw_suit_leaning(c, 0, 45, 22, 30)
 
     # Top central floral jewel & oak sprigs (x=23..37, y=4..19)
     c.fill_ellipse(30, 9, 4, 4, LIGHT_RED, RED, outline=DARK_GRAY)
@@ -126,7 +126,9 @@ def draw_ace_acorn(c):
                     c.put(lx0 + gx, ly0 + gy, DARK_GRAY)
 
     # An oak behind him: trunk and a round crown of leaves dotted with acorns.
-    c.fill_rect(27, 60, 33, 84, BROWN, DARK_GRAY, mode='vstripe')
+    # The trunk stops behind his girdle: showing between his legs, it read
+    # as a third leg.
+    c.fill_rect(27, 60, 33, 66, BROWN, DARK_GRAY, mode='vstripe')
     c.fill_ellipse(30, 55, 25, 19, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='sparse')
     acorn = ['.6.', '666', 'eee', 'eee', '.e.']
     for ax, ay in ((11, 48), (19, 40), (41, 40), (49, 48), (8, 60), (52, 60), (15, 67), (45, 67)):
@@ -140,7 +142,9 @@ def draw_ace_acorn(c):
     # Twin O / F golden medallions nestled in the foreground turf (y=75..87)
     c.fill_ellipse(11, 81, 6, 6, YELLOW, BROWN, outline=DARK_GRAY)
     c.fill_ellipse(49, 81, 6, 6, YELLOW, BROWN, outline=DARK_GRAY)
-    c.rect(9, 79, 13, 83, RED)
+    # The O without its corners, so it reads as a ring and not a box.
+    for a, b in (((10, 79), (12, 79)), ((10, 83), (12, 83)), ((9, 80), (9, 82)), ((13, 80), (13, 82))):
+        c.line(*a, *b, RED)
     c.line(47, 79, 47, 83, RED)
     c.line(47, 79, 51, 79, RED)
     c.line(47, 81, 50, 81, RED)
@@ -150,9 +154,9 @@ def draw_ace_leaf(c):
     """Draws the Leaf Ace: Crowned Bohemian Double-Tailed Lion inside a Linden Wreath."""
     _fill_ace_ground(c, top_y=52, water=True)
 
-    # Top-left and top-right leaves
-    draw_suit(c, 1, 10, 11, 'v')
-    draw_suit(c, 1, 50, 11, 'v')
+    # Top-left and top-right leaves, leaning outwards from behind the shield
+    draw_suit_leaning(c, 1, 15, 19, -32, size=0.95, width=1.2)
+    draw_suit_leaning(c, 1, 45, 19, 32, size=0.95, width=1.2)
 
     # Lush linden & oak wreath wrapping around the shield (center=(30, 50), rx=27, ry=29)
     c.fill_ellipse(30, 50, 27, 29, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='checker')
@@ -196,8 +200,9 @@ def draw_ace_leaf(c):
     # Rampant double-tailed Bohemian lion centered inside the crimson shield
     animals.draw_lion_rampant(c)
 
-    # Overlapping foreground hillock & bushes cradling the lower shield
-    _overlap_foreground_turf(c, base_y=79)
+    # Overlapping foreground hillock & bushes cradling the lower shield, low
+    # enough that the lion's standing hind paw shows above them.
+    _overlap_foreground_turf(c, base_y=81)
 
 
 def draw_ace_bell(c):

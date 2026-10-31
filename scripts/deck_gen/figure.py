@@ -9,6 +9,8 @@ H/h hair and its shade, J/j beard, C/c hat cloth, T/t trim (feather or
 jewel), B/b hat band.
 """
 
+import math
+
 from scripts.deck_gen.palette import (
     BROWN,
     DARK_GRAY,
@@ -105,7 +107,10 @@ FACE_GOATEE = [
 
 # Kings sit facing the viewer, so their heads are turned only a little to the
 # right: both sides of the face show, hair falls on either side, and the nose
-# sits just right of the middle.
+# sits just right of the middle. A full beard gets a moustache drooping past
+# the mouth and a few strands in the shade colour: in flat yellow it reads
+# as a clean-shaven chin. The forked beard is long enough for its notch to
+# show against the ermine below.
 FACE_KING = [
     '....hHHHHHh....',
     '..hHHHHHHHHHh..',
@@ -131,13 +136,13 @@ FACE_KING_OLD = [
     '.hH8f0ff7f0fHh.',
     '.hHff7ff7fffHh.',
     '.hHJfff878fJHh.',
-    '.hJJJJJJJJJJJh.',
-    '.hJJJJ444JJJJh.',
-    '.hJJJJJJJJJJJh.',
-    '..jJJJJJJJJJj..',
-    '..jJJJJJJJJJj..',
-    '...jJJJJJJJj...',
-    '.....jJJJj.....',
+    '.hJJjjjfjjjJJh.',
+    '.hJjJJ444JJjJh.',
+    '.hJjJJJJJJJjJh.',
+    '..jJJJjJJJjJj..',
+    '..jJJjJJJjJjj..',
+    '...jJJJjJjjj...',
+    '.....jJJjj.....',
 ]
 
 FACE_KING_FORKED = [
@@ -149,13 +154,15 @@ FACE_KING_FORKED = [
     '.hH8f0ff7f0fHh.',
     '.hHfffff7fffHh.',
     '.hHJfff878fJHh.',
-    '.hJJJJJJJJJJJh.',
-    '.hJJJJ444JJJJh.',
-    '.hJJJJJJJJJJJh.',
-    '..jJJJJJJJJJj..',
-    '...jJJJ.JJJj...',
-    '...jJJj.jJJj...',
-    '....jj...jj....',
+    '.hJJjjjfjjjJJh.',
+    '.hJjJJ444JJjJh.',
+    '.hJjJJJJJJJjJh.',
+    '..jJJJJjJJJjj..',
+    '..jJJjJJJjJjj..',
+    '...jJJJ..JJj...',
+    '...jJJj..jJj...',
+    '....jJj..jj....',
+    '.....j....j....',
 ]
 
 FACES = {
@@ -232,6 +239,49 @@ HATS = {
 }
 
 
+# Open hands for full-size figures, drawn for a forearm pointing forwards
+# (right) and mirrored for one pointing back, each with the pixel that sits on
+# the wrist. Light grey parts the fingers; the thumb stands off on its own.
+OPEN_HANDS = {
+    # Raised, palm out, as in greeting.
+    'up': (
+        [
+            '.888..',
+            '8f7f8.',
+            '8f7f88',
+            '8fff8f8',
+            '8ffff8.',
+            '.8ff8..',
+        ],
+        (2, 4),
+    ),
+    # Held out, fingers forward and the thumb on top.
+    'out': (
+        [
+            '.88.....',
+            '8ff8888.',
+            '8fff7778',
+            '8ffffff8',
+            '8fff7778',
+            '.888888.',
+        ],
+        (1, 3),
+    ),
+    # Hanging, or resting on the hip.
+    'down': (
+        [
+            '.888..',
+            '8fff8.',
+            '8fff88',
+            '8f7f8f8',
+            '8f7f88.',
+            '.888...',
+        ],
+        (2, 1),
+    ),
+}
+
+
 # Heads for figures drawn at vignette size (rig scale below SMALL_SCALE), on
 # the same placeholders; the face centre is column 3, row 3.
 SMALL_SCALE = 0.6
@@ -283,17 +333,42 @@ def draw_head(rig, hx, hy, face='young', hair=BROWN, beard=None, hat=None, small
         rig.sprite(rows, hx, hy, subst, anchor=(anchor[0], anchor[1] - top))
 
 
-def draw_hand(rig, x, y, grip=False):
+def draw_hand(rig, x, y, grip=False, toward=None):
     """A hand at the end of an arm; `grip` draws a closed fist.
 
     A little wider than the sleeve end so the cuff doesn't show past it, and
     edged in dark grey: light grey skin shading vanishes on the white card.
+
+    `toward` is the elbow. Given, on a full-size figure, the hand follows
+    the forearm rather than being a plain oval: a fist sits a little past the
+    wrist with the crease of its curled fingers across the front, and an
+    open hand is raised, held out or hanging, fingers and thumb apart.
     """
+    if toward is None or rig.s != 1.0:
+        if grip:
+            rig.part().ellipse(x, y, 2.5, 2.2).paint(SKIN, None, outline=DARK_GRAY)
+        else:
+            rig.part().ellipse(x, y + 0.5, 2.4, 2.9).paint(SKIN, None, outline=DARK_GRAY)
+            rig.put(x - 1, y + 1, LIGHT_GRAY)
+        return
+    ex, ey = toward
+    ln = max(math.hypot(x - ex, y - ey), 1)
+    ux, uy = (x - ex) / ln, (y - ey) / ln
     if grip:
-        rig.part().ellipse(x, y, 2.5, 2.2).paint(SKIN, None, outline=DARK_GRAY)
-    else:
-        rig.part().ellipse(x, y + 0.5, 2.4, 2.9).paint(SKIN, None, outline=DARK_GRAY)
-        rig.put(x - 1, y + 1, LIGHT_GRAY)
+        cx, cy = x + ux * 0.8, y + uy * 0.8
+        rig.part().ellipse(cx, cy, 2.6, 2.3, angle=math.degrees(math.atan2(uy, ux))).paint(SKIN, None, outline=DARK_GRAY)
+        for k in (-1, 0, 1):
+            rig.put(cx + ux * 0.8 - uy * k, cy + uy * 0.8 + ux * k, LIGHT_GRAY)
+        return
+    # An open hand is too small to shape from ellipses, so it is pixelled by
+    # hand and picked by the forearm's slope, mirrored when it points backwards.
+    slope = math.degrees(math.atan2(uy, abs(ux)))
+    rows, anchor = OPEN_HANDS['up' if slope < -30 else 'down' if slope > 45 else 'out']
+    if ux < 0:
+        width = max(len(row) for row in rows)
+        rows = [''.join(reversed(row.ljust(width, '.'))) for row in rows]
+        anchor = (width - 1 - anchor[0], anchor[1])
+    rig.sprite(rows, x, y, anchor=anchor)
 
 
 def arm(rig, sh, el, wr, sleeve, cuff=None, upper_r=3.1, puff=None):
@@ -414,7 +489,7 @@ def pole(rig, a, b, col=BROWN, outline=None):
 BASE = dict(head=(30, 15), neck=(30, 21), sh_b=(23, 26), sh_f=(36, 26), waist=(30, 44), hem=56)
 
 
-def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose=None):
+def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose=None, back_over=False):
     """Draws a standing figure back to front.
 
     `look` names the colours (sleeve_b, sleeve_f, hose, boot, tunic, skirt,
@@ -422,6 +497,10 @@ def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose
     (sh, el, wr, hand)) for the back and the front arm, where hand is
     'open', 'grip' or None; `legs` is ((hip, knee, ankle, toe), ...) back
     then front. Props are callbacks taking the rig.
+
+    `back_over` draws the back arm over the body instead of behind it, for
+    a hand resting on the hip or reaching across the belly, which the body
+    would otherwise hide.
     """
     j = dict(BASE, **(pose or {}))
     if look.get('cape') is not None:
@@ -429,9 +508,14 @@ def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose
     if back_props:
         back_props(rig)
     (bsh, bel, bwr, bhand), (fsh, fel, fwr, fhand) = arms
-    arm(rig, bsh, bel, bwr, look['sleeve_b'], cuff=look.get('cuff'), puff=look.get('puff'))
-    if bhand:
-        draw_hand(rig, *bwr, grip=bhand == 'grip')
+
+    def back_arm():
+        arm(rig, bsh, bel, bwr, look['sleeve_b'], cuff=look.get('cuff'), puff=look.get('puff'))
+        if bhand:
+            draw_hand(rig, *bwr, grip=bhand == 'grip', toward=bel)
+
+    if not back_over:
+        back_arm()
     for hip, kn, an, toe in legs:
         leg(rig, hip, kn, an, toe, look['hose'], look['boot'], cuff=look.get('boot_cuff'))
     torso(
@@ -445,6 +529,8 @@ def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose
         skirt_pattern=look.get('skirt_pattern'),
         buttons=look.get('buttons'),
     )
+    if back_over:
+        back_arm()
     hx, hy = j['head']
     draw_head(rig, hx, hy, face=look.get('face', 'young'), hair=look['hair'], beard=look.get('beard'), hat=look['hat'])
     arm(rig, fsh, fel, fwr, look['sleeve_f'], cuff=look.get('cuff'), puff=look.get('puff'))
@@ -452,6 +538,6 @@ def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose
     if front_props:
         front_props(rig)
     if fhand:
-        draw_hand(rig, *fwr, grip=fhand == 'grip')
+        draw_hand(rig, *fwr, grip=fhand == 'grip', toward=fel)
     return rig
 
