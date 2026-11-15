@@ -2,31 +2,27 @@
 
 The vignette people are drawn on a thin rig: one dark silhouette outline
 instead of an outline per part, which would swallow limbs two pixels wide.
-The band and Cupid use the court figures' jointed poses scaled down; the
-forester, the horn-blower and the jester are pixelled by hand with the
-`figure` vignette heads, since the rig's garments turn to grey mud at a
-third of court size. The wild man is a full pose at two-thirds size.
+The forester, the horn-blower, the jester, the village band and Cupid are
+pixelled by hand with the `figure` vignette heads where a face is wanted.
+Scaled court garments turn to grey mud at a third of court size, and a
+white cherub scaled down vanishes into the card. The wild man is a full
+pose at two-thirds size, in a tawny pelt rather than a white one.
 """
 
 from scripts.deck_gen import figure as F
 from scripts.deck_gen.palette import (
     BLUE,
     BROWN,
-    CYAN,
     DARK_GRAY,
     GREEN,
-    LIGHT_CYAN,
     LIGHT_GRAY,
+    LIGHT_GREEN,
     LIGHT_RED,
+    RED,
     WHITE,
     YELLOW,
 )
 from scripts.deck_gen.rig import Rig
-
-
-def _rig(c, scale, x, flip=False, dy=0):
-    """A thin rig whose figure stands centred on card column `x`, lowered by `dy`."""
-    return Rig(c, flip=flip, dx=x - 30, dy=dy, scale=scale, thin=True)
 
 
 # The forester is too small for the rig's garments, whose pleats and seams
@@ -200,142 +196,208 @@ def draw_jester(c, x=30, foot_y=88):
     r.silhouette()
 
 
-def _musician(c, x, scale, flip, look, arms, legs, dy=0):
-    r = _rig(c, scale, x, flip, dy)
-    F.draw_standing(r, look, arms, legs)
-    r.silhouette()
+# The village band is pixelled at card size using fill colours only, so
+# `Rig(thin=True).silhouette()` wraps one crisp dark-grey outline around each
+# figure and its arms without doubling an inner outline. Hats start on row 68
+# and boots stand on row 87, clear of the Ten's lowest bells at row 63.
+TRUMPETER_BODY = [
+    '..ccccc..ff.',
+    '.cccccccccc.',
+    '.cc4cccc....',
+    '..eeeee.....',
+    '.ccccccc....',
+    '..99..99....',
+    '..99..99....',
+    '..99..99....',
+    '..66..66....',
+    '..66..66....',
+    '..666.666...',
+]
 
+TRUMPET = [
+    '........e',
+    'eeeeeeeee',
+    '....ff.6e',
+    '........6',
+]
 
-# The band's instruments, pixelled at card size: at a quarter scale, shapes
-# built on the rig shrink to blobs. Each is placed beside its player's hands.
-TRUMPET = ['........e', '.......ee', 'eeeeeeeee', '.......e6', '........6']
-DRUM = ['.fffff.', '4444444', 'e4e4e4e', 'eeeeeee', '4444444']
-FIDDLE = ['6......', '.6.....', '..6.66.', '...6ee6', '....66.', '...6666']
-FIDDLE_BOW = ['....7', '...7.', '..7..', '.7...', '7....']
+DRUMMER_BODY = [
+    '..2aaa2.....',
+    '.2aaaaa2ff..',
+    '.22aaa22....',
+    '..ee6ee.....',
+    '.2aaaaa2....',
+    '..ee..ee....',
+    '..ee..ee....',
+    '..ee..ee....',
+    '..66..66....',
+    '..66..66....',
+    '..666.666...',
+]
 
+DRUM_BODY = [
+    'ffffff',
+    'cccccc',
+    'e4ee4e',
+    'ee4eee',
+    'cccccc',
+]
 
-def _instrument(c, rows, x0, y0):
-    """Blits a sprite with its top-left at (x0, y0), edged in dark grey wherever it meets the white card."""
-    r = Rig(c, thin=True)
-    r.sprite(rows, x0, y0)
-    r.silhouette(where=lambda x, y: c.get(x, y) == WHITE)
+FIDDLER_BODY = [
+    '..99999.....',
+    '.99999999ff.',
+    '.991999ff...',
+    '..eeeee.....',
+    '.9999999....',
+    '..cc..cc....',
+    '..cc..cc....',
+    '..cc..cc....',
+    '..66..66....',
+    '..66..66....',
+    '..666.666...',
+]
+
+FIDDLE_BODY = [
+    '.6ee6...',
+    '6eeee666',
+    '.666....',
+]
 
 
 def draw_musicians(c):
-    """A village band: a trumpeter, a drummer and a fiddler."""
-    s = 0.22
-    # Two rows lower than the other vignettes, so the hats clear the Ten's
-    # lowest bells.
-    dy = 2
-    stand = (((27, 52), (25, 68), (24, 84), (29, 87)), ((33, 52), (37, 68), (38, 84), (44, 87)))
+    """A village band: a trumpeter, a bearded drummer and a fiddler."""
+    # Trumpeter, facing right: crimson doublet, raised sleeve and herald's trumpet.
+    r1 = Rig(c, thin=True)
+    r1.sprite(TRUMPETER_BODY, 8, 77)
+    F.draw_head(r1, 11, 74, 'young', BROWN, hat=('cap', GREEN, YELLOW, LIGHT_RED), small=True)
+    r1.sprite(TRUMPET, 14, 74)
+    r1.silhouette()
 
-    _musician(
-        c,
-        13,
-        s,
-        False,
-        dict(sleeve_b=LIGHT_RED, sleeve_f=LIGHT_RED, hose=BLUE, boot=BROWN, tunic=LIGHT_RED, skirt=LIGHT_RED,
-             belt=YELLOW, hair=BROWN, hat=('cap', GREEN, WHITE, YELLOW)),
-        (((23, 26), (30, 34), (38, 24), 'grip'), ((36, 26), (43, 28), (46, 14), 'grip')),
-        stand,
-        dy,
-    )
-    _musician(
-        c,
-        30,
-        s,
-        False,
-        dict(sleeve_b=GREEN, sleeve_f=GREEN, hose=YELLOW, boot=BROWN, tunic=GREEN, skirt=GREEN, belt=LIGHT_RED,
-             face='beard', hair=BROWN, hat=('brim', LIGHT_RED, YELLOW, GREEN)),
-        (((23, 26), (30, 36), (40, 34), 'grip'), ((36, 26), (44, 32), (48, 34), 'grip')),
-        stand,
-        dy,
-    )
-    _musician(
-        c,
-        47,
-        s,
-        True,
-        dict(sleeve_b=CYAN, sleeve_f=CYAN, hose=LIGHT_RED, boot=BROWN, tunic=CYAN, skirt=CYAN, belt=YELLOW,
-             hair=YELLOW, hat=('beret', BLUE, LIGHT_RED, YELLOW)),
-        (((23, 26), (34, 32), (44, 33), 'grip'), ((36, 26), (36, 38), (40, 30), 'grip')),
-        stand,
-        dy,
-    )
-    # A straight herald's trumpet level from the lips, a drum slung at the hip
-    # with one stick raised and one on the skin, and a fiddle under the chin
-    # with the bow across its strings.
-    _instrument(c, TRUMPET, 15, 68 + dy)
-    _instrument(c, DRUM, 31, 75 + dy)
-    for x, y in ((31, 72), (30, 71), (35, 74)):
-        c.put(x, y + dy, BROWN)
-    _instrument(c, FIDDLE_BOW, 40, 71 + dy)
-    _instrument(c, FIDDLE, 39, 68 + dy)
+    # Bearded drummer: green coat, red plumed brimmed hat, side drum outlined
+    # against his hip, and crisp one-pixel drumsticks drawn after the silhouette.
+    r2 = Rig(c, thin=True)
+    r2.sprite(DRUMMER_BODY, 26, 77)
+    F.draw_head(r2, 30, 74, 'beard', BROWN, beard=BROWN, hat=('brim', LIGHT_RED, YELLOW, GREEN), small=True)
+    r2.silhouette()
+    rd = Rig(c, thin=True)
+    rd.sprite(DRUM_BODY, 34, 81)
+    rd.silhouette()
+    c.line(35, 77, 38, 80, BROWN)
+    c.line(32, 80, 36, 81, BROWN)
+
+    # Fiddler, mirrored about column 50 to face into the band, bow across strings.
+    r3 = Rig(c, flip=True, axis=50, thin=True)
+    r3.sprite(FIDDLER_BODY, 46, 77)
+    F.draw_head(r3, 50, 74, 'young', YELLOW, hat=('beret', BLUE, LIGHT_RED, YELLOW), small=True)
+    r3.sprite(FIDDLE_BODY, 52, 75)
+    r3.silhouette()
+    c.line(44, 73, 47, 79, LIGHT_GRAY)
 
 
 def draw_wild_man(c, x=28, scale=0.66):
-    """The wild man of Czech heraldry: bearded, girdled and crowned with oak, a club on his shoulder."""
+    """The wild man of Czech heraldry: tawny pelt, oak-leaf girdle, club on his shoulder.
+
+    Consistent brown-and-tawny fur across chest, arms and legs so he stands out
+    warmly against the dark green oak, with bare ankles tucked into the turf.
+    """
     r = Rig(c, dx=x - 30, scale=scale)
+
+    def fur(px, py):
+        if (px + py * 2) % 5 == 0 or (px * 3 + py) % 11 == 0:
+            return YELLOW
+        return None
+
+    def girdle(px, py):
+        n = (px * 13 + py * 7) % 17
+        if n <= 5:
+            return LIGHT_GREEN
+        if n == 7:
+            return YELLOW
+        if n == 8:
+            return RED
+        return None
+
     look = dict(
-        sleeve_b=WHITE,
-        sleeve_f=WHITE,
-        hose=WHITE,
+        sleeve_b=BROWN,
+        sleeve_f=BROWN,
+        hose=BROWN,
         boot=WHITE,
-        tunic=WHITE,
-        # A girdle of autumn oak leaves: a green one vanished into the oak behind him.
-        skirt=BROWN,
-        belt=GREEN,
-        collar=WHITE,
-        skirt_pattern=lambda x, y: YELLOW if (x * 2 + y) % 5 == 0 else (LIGHT_RED if (x * 3 + y) % 11 == 0 else None),
-        # Body hair in short strokes over the chest.
-        pattern=lambda x, y: LIGHT_GRAY if (x + 2 * y) % 7 == 0 else None,
+        boot_top=0.88,
+        tunic=BROWN,
+        skirt=GREEN,
+        belt=YELLOW,
+        collar=BROWN,
+        skirt_pattern=girdle,
+        pattern=fur,
         face='old',
         hair=BROWN,
         beard=BROWN,
-        hat=('wreath', GREEN, YELLOW, GREEN),
+        hat=('wreath', LIGHT_GREEN, YELLOW, GREEN),
     )
     arms = (((23, 26), (15, 36), (18, 46), 'open'), ((36, 26), (45, 34), (50, 27), 'grip'))
     legs = (((26, 52), (22, 68), (19, 84), (14, 87)), ((34, 52), (39, 68), (41, 84), (46, 87)))
 
     def club(rr):
-        # Short enough that its head stays clear of the Ace's ribbon.
         rr.part().chain([(49, 32), (53, 19), (56, 8)], [1.4, 2.4, 3.4]).paint(BROWN, outline=DARK_GRAY)
-        for kx, ky in ((52, 21), (55, 12), (56, 7)):
+        for kx, ky in ((52, 21), (54, 16), (55, 12), (56, 7), (57, 9)):
             rr.put(kx, ky, YELLOW)
 
     F.draw_standing(r, look, arms, legs, back_props=club, pose=dict(hem=60, flare=7))
 
 
-def draw_cupid(c, x=44, scale=0.27):
-    """A winged cupid facing left, drawing his bow."""
-    r = _rig(c, scale, x, flip=True)
-    # Wings behind the shoulders: the far one light cyan, the near one white
-    # with cyan feather edges so it doesn't read as a hole in the figure.
-    r.part().ellipse(17, 26, 11, 5, angle=-60).paint(LIGHT_CYAN, None)
-    r.part().ellipse(17, 26, 11, 5, angle=-30).paint(WHITE, None, pattern=lambda px, py: LIGHT_CYAN if (px + py) % 3 == 0 else None)
-    look = dict(
-        sleeve_b=WHITE,
-        sleeve_f=WHITE,
-        hose=WHITE,
-        boot=WHITE,
-        tunic=WHITE,
-        skirt=LIGHT_RED,
-        belt=LIGHT_RED,
-        collar=WHITE,
-        hair=YELLOW,
-        hat=None,
-    )
-    arms = (((23, 26), (34, 30), (42, 26), 'grip'), ((36, 26), (43, 24), (52, 24), 'grip'))
-    legs = (((27, 52), (22, 68), (18, 84), (23, 87)), ((33, 52), (40, 66), (42, 84), (48, 87)))
+# Cupid facing left: golden curls, cyan-shaded white wings, outstretched bow
+# arm and fluttering crimson sash. Drawn in fill colours first and outlined
+# once; the bow, string and one-pixel arrow go on afterwards so `silhouette`
+# does not thicken the arrow into a three-pixel grey bar.
+CUPID_BODY = [
+    '.......eee6e.......',
+    '......e6eeee6......',
+    '......ee0efec......',
+    '.......eefff..bbb..',
+    '......fffffffbfffb.',
+    '.fffffffffffbfff3b.',
+    '......fff7fffbff3b.',
+    '.......fffffffbbb..',
+    '.......ffffcccc....',
+    '.......cc4ccc.cc...',
+    '.......ffffff..c...',
+    '......fff..fff.....',
+    '......fff..fff.....',
+    '......ff....ff.....',
+    '.....fff....fff....',
+    '....fff......fff...',
+]
 
-    F.draw_standing(r, look, arms, legs, pose=dict(hem=50, flare=6))
+
+def draw_cupid(c, x=44):
+    """A winged cupid facing left, drawing his bow at the heart on the post."""
+    r = Rig(c, thin=True)
+    eye = CUPID_BODY[2].index('0')
+    top = 70
+    r.sprite(CUPID_BODY, x - eye, top)
     r.silhouette()
-    # Bow, string and arrow go on after the silhouette as crisp one-pixel
-    # lines: outlined, they would thicken into a grey tangle at this scale.
-    for (x0, y0), (x1, y1) in (((52, 4), (56, 14)), ((56, 14), (56, 34)), ((56, 34), (52, 44))):
-        r.line(x0, y0, x1, y1, BROWN)
-    r.line(52, 5, 42, 26, LIGHT_GRAY)
-    r.line(42, 26, 52, 43, LIGHT_GRAY)
-    r.line(38, 26, 64, 25, BROWN)
-    for px, py in ((68, 25), (67, 24), (67, 26)):
-        r.put(px, py, DARK_GRAY)
+
+    # Recurve wooden bow, taut bowstring, and crisp 1px heart-tipped arrow.
+    for dx, dy, col in (
+        (-6, 0, BROWN),
+        (-7, 1, BROWN),
+        (-8, 2, BROWN),
+        (-8, 3, YELLOW),
+        (-9, 4, BROWN),
+        (-9, 5, YELLOW),
+        (-9, 6, BROWN),
+        (-9, 7, YELLOW),
+        (-9, 8, BROWN),
+        (-8, 9, YELLOW),
+        (-8, 10, BROWN),
+        (-7, 11, BROWN),
+        (-6, 12, BROWN),
+    ):
+        c.put(x + dx, top + dy, col)
+    c.line(x - 6, top + 1, x - 3, top + 6, LIGHT_GRAY)
+    c.line(x - 3, top + 6, x - 6, top + 11, LIGHT_GRAY)
+    c.line(x - 16, top + 6, x - 3, top + 6, BROWN)
+    c.put(x - 4, top + 5, LIGHT_RED)
+    c.put(x - 4, top + 7, LIGHT_RED)
+    for dx, dy, col in ((-17, 6, RED), (-16, 5, RED), (-16, 7, RED), (-18, 6, DARK_GRAY)):
+        c.put(x + dx, top + dy, col)

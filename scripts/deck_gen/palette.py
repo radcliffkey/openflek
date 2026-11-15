@@ -102,11 +102,10 @@ class FaceCanvas:
             self.px[y][FACE_W - 2] = DARK_GRAY
 
     def in_interior(self, x, y):
-        if x < 2 or x > 58 or y < 2 or y > 97:
-            return False
-        if (x in (2, 58)) and (y in (2, 97)):
-            return False
-        return True
+        # The whole rectangle sits inside the inner octagon. Face (2, 97) and
+        # (58, 97) are sprite (4, 99) and (60, 99); leaving them white punched
+        # bright pinholes in the turf at the bottom corners.
+        return 2 <= x <= 58 and 2 <= y <= 97
 
     def put(self, x, y, col):
         x = int(round(x))

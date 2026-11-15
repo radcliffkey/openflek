@@ -50,14 +50,22 @@ const SHADOW: [(i32, i32); 8] = [
 
 /// Paints the white ring between the outer and inner octagon plus both outlines.
 fn draw_frame(c: &mut Canvas) {
+    // Use the bounding box of `INNER` (3..=61, 3..=100) as the cutout so
+    // `fill_poly`'s pixel-centre rounding on the (61, 99)->(60, 100) diagonal
+    // cannot paint a white pinhole at interior pixel (60, 99). The four corner
+    // pixels of that box lie outside `INNER` and are set white explicitly.
+    const CUTOUT: [(i32, i32); 4] = [(3, 3), (61, 3), (61, 100), (3, 100)];
     let ring: Vec<(i32, i32)> = OUTER
         .iter()
         .chain([&OUTER[0]])
-        .chain(INNER.iter())
-        .chain([&INNER[0]])
+        .chain(CUTOUT.iter())
+        .chain([&CUTOUT[0]])
         .copied()
         .collect();
     c.fill_poly(&ring, Fill::solid(color::WHITE));
+    for (x, y) in CUTOUT {
+        c.put_pixel(x, y, color::WHITE);
+    }
     c.poly(&OUTER, color::DARK_GRAY);
     c.poly(&INNER, color::DARK_GRAY);
     c.fill_poly(&SHADOW, Fill::solid(color::DARK_GRAY));
@@ -119,10 +127,149 @@ fn back_light(line_color: u8) -> u8 {
     }
 }
 
+/// Quadrant of face pixel `(x, y)`. Rows 49 and 50 share a quadrant row, so a
+/// pattern built from these coordinates mirrors exactly either way up.
+fn back_quadrant(x: i32, y: i32) -> (i32, i32) {
+    let qx = (x - 30).abs();
+    let qy = ((2 * y - 99).abs() - 1) / 2;
+    (qx, qy)
+}
+
+/// True when `(x, y)` lies inside the ellipse of radii `(rx, ry)` centred on
+/// the card. The vertical radius is measured from the shared middle row.
+fn in_back_oval(x: i32, y: i32, rx: f64, ry: f64) -> bool {
+    let (qx, qy) = back_quadrant(x, y);
+    let mx = f64::from(qx) / rx;
+    let my = (f64::from(qy) + 0.5) / ry;
+    mx * mx + my * my <= 1.0
+}
+
+fn touches8(x: i32, y: i32, pred: impl Fn(i32, i32) -> bool) -> bool {
+    for dy in -1..=1 {
+        for dx in -1..=1 {
+            if (dx != 0 || dy != 0) && pred(x + dx, y + dy) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// A pixel of `inside` with an orthogonal neighbour outside it: a one-pixel rim.
+fn on_shape_edge(x: i32, y: i32, inside: impl Fn(i32, i32) -> bool) -> bool {
+    if !inside(x, y) {
+        return false;
+    }
+    [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        .into_iter()
+        .any(|(dx, dy)| !inside(x + dx, y + dy))
+}
+
+/// Corner fan, in quadrant pixels measured toward the middle of the card.
+/// `None` when `(x, y)` is outside the fan's disc.
+fn fan_offset(x: i32, y: i32) -> Option<(i32, i32)> {
+    let (qx, qy) = back_quadrant(x, y);
+    let fx = 23 - qx;
+    let fy = 42 - qy;
+    if fx >= 0 && fy >= 0 && fx * fx + fy * fy <= 81 {
+        Some((fx, fy))
+    } else {
+        None
+    }
+}
+
+fn on_disc_edge(fx: i32, fy: i32) -> bool {
+    if fx < 0 || fy < 0 || fx * fx + fy * fy > 81 {
+        return false;
+    }
+    [(1, 0), (0, 1)]
+        .into_iter()
+        .any(|(dx, dy)| (fx + dx) * (fx + dx) + (fy + dy) * (fy + dy) > 81)
+}
+
+/// Interior of the three-lobed corner palmette inside `(fx, fy)`.
+fn fan_lobe_fill(fx: i32, fy: i32) -> bool {
+    if fx < 0 || fy < 0 || fx + fy <= 2 {
+        return false;
+    }
+    if fy <= 1 && (2..=6).contains(&fx) && !(fx == 6 && fy == 1) {
+        return true;
+    }
+    if fx <= 1 && (2..=6).contains(&fy) && !(fy == 6 && fx == 1) {
+        return true;
+    }
+    matches!(
+        (fx, fy),
+        (2, 2) | (3, 3) | (3, 4) | (4, 3) | (4, 4) | (4, 5) | (5, 4) | (5, 5)
+    )
+}
+
+/// Interior of one of the eight rosette petals at face pixel `(x, y)`.
+/// Defining the fill first and deriving the one-pixel dark rim from 4-neighbours
+/// keeps all eight petals attached to the hub with an unbroken outline.
+fn petal_interior(x: i32, y: i32) -> bool {
+    let (qx, qy) = back_quadrant(x, y);
+    if qx + qy <= 1 || (qx == 1 && qy == 1) {
+        return false;
+    }
+    if (2..=12).contains(&qy) && qx <= i32::from(!(qy == 2 || qy == 12)) {
+        return true;
+    }
+    if (2..=9).contains(&qx) && qy <= i32::from(!(qx == 2 || qx == 9)) {
+        return true;
+    }
+    matches!(
+        (qx, qy),
+        (2, 2) | (3, 3) | (3, 4) | (4, 4) | (4, 5) | (5, 5) | (5, 6) | (6, 6) | (5, 7) | (6, 7)
+    )
+}
+
+fn rosette_pixel(x: i32, y: i32, dark: u8, light: u8) -> u8 {
+    let (qx, qy) = back_quadrant(x, y);
+    if qx + qy <= 1 {
+        return dark;
+    }
+    if petal_interior(x, y) {
+        return light;
+    }
+    if (qx == 1 && qy == 1)
+        || [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            .into_iter()
+            .any(|(dx, dy)| petal_interior(x + dx, y + dy))
+    {
+        return dark;
+    }
+    color::WHITE
+}
+
+fn lattice_pixel(qx: i32, qy: i32, dark: u8, light: u8, gold: bool) -> u8 {
+    let a = (qx + qy).rem_euclid(8);
+    let b = (qx - qy).rem_euclid(8);
+    if a == 0 || b == 0 || (a == 4 && b == 4) {
+        return dark;
+    }
+    let plus = (a == 4 && (b == 3 || b == 5)) || (b == 4 && (a == 3 || a == 5));
+    if plus {
+        // Yellow flowers vanish on the white cells of the gold back.
+        return if gold { dark } else { light };
+    }
+    let cell = (qx + qy).div_euclid(8) + (qx - qy).div_euclid(8);
+    // Gold fills the whole diamond; the other backs keep a light chequer.
+    if cell.rem_euclid(2) == 1 && (gold || (qx + qy).rem_euclid(2) == 1) {
+        return light;
+    }
+    color::WHITE
+}
+
 /// The back pattern at face pixel (x, y), for x in 2..=58 and y in 2..=97:
 /// a double border, fans in the corners, a diamond lattice with a flower in
 /// each cell and alternate cells tinted, and a medallion holding an
 /// eight-petalled rosette.
+///
+/// A one-pixel white halo keeps the lattice off the medallion and the fans.
+/// Petals and fan ribs are stepped in whole pixels so the outline does not
+/// sprout single-pixel jags. The gold back fills its tinted diamonds solid
+/// yellow and draws its flowers in brown; yellow on white would wash out.
 ///
 /// Everything is measured from the centre, so the back is mirror symmetric
 /// both ways and looks the same either way up.
@@ -133,9 +280,8 @@ fn back_pixel(line_color: u8, x: i32, y: i32) -> u8 {
         line_color
     };
     let light = back_light(line_color);
-    // Quadrant coordinates: rows 49 and 50 are both the middle row.
-    let qx = (x - 30).abs();
-    let qy = ((2 * y - 99).abs() - 1) / 2;
+    let gold = line_color == color::BROWN;
+    let (qx, qy) = back_quadrant(x, y);
 
     // Border: a dark rule, a light band, another dark rule.
     let edge = (x - 2).min(58 - x).min(y - 2).min(97 - y);
@@ -146,55 +292,46 @@ fn back_pixel(line_color: u8, x: i32, y: i32) -> u8 {
         _ => {}
     }
 
-    // Fans in the four corners of the field.
-    let (fx, fy) = (f64::from(23 - qx), f64::from(42 - qy));
-    let fr = fx.hypot(fy);
-    if fx >= 0.0 && fy >= 0.0 && fr <= 9.0 {
-        if fr > 8.0 || (fr as i32) % 3 == 0 {
+    if let Some((fx, fy)) = fan_offset(x, y) {
+        if on_disc_edge(fx, fy) || fx + fy <= 1 {
             return dark;
         }
-        let ray = (fy.atan2(fx).to_degrees() / 15.0) as i32;
-        return if ray % 2 != 0 { light } else { color::WHITE };
-    }
-
-    // Central medallion with a rosette.
-    let (mx, my) = (f64::from(qx), f64::from(qy) + 0.5);
-    let mr = (mx / 15.0).hypot(my / 19.0);
-    if mr <= 1.0 {
-        if mr > 0.92 {
+        if fan_lobe_fill(fx, fy) {
+            return light;
+        }
+        if [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            .into_iter()
+            .any(|(dx, dy)| fan_lobe_fill(fx + dx, fy + dy))
+        {
             return dark;
-        }
-        if mr > 0.84 {
-            return if (qx + qy) % 2 != 0 {
-                light
-            } else {
-                color::WHITE
-            };
-        }
-        let petal = 0.25 + 0.55 * (4.0 * my.atan2(mx)).cos().abs();
-        if mr < 0.14 {
-            return dark;
-        }
-        if mr < petal {
-            return if mr > petal - 0.08 { dark } else { light };
         }
         return color::WHITE;
     }
+    let (fx, fy) = (23 - qx, 42 - qy);
+    if fx >= -1 && fy >= -1 && touches8(x, y, |px, py| fan_offset(px, py).is_some()) {
+        return color::WHITE;
+    }
 
-    // Diamond lattice with a flower in each cell.
-    let (a, b) = ((qx + qy).rem_euclid(8), (qx - qy).rem_euclid(8));
-    if a == 0 || b == 0 || (a == 4 && b == 4) {
-        return dark;
+    let outer = |px, py| in_back_oval(px, py, 15.0, 19.0);
+    if outer(x, y) {
+        if on_shape_edge(x, y, outer) {
+            return dark;
+        }
+        let inner = |px, py| in_back_oval(px, py, 12.6, 16.2);
+        if on_shape_edge(x, y, inner) {
+            // Brown reads on yellow; the other backs use their light colour.
+            return if gold { dark } else { light };
+        }
+        if !inner(x, y) {
+            return color::WHITE;
+        }
+        return rosette_pixel(x, y, dark, light);
     }
-    if (a == 4 && (b == 3 || b == 5)) || (b == 4 && (a == 3 || a == 5)) {
-        return light;
+    if touches8(x, y, outer) {
+        return color::WHITE;
     }
-    // Every other cell is tinted, so the lattice reads as a chequer of diamonds.
-    let cell = (qx + qy).div_euclid(8) + (qx - qy).div_euclid(8);
-    if cell.rem_euclid(2) == 1 && (qx + qy) % 2 == 1 {
-        return light;
-    }
-    color::WHITE
+
+    lattice_pixel(qx, qy, dark, light, gold)
 }
 
 /// The 32 faces in card-id order, row-major, two pixels per byte (high nibble first).
@@ -234,6 +371,17 @@ mod tests {
             assert_eq!(c.pixel(SPRITE_W - 1, 0), Some(TRANSPARENT));
             assert_eq!(c.pixel(3, 0), Some(color::DARK_GRAY));
             assert_eq!(c.pixel(1, 1), Some(color::WHITE));
+            let f = render_face(Card::from_id(id));
+            assert_eq!(
+                c.pixel(4, 99),
+                f.pixel(2, 97),
+                "card {id} bottom-left corner"
+            );
+            assert_eq!(
+                c.pixel(60, 99),
+                f.pixel(58, 97),
+                "card {id} bottom-right corner"
+            );
         }
     }
 
@@ -303,5 +451,23 @@ mod tests {
                 .pixels()
                 .contains(&color::DARK_GRAY)
         );
+    }
+
+    #[test]
+    fn gold_back_fills_diamonds_and_ornaments_keep_a_white_halo() {
+        let gold = render_back_face(color::BROWN);
+        let red = render_back_face(color::RED);
+        // The red back dithers this lattice cell; the gold back fills it yellow.
+        assert_eq!(red.pixel(47, 61), Some(color::WHITE));
+        assert_eq!(gold.pixel(47, 61), Some(color::YELLOW));
+        assert!(gold.pixels().iter().all(|&p| {
+            matches!(
+                p,
+                color::BROWN | color::YELLOW | color::WHITE | color::DARK_GRAY
+            )
+        }));
+        // Those two whites sit on lattice lines, just outside the medallion and a fan.
+        assert_eq!(red.pixel(27, 30), Some(color::WHITE));
+        assert_eq!(red.pixel(16, 11), Some(color::WHITE));
     }
 }

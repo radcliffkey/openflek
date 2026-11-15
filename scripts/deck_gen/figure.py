@@ -18,11 +18,15 @@ from scripts.deck_gen.palette import (
     LIGHT_GRAY,
     WHITE,
     YELLOW,
+    bresenham,
 )
 from scripts.deck_gen.rig import darker
 
 SKIN = WHITE
 
+# Skin is white, the same index as the card, so the cheek and jaw on the open
+# side of a 3/4 face are closed with dark grey. A missing pixel there lets the
+# mouth or the chin bleed into the paper.
 FACE_YOUNG = [
     '.....hHHHh.....',
     '...hHHHHHHHh...',
@@ -33,7 +37,7 @@ FACE_YOUNG = [
     '.hHHHfffffff88.',
     '.hHHHcfffffff8.',
     '.hHHHHfffff878.',
-    '.hHHHHffff447..',
+    '.hHHHHffff448..',
     '..hHHH8ffff8...',
     '..hHHHh8888....',
     '...hHh.........',
@@ -83,7 +87,7 @@ FACE_MOUSTACHE = [
     '.hHHHfffffff88.',
     '.hHHHcJffffff8.',
     '.hHHHHfJJJJ8J8.',
-    '.hHHHHffff44...',
+    '.hHHHHffff448..',
     '..hHHH8ffff8...',
     '..hHHHh8888....',
     '...hHh.........',
@@ -99,9 +103,9 @@ FACE_GOATEE = [
     '.hHHHfffffff88.',
     '.hHHHcfffffff8.',
     '.hHHHHffJJJ878.',
-    '.hHHHHfff447...',
+    '.hHHHHfff448...',
     '..hHHH8fJJJ8...',
-    '..hHHHh.JJj....',
+    '..hHHHh8JJj....',
     '...hHh...j.....',
 ]
 
@@ -437,7 +441,11 @@ def torso(rig, j, tunic, skirt, belt, collar=WHITE, pattern=None, skirt_pattern=
 
 
 def cape(rig, j, col, length=62, swing=-6, lining=None):
-    """A cape hanging from the shoulders, flaring backwards by `swing` pixels."""
+    """A cape hanging from the shoulders, flaring backwards by `swing` pixels.
+
+    A fold runs from the shoulder down the flared hem, in the darker colour
+    of the cloth, kept off the outline. A wide flare gets a second seam.
+    """
     (sbx, sby), (sfx, sfy) = j['sh_b'], j['sh_f']
     p = rig.part().poly(
         [
@@ -450,6 +458,23 @@ def cape(rig, j, col, length=62, swing=-6, lining=None):
     )
     p.ellipse(sbx + swing + 3.5, length - 1.5, 4.5, 2.0)
     p.paint(col)
+    fold = darker(col)
+    # Interior only: the outline stays a clean rim, and the lines sit on cloth.
+    inset = p.interior()
+    # The body covers the middle of the cape, so the seams run down the
+    # flared back edge, the cloth that actually shows. A wide flare gets
+    # a second seam further out; a narrow one would merge the two.
+    outer = sbx + swing
+    span = abs(swing)
+    seams = ((sbx + 1.5, sby + 3, outer + span * 0.62, length - 6),)
+    if span >= 8:
+        seams = seams + ((sbx - 0.5, sby + 6, outer + 3.0, length - 9),)
+    for x0, y0, x1, y1 in seams:
+        ax, ay = rig.tx(x0, y0)
+        bx, by = rig.tx(x1, y1)
+        for x, y in bresenham(ax, ay, bx, by):
+            if (x, y) in inset:
+                rig.plot(x, y, fold)
     if lining is not None:
         rig.part().poly([(sbx + swing, length - 2), (sbx + swing + 1, length - 10), (sbx + swing + 7, length)]).paint(lining)
 
@@ -517,7 +542,17 @@ def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose
     if not back_over:
         back_arm()
     for hip, kn, an, toe in legs:
-        leg(rig, hip, kn, an, toe, look['hose'], look['boot'], cuff=look.get('boot_cuff'))
+        leg(
+            rig,
+            hip,
+            kn,
+            an,
+            toe,
+            look['hose'],
+            look['boot'],
+            boot_top=look.get('boot_top', 0.4),
+            cuff=look.get('boot_cuff'),
+        )
     torso(
         rig,
         j,

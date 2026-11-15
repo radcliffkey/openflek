@@ -59,78 +59,86 @@ ACORN_H_LEFT = [
     '.........8288..2...',
 ]
 
-# Vertical Leaf (15x17): serrated linden leaf with yellow-green midrib & dual-tone halves
+# Vertical linden leaf (15x17). Tip at the top, yellow midrib, light-green
+# left half and green right half. Side veins slant up from the midrib toward
+# the tip; the red stem curves away at the bottom.
 LEAF_V = [
     '.......8.......',
     '......8a8......',
-    '.....8a228.....',
-    '....8aa8228....',
-    '...8aa2e8228...',
-    '..8aaa8e28228..',
-    '.8aa2a8e228228.',
-    '8aaa8a8e2822228',
-    '8aa2a8ae2288228',
-    '8aaaa8e22228228',
-    '.8aa28e2822228.',
-    '..8aa8e228228..',
-    '...8888e8888...',
+    '.....8ae28.....',
+    '....8aae228....',
+    '...8a2ae2828...',
+    '..82aa2e82288..',
+    '.8aa2aae228228.',
+    '8a2aa2ae2822828',
+    '8aa2aa2e8228228',
+    '8aaa2aae2282228',
+    '.8aaa2ae282228.',
+    '..8aaa2e82228..',
+    '...888888888...',
     '.....44c44.....',
     '......4c4......',
     '.....4c4.......',
     '....44.........',
 ]
 
-# Horizontal Leaf pointing LEFT (19x13): tip on left, stem on right
+# Horizontal linden leaf pointing left (19x13). Sharp tip at column 0, full
+# cordate lobes around a deep notch, red/coral stem in columns 15..18. The lit
+# upper half is light green with green veins; the shaded lower half is green
+# with dark-grey veins. Both sets slant toward the tip. 13 rows match the
+# vertical spacing of the eights and tens.
 LEAF_H_LEFT = [
-    '.......882288......',
-    '.....88aa2a2288....',
-    '...88aa8aaa8a228...',
-    '..8aa2a8aa28aa228..',
-    '.8aaaa2a8aa28aa28..',
-    '8eeeeeeeeeeeee44c44',
-    '.822822822822822844',
-    '..82228222822228...',
-    '...882228222288....',
-    '.....88222288......',
-    '.......8888........',
+    '.........88888.....',
+    '.......88aaaaa88...',
+    '.....88aa2aaaaaa8..',
+    '...88aa2aaaa2aaaa8.',
+    '..8aaaaaaa2aaaa8a8.',
+    '.8aaaa2aaaa2aaa88..',
+    '8eeeeeeeeeeeee84c44',
+    '.8222282222822284..',
+    '..8222222822222828.',
+    '...882282222822228.',
+    '.....882282222228..',
+    '.......882222288...',
+    '.........88888.....',
 ]
 
-# Bell (15x15): golden hawk-bell with crimson-and-gold jewelled band and one
-# short sound slot with round ends low in the plain lower half. Any more
-# marks there, or a slot as wide as the band, read as a face under it.
+# Bell (15x13): golden hawk-bell. Compact suspension loop, dome lit from the
+# upper left, crimson-and-gold band, and one short sound slot with wider ends
+# low in the bowl. 13 rows keep a gap between the bells on an eight and a ten;
+# a second mark under the slot would read as a face.
 BELL_SYM = [
     '......6e6......',
     '.....68.86.....',
-    '....6eeeee6....',
-    '..66eefeeee66..',
-    '.6eeffeeeeeee6.',
-    '.444c4c4c4c444.',
-    '4ce4ce4ce4ce4c4',
-    '444c4c4c4c4c444',
-    '6eeeeeeeeeeeee6',
-    '6eeeeeeeeeeee66',
-    '.6ee88eee88ee6.',
-    '.6ee8888888e66.',
-    '..6e88eee8866..',
-    '....66eee66....',
-    '......666......',
+    '....6efeee6....',
+    '...6effeeee6...',
+    '..6eeffeeee66..',
+    '.6eefeeeeeee66.',
+    '.4ce4ce4ce4ce4.',
+    '4ec4ec4ec4ec4e4',
+    '.6eeeeeeeeee66.',
+    '..6e88eee88e6..',
+    '..6e8888888e6..',
+    '...6eeeeeee6...',
+    '....6666666....',
 ]
 
-# Heart (15x14): Bohemian heart with top golden pearl, specular highlight & ribbed left lobe
+# Heart (15x13): Bohemian heart. Red rim all the way round both lobes, golden
+# pearl in the cleft, white and yellow glint on the upper left, crimson shade
+# along the right. 13 rows leave a white gap in the columns on an eight and a ten.
 HEART_SYM = [
-    ' ..444.6.444.. ',
-    '.44ccc4e4ccc44.',
-    '4ccffcccccccccc',
-    '4cfeecccccccccc',
-    '4cc4c4ccccccccc',
-    '4c4cc4ccccccccc',
-    '.4cc4ccccccccc.',
-    '.44c4cccccccc4.',
-    '..4c4ccccccc4..',
-    '...4c4ccccc4...',
-    '....4c4ccc4....',
-    '.....4c4c4.....',
-    '......4c4......',
+    '..444.6e6.444..',
+    '.4ffe46e64cc44.',
+    '4feccc464cccc44',
+    '4cecccc4ccccc44',
+    '4cccccc4ccccc44',
+    '44ccccc4cccc444',
+    '.44cccc4ccc444.',
+    '..44ccc4ccc44..',
+    '...44cc4c444...',
+    '....44c4444....',
+    '.....44444.....',
+    '......444......',
     '.......4.......',
 ]
 

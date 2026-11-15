@@ -23,6 +23,76 @@ from scripts.deck_gen.rig import Rig, darker
 from scripts.deck_gen.symbols import draw_shrub, draw_suit, draw_suit_leaning
 
 
+# Fly agarics for the Acorn Ace's left bank: red caps, white spots, white stems.
+AGARIC = [
+    '....4c4c4...',
+    '...4cf4fc4..',
+    '..4cff4ffc4.',
+    '.4c4ff4ff4c4',
+    '..4ccccccc4.',
+    '...44cccc44.',
+    '....8ff8....',
+    '....8ff8....',
+    '...8ffff8...',
+]
+
+AGARIC_SMALL = [
+    '..4c4c4..',
+    '.4cf4fc4.',
+    '4cff4ffc4',
+    '.4ccccc4.',
+    '..8ff8...',
+    '..8ff8...',
+    '..8fff8..',
+]
+
+# Oak-fern shoot and a fallen acorn for the right bank.
+# Frond with a dark edge, so it still shows against the green bank.
+FERN = [
+    '..8a8..',
+    '.8a2a8.',
+    '8a2a2a8',
+    '.82a28.',
+    '..828..',
+    '...6...',
+    '...6...',
+]
+
+ACORN_FALLEN = [
+    '66eee',
+    '6eeee',
+    '.666.',
+]
+
+# Crowned sacred heart for the Heart Ace (17x16): a golden coronet edged in
+# dark grey over the cleft, the left lobe lit with a single specular glint on
+# the upper left and light-red face, the right lobe in deeper crimson shadow.
+# Sized to sit cleanly inside the blue sky oval without touching the top rose.
+CROWNED_HEART = [
+    '...8e8.8e8.8e8...',
+    '...8ee8eee8ee8...',
+    '...8ee4eee4ee8...',
+    '....884484488....',
+    '.444ccff44ccc444.',
+    '4ccffffc44ccccc44',
+    '4cffffcc4cccccc44',
+    '4ccffcc44cccccc44',
+    '4cccccc4ccccccc44',
+    '.44cccc4cccccc44.',
+    '..44ccc4ccccc44..',
+    '...44cc4cccc44...',
+    '....44c4ccc44....',
+    '.....44c4444.....',
+    '......44444......',
+    '.......444.......',
+]
+
+
+def _draw_crowned_heart(c, cx, cy):
+    """A sculpted heart and coronet centred on (cx, cy), crowning the chalice."""
+    c.blit_sprite(CROWNED_HEART, cx - 8, cy - 7)
+
+
 # Small round hawk-bell (7x8) charged on the Bell Ace shield: a loop on top,
 # a red band round the middle and the slot underneath, like the suit sign.
 MINI_BELL = [
@@ -139,15 +209,16 @@ def draw_ace_acorn(c):
 
     _overlap_foreground_turf(c, base_y=84)
 
-    # Twin O / F golden medallions nestled in the foreground turf (y=75..87)
-    c.fill_ellipse(11, 81, 6, 6, YELLOW, BROWN, outline=DARK_GRAY)
-    c.fill_ellipse(49, 81, 6, 6, YELLOW, BROWN, outline=DARK_GRAY)
-    # The O without its corners, so it reads as a ring and not a box.
-    for a, b in (((10, 79), (12, 79)), ((10, 83), (12, 83)), ((9, 80), (9, 82)), ((13, 80), (13, 82))):
-        c.line(*a, *b, RED)
-    c.line(47, 79, 47, 83, RED)
-    c.line(47, 79, 51, 79, RED)
-    c.line(47, 81, 50, 81, RED)
+    # Woodland floor on the banks, in place of the old O and F medallions
+    # (those repeated the ribbon's title as two yellow wheels in the bushes).
+    # Fly agarics on the left, fallen acorns and fern shoots on the right.
+    c.blit_sprite(AGARIC, 3, 77)
+    c.blit_sprite(AGARIC_SMALL, 12, 83)
+    c.blit_sprite(FERN, 46, 79)
+    c.blit_sprite(FERN, 54, 81)
+    c.blit_sprite(ACORN_FALLEN, 47, 84)
+    c.blit_sprite(ACORN_FALLEN, 53, 86)
+    c.blit_sprite(ACORN_FALLEN, 48, 88)
 
 
 def draw_ace_leaf(c):
@@ -323,7 +394,6 @@ def draw_ace_heart(c):
             x, y = round(30 + t * math.cos(a)), round(46 + t * math.sin(a))
             if (x, y) in inside:
                 c.put(x, y, YELLOW)
-    draw_suit(c, 3, 30, 46)
 
     # Golden chalice: wide cup, knopped stem and a broad foot.
     cup = r.part().poly([(21, 55), (39, 55), (36, 63), (31, 66), (29, 66), (24, 63)]).ellipse(30, 55, 9, 1.6)
@@ -331,6 +401,8 @@ def draw_ace_heart(c):
     r.part().ellipse(30, 55, 8, 1.2).fill(BROWN)
     r.part().rect(29, 66, 31, 71).ellipse(30, 68.5, 2.4, 1.4).paint(YELLOW, outline=BROWN)
     r.part().poly([(24, 75), (36, 75), (33, 71), (27, 71)]).ellipse(30, 75, 6.5, 1.5).paint(YELLOW, outline=BROWN)
+    # After the cup, so the heart's point rests on the rim instead of being painted over.
+    _draw_crowned_heart(c, 30, 46)
 
     _overlap_foreground_turf(c, base_y=80)
 
