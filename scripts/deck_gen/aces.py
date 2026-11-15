@@ -20,7 +20,7 @@ from scripts.deck_gen.palette import (
 from scripts.deck_gen import animals, people
 from scripts.deck_gen.palette import checker, fill_terrain
 from scripts.deck_gen.rig import Rig, darker
-from scripts.deck_gen.symbols import draw_shrub, draw_suit, draw_suit_leaning
+from scripts.deck_gen.symbols import draw_ace_corner_pips, draw_shrub
 
 
 # Fly agarics for the Acorn Ace's left bank: red caps, white spots, white stems.
@@ -59,31 +59,30 @@ FERN = [
 ]
 
 ACORN_FALLEN = [
-    '66eee',
-    '6eeee',
-    '.666.',
+    '86eee',
+    '82ccc',
+    '.844.',
 ]
 
-# Crowned sacred heart for the Heart Ace (17x16): a golden coronet edged in
-# dark grey over the cleft, the left lobe lit with a single specular glint on
-# the upper left and light-red face, the right lobe in deeper crimson shadow.
-# Sized to sit cleanly inside the blue sky oval without touching the top rose.
+# Crowned sacred heart for the Heart Ace (17x16): a golden coronet over the
+# cleft, shaded with horizontal woodcut bars down the left lobe to match the
+# Prague heart pips while sitting cleanly inside the sky oval.
 CROWNED_HEART = [
     '...8e8.8e8.8e8...',
     '...8ee8eee8ee8...',
     '...8ee4eee4ee8...',
     '....884484488....',
-    '.444ccff44ccc444.',
-    '4ccffffc44ccccc44',
-    '4cffffcc4cccccc44',
-    '4ccffcc44cccccc44',
-    '4cccccc4ccccccc44',
-    '.44cccc4cccccc44.',
-    '..44ccc4ccccc44..',
-    '...44cc4cccc44...',
-    '....44c4ccc44....',
-    '.....44c4444.....',
-    '......44444......',
+    '.444ccc4.4ccc444.',
+    '44444cc444ccccc44',
+    '4ccccccccccccccc4',
+    '4444444ccccccccc4',
+    '4ccccccccccccccc4',
+    '.444444cccccccc4.',
+    '..4ccccccccccc4..',
+    '...44444ccccc4...',
+    '....4ccccccc4....',
+    '.....444ccc4.....',
+    '......4ccc4......',
     '.......444.......',
 ]
 
@@ -93,17 +92,17 @@ def _draw_crowned_heart(c, cx, cy):
     c.blit_sprite(CROWNED_HEART, cx - 8, cy - 7)
 
 
-# Small round hawk-bell (7x8) charged on the Bell Ace shield: a loop on top,
-# a red band round the middle and the slot underneath, like the suit sign.
+# Small half-red hawk-bell (7x8) charged on the Bell Ace shield: crimson upper
+# dome and ribbed golden lower half, matching the Kule suit pips.
 MINI_BELL = [
     '...8...',
-    '..888..',
-    '.8efe8.',
-    '8eeeee8',
-    '8444448',
-    '8e888e8',
-    '.8eee8.',
-    '..888..',
+    '.44c44.',
+    '4cc4cc4',
+    '4444444',
+    '6ee8ee6',
+    '6e888e6',
+    '.6eee6.',
+    '..686..',
 ]
 
 
@@ -149,15 +148,14 @@ def draw_ace_acorn(c):
     """Draws the Acorn Ace with arched OPENFLEK ribbon, top acorns & woodland crest."""
     _fill_ace_ground(c, top_y=54, water=True)
 
-    # Top left & right acorns with oak-leaf garlands, leaning outwards, their stems under the ribbon
-    draw_suit_leaning(c, 0, 15, 22, -30)
-    draw_suit_leaning(c, 0, 45, 22, 30)
+    # Monumental top-left & top-right acorns, stems tucked under the ribbon
+    draw_ace_corner_pips(c, 0)
 
-    # Top central floral jewel & oak sprigs (x=23..37, y=4..19)
-    c.fill_ellipse(30, 9, 4, 4, LIGHT_RED, RED, outline=DARK_GRAY)
-    c.fill_ellipse(30, 9, 2, 2, YELLOW, BROWN)
-    c.line(23, 7, 27, 9, GREEN)
-    c.line(37, 7, 33, 9, GREEN)
+    # Top central floral jewel & oak sprigs (x=24..36, y=4..19)
+    c.fill_ellipse(30, 9, 3.5, 3.5, LIGHT_RED, RED, outline=DARK_GRAY)
+    c.fill_ellipse(30, 9, 1.8, 1.8, YELLOW, BROWN)
+    c.line(24, 7, 27, 9, GREEN)
+    c.line(36, 7, 33, 9, GREEN)
     c.line(30, 13, 30, 19, DARK_GRAY)
 
     # Arched golden ribbon (x=3..57, y=19..37) with OPENFLEK lettering. It is
@@ -225,9 +223,8 @@ def draw_ace_leaf(c):
     """Draws the Leaf Ace: Crowned Bohemian Double-Tailed Lion inside a Linden Wreath."""
     _fill_ace_ground(c, top_y=52, water=True)
 
-    # Top-left and top-right leaves, leaning outwards from behind the shield
-    draw_suit_leaning(c, 1, 15, 19, -32, size=0.95, width=1.2)
-    draw_suit_leaning(c, 1, 45, 19, 32, size=0.95, width=1.2)
+    # Monumental top-left and top-right linden leaves leaning behind the shield
+    draw_ace_corner_pips(c, 1)
 
     # Lush linden & oak wreath wrapping around the shield (center=(30, 50), rx=27, ry=29)
     c.fill_ellipse(30, 50, 27, 29, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='checker')
@@ -257,14 +254,14 @@ def draw_ace_leaf(c):
     # Plain gold shaded to the lower right, not hatched, with its points kept
     # clear of the corner leaves.
     crown = Rig(c)
-    crown.part().poly([(19, 21), (18, 12), (24, 16), (30, 9), (36, 16), (42, 12), (41, 21)]).paint(YELLOW, outline=DARK_GRAY)
-    crown.part().rect(18, 18, 42, 21).paint(YELLOW, shade=None, outline=DARK_GRAY)
+    crown.part().poly([(20, 21), (20, 12), (25, 16), (30, 9), (35, 16), (40, 12), (40, 21)]).paint(YELLOW, outline=DARK_GRAY)
+    crown.part().rect(20, 18, 40, 21).paint(YELLOW, shade=None, outline=DARK_GRAY)
     # Cross on top, edged so the thin gold reads against the white card.
     cross = Rig(c, thin=True)
     cross.line(30, 4, 30, 8, YELLOW)
     cross.line(28, 6, 32, 6, YELLOW)
     cross.silhouette(where=lambda x, y: y < 9)
-    for jx, jcol in [(22, LIGHT_BLUE), (26, RED), (30, LIGHT_GREEN), (34, RED), (38, LIGHT_BLUE)]:
+    for jx, jcol in [(23, LIGHT_BLUE), (26, RED), (30, LIGHT_GREEN), (34, RED), (37, LIGHT_BLUE)]:
         c.put(jx, 19, jcol)
         c.put(jx, 20, darker(jcol))
 
@@ -280,9 +277,8 @@ def draw_ace_bell(c):
     """Draws the Bell Ace: Tournament Helm, Acanthus Mantling & Quartered Coat of Arms."""
     _fill_ace_ground(c, top_y=52, water=False)
 
-    # Top-left and top-right bells
-    draw_suit(c, 2, 11, 12)
-    draw_suit(c, 2, 49, 12)
+    # Monumental top-left and top-right half-red bells
+    draw_ace_corner_pips(c, 2)
 
     # Acanthus mantling flowing from the helm down both sides of the shield:
     # cyan cloth with a gold lining, its edge cut into curling leaves.
@@ -312,10 +308,10 @@ def draw_ace_bell(c):
         c.blit_centered(MINI_BELL, qx, qy)
 
     # Barred tournament helm above the shield, crowned and plumed.
-    # The middle plume's tip stays a row inside the frame rather than being cut flat by it.
+    # Plumes stay clear of the oversized corner bells on either side.
     for tip, mid, col, end in (
-        ((19, 4), (24, 6), LIGHT_RED, 1.8),
-        ((41, 4), (36, 6), LIGHT_RED, 1.8),
+        ((23, 4), (26, 6), LIGHT_RED, 1.6),
+        ((37, 4), (34, 6), LIGHT_RED, 1.6),
         ((30, 4), (30, 7), LIGHT_CYAN, 1.5),
     ):
         plain.part().chain([(30, 12), mid, tip], [1.6, 2.8, end]).paint(col, outline=darker(col))
@@ -331,8 +327,8 @@ def draw_ace_bell(c):
     # A plain gilt neck band: the shade dither would spot a band one pixel deep.
     plain.part().rect(22, 30, 38, 32).paint(YELLOW, None, outline=BROWN)
     # The crown sits down on the dome, with no white seam under its band.
-    crown = plain.part().rect(24, 13, 36, 16)
-    for px in (24, 30, 36):
+    crown = plain.part().rect(25, 13, 35, 16)
+    for px in (25, 30, 35):
         crown.poly([(px - 2, 14), (px, 9), (px + 2, 14)])
     crown.paint(YELLOW)
     for px, col in ((27, RED), (30, LIGHT_CYAN), (33, RED)):
@@ -345,22 +341,21 @@ def draw_ace_heart(c):
     """Draws the Heart Ace: Golden Arch, Rose Wreath & Crowned Chalice Monument."""
     _fill_ace_ground(c, top_y=54, water=True)
 
-    # Top-left and top-right hearts
-    draw_suit(c, 3, 12, 12)
-    draw_suit(c, 3, 48, 12)
+    # Monumental top-left and top-right woodcut-shaded hearts
+    draw_ace_corner_pips(c, 3)
 
     r = Rig(c)
-    # Golden arch over the wreath, studded with garnets.
+    # Golden arch over the wreath, studded with garnets, clear of the big corner hearts.
     arch = r.part()
     for x in range(4, 57):
         dx = abs(x - 30)
-        arch.rect(x, 22 + (dx * dx) // 65, x, 27 + (dx * dx) // 65)
+        arch.rect(x, 23 + (dx * dx) // 65, x, 28 + (dx * dx) // 65)
     # A solid brown line along the underside shades it without a dotted dither.
     arch_rim = arch.edge()
-    arch.paint(YELLOW, shade=None, outline=DARK_GRAY, pattern=lambda x, y: BROWN if (x, y + 1) in arch_rim and (x, y + 1) not in arch.mask - arch_rim and y > 24 else None)
+    arch.paint(YELLOW, shade=None, outline=DARK_GRAY, pattern=lambda x, y: BROWN if (x, y + 1) in arch_rim and (x, y + 1) not in arch.mask - arch_rim and y > 25 else None)
     for x in range(8, 54, 6):
         dx = abs(x - 30)
-        c.put(x, 24 + (dx * dx) // 65, RED)
+        c.put(x, 25 + (dx * dx) // 65, RED)
 
     # Wreath of leaves framing an oval of sky, roses set at intervals. The
     # sky goes first so the wreath overlaps its rim and no white gap shows.

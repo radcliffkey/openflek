@@ -219,6 +219,17 @@ HATS = {
             '..bBBBBBBBBBb..',
         ],
     ),
+    'wide_beret': (
+        -4,
+        [
+            '..ccccccccccc..',
+            '.cCCCCCCCCCCCc.',
+            'cCCCCCCCCCCCCcc',
+            'cCCCccccccCCCcT',
+            '.cCCcBBBBBBBBtT',
+            '..cc.bbbbbbbbb.',
+        ],
+    ),
     'wreath': (  # oak leaves with acorns, for the wild man
         -3,
         [
@@ -514,7 +525,7 @@ def pole(rig, a, b, col=BROWN, outline=None):
 BASE = dict(head=(30, 15), neck=(30, 21), sh_b=(23, 26), sh_f=(36, 26), waist=(30, 44), hem=56)
 
 
-def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose=None, back_over=False):
+def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose=None, back_over=False, head_over=False):
     """Draws a standing figure back to front.
 
     `look` names the colours (sleeve_b, sleeve_f, hose, boot, tunic, skirt,
@@ -525,7 +536,8 @@ def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose
 
     `back_over` draws the back arm over the body instead of behind it, for
     a hand resting on the hip or reaching across the belly, which the body
-    would otherwise hide.
+    would otherwise hide. `head_over` draws the head after both arms, so
+    overhead two-handed swings never cover the face.
     """
     j = dict(BASE, **(pose or {}))
     if look.get('cape') is not None:
@@ -567,12 +579,15 @@ def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose
     if back_over:
         back_arm()
     hx, hy = j['head']
-    draw_head(rig, hx, hy, face=look.get('face', 'young'), hair=look['hair'], beard=look.get('beard'), hat=look['hat'])
+    if not head_over:
+        draw_head(rig, hx, hy, face=look.get('face', 'young'), hair=look['hair'], beard=look.get('beard'), hat=look['hat'])
     arm(rig, fsh, fel, fwr, look['sleeve_f'], cuff=look.get('cuff'), puff=look.get('puff'))
     # Props before the hand, so a fist closes over the grip of whatever it holds.
     if front_props:
         front_props(rig)
     if fhand:
         draw_hand(rig, *fwr, grip=fhand == 'grip', toward=fel)
+    if head_over:
+        draw_head(rig, hx, hy, face=look.get('face', 'young'), hair=look['hair'], beard=look.get('beard'), hat=look['hat'])
     return rig
 

@@ -271,10 +271,33 @@ HEART_CHALICE = [
 OBER_COAT = dict(hem=61, flare=10, sh_b=(22, 26), sh_f=(37, 26))
 
 
-def _standing(c, suit, flip, look, arms, legs, back_props=None, front_props=None, pose=None, back_over=False):
+def _standing(
+    c,
+    suit,
+    flip,
+    look,
+    arms,
+    legs,
+    back_props=None,
+    front_props=None,
+    pose=None,
+    back_over=False,
+    head_over=False,
+    dx=0,
+):
     """Draws a standing court figure and grounds it: grass (or a shadow on cobbles) under each boot sole."""
-    r = Rig(c, flip=flip)
-    F.draw_standing(r, look, arms, legs, back_props=back_props, front_props=front_props, pose=pose, back_over=back_over)
+    r = Rig(c, flip=flip, dx=dx)
+    F.draw_standing(
+        r,
+        look,
+        arms,
+        legs,
+        back_props=back_props,
+        front_props=front_props,
+        pose=pose,
+        back_over=back_over,
+        head_over=head_over,
+    )
     # The middle of each sole, halfway from ankle to toe, wherever mirroring put it.
     _tufts(c, suit, [round(r.tx((ankle[0] + toe[0]) / 2, 0)[0]) for _, _, ankle, toe in legs])
     return r
@@ -288,29 +311,120 @@ def draw_unter(c, suit):
     """
     draw_pedestal(c, suit)
     # The suit sign sits on the left, where it still shows when the hand fans the cards.
-    if suit == 0:  # Acorn: swinging a sword up over his head, striding left
+    if suit == 0:  # Acorn: forward fencing lunge facing right, matching blue sleeves & twin blades
         look = dict(
             cape=GREEN,
-            swing=-9,
-            sleeve_b=LIGHT_RED,
-            sleeve_f=LIGHT_RED,
+            swing=-5,
+            cape_len=55,
+            sleeve_b=LIGHT_BLUE,
+            sleeve_f=LIGHT_BLUE,
             cuff=YELLOW,
             hose=LIGHT_RED,
             boot=YELLOW,
-            tunic=YELLOW,
-            skirt=YELLOW,
+            tunic=LIGHT_RED,
+            skirt=LIGHT_RED,
             belt=GREEN,
-            buttons=RED,
+            pattern=lambda x, y: YELLOW if abs(x - 32) <= 2 else None,
+            buttons=GREEN,
             hair=BROWN,
-            hat=('cap', GREEN, LIGHT_RED, YELLOW),
+            hat=None,
         )
-        arms = (((23, 26), (17, 17), (22, 9), 'grip'), ((36, 26), (42, 33), (48, 37), 'open'))
-        legs = (((26, 52), (19, 68), (13, 84), (18, 87)), ((34, 52), (41, 67), (42, 84), (48, 87)))
+        arms = (((22, 27), (16, 35), (22, 43), 'grip'), ((35, 24), (43, 14), (50, 9), 'grip'))
+        legs = (((26, 52), (21, 68), (17, 84), (22, 87)), ((35, 52), (43, 66), (43, 84), (49, 87)))
 
-        def blade(r):
-            F.sword(r, (22, 9), (5, 24))
+        def high_blade(r):
+            F.sword(r, (50, 9), (55, 36))
+            r.line(51, 13, 55, 34, LIGHT_CYAN)
 
-        # A short lunge into the swing: head, neck and waist shift together.
+        def parrying_blade(r):
+            # Drawn before the back fist so the hand closes over the hilt.
+            F.sword(r, (22, 43), (44, 37))
+            r.line(25, 42, 42, 38, LIGHT_CYAN)
+            F.draw_hand(r, 22, 43, grip=True, toward=(16, 35))
+
+        _standing(
+            c,
+            suit,
+            False,
+            look,
+            (((22, 27), (16, 35), (22, 43), None), arms[1]),
+            legs,
+            back_props=high_blade,
+            front_props=parrying_blade,
+            back_over=True,
+            dx=1,
+            pose=dict(head=(29, 15), neck=(28, 21), sh_b=(22, 27), sh_f=(35, 24), waist=(29, 44), flare=8, lean=2),
+        )
+        draw_suit(c, 0, 9, 58, 'v')
+
+    elif suit == 1:  # Leaf: playing a transverse flute in a wide rose-red beret, hanger at his hip
+        look = dict(
+            cape=RED,
+            lining=YELLOW,
+            swing=-6,
+            sleeve_b=GREEN,
+            sleeve_f=GREEN,
+            cuff=LIGHT_RED,
+            puff=LIGHT_RED,
+            hose=LIGHT_GREEN,
+            boot=LIGHT_BLUE,
+            boot_cuff=CYAN,
+            tunic=GREEN,
+            skirt=GREEN,
+            belt=YELLOW,
+            buttons=YELLOW,
+            pattern=_stripes(YELLOW, 4),
+            hair=BROWN,
+            hat=('wide_beret', LIGHT_RED, LIGHT_GREEN, YELLOW),
+        )
+        arms = (((23, 26), (32, 27), (40, 21), None), ((36, 26), (44, 24), (49, 22), None))
+        legs = (((28, 52), (27, 68), (25, 84), (30, 87)), ((34, 52), (36, 68), (38, 84), (44, 87)))
+
+        def hanger(r):
+            # Curved hunting-sword hilt and chape peeking behind the coat, as on Prague cards.
+            r.part().capsule(22, 43, 14, 35, 1.3).paint(BROWN, None, outline=DARK_GRAY)
+            r.part().capsule(16, 37, 13, 39, 0.9).fill(YELLOW)
+            r.part().ellipse(13.5, 34.5, 1.4, 1.4).paint(YELLOW, None, outline=BROWN)
+
+        def flute(r):
+            r.part().capsule(34, 18.5, 55, 21.7, 1.5).paint(YELLOW, None, outline=BROWN)
+            for x in (44, 52, 54):
+                r.put(x, 18.5 + (x - 34) * 3.2 / 21, BROWN)
+            F.draw_hand(r, 39.5, 21.5, grip=True, toward=(32, 27))
+            F.draw_hand(r, 48.5, 23, grip=True, toward=(44, 24))
+
+        _standing(c, suit, True, look, arms, legs, back_props=hanger, front_props=flute, pose=dict(flare=7, lean=-1))
+        draw_suit(c, 1, 11, 56, 'v')
+
+    elif suit == 2:  # Bell: bare-headed wide lunge, swinging a two-handed greatsword overhead
+        look = dict(
+            cape=BLUE,
+            swing=-4,
+            cape_len=50,
+            sleeve_b=LIGHT_RED,
+            sleeve_f=LIGHT_RED,
+            puff=LIGHT_BLUE,
+            cuff=YELLOW,
+            hose=YELLOW,
+            boot=RED,
+            tunic=LIGHT_RED,
+            skirt=LIGHT_RED,
+            belt=BLUE,
+            buttons=YELLOW,
+            face='young',
+            hair=BROWN,
+            hat=None,
+        )
+        # Elbows frame the head on either side and hands meet above the crown,
+        # with `head_over=True` so no sleeve ever obscures the face.
+        arms = (((23, 26), (15, 15), (21, 7), 'grip'), ((35, 26), (43, 15), (26, 7), 'grip'))
+        legs = (((26, 52), (18, 67), (13, 84), (18, 87)), ((34, 52), (42, 66), (45, 84), (51, 87)))
+
+        def greatsword(r):
+            F.sword(r, (23, 7), (4, 25))
+            r.line(20, 10, 6, 23, LIGHT_CYAN)
+            r.line(20, 11, 6, 24, LIGHT_CYAN)
+
         _standing(
             c,
             suit,
@@ -318,98 +432,11 @@ def draw_unter(c, suit):
             look,
             arms,
             legs,
-            back_props=blade,
-            pose=dict(head=(31, 16), neck=(31, 22), waist=(31, 45), lean=1),
+            back_props=greatsword,
+            head_over=True,
+            pose=dict(head=(31, 18), neck=(30, 23), sh_b=(23, 26), sh_f=(35, 26), waist=(30, 45), flare=7, lean=1),
         )
-        draw_suit(c, 0, 10, 56, 'v')
-
-    elif suit == 1:  # Leaf: playing a transverse flute, facing left
-        look = dict(
-            cape=RED,
-            lining=YELLOW,
-            swing=-6,
-            sleeve_b=GREEN,
-            sleeve_f=GREEN,
-            cuff=YELLOW,
-            puff=YELLOW,
-            hose=YELLOW,
-            boot=BROWN,
-            boot_cuff=YELLOW,
-            tunic=GREEN,
-            skirt=GREEN,
-            belt=YELLOW,
-            buttons=YELLOW,
-            pattern=_stripes(YELLOW, 4),
-            hair=BROWN,
-            hat=('beret', GREEN, LIGHT_RED, YELLOW),
-        )
-        # Both elbows raised, hands on the flute; the hands are drawn with the
-        # flute. The elbow of the arm reaching furthest along the tube is
-        # tucked up under it, so that forearm runs from the puffed sleeve to
-        # the fist: lower, its end hung below the fist as a stray green blob.
-        arms = (((23, 26), (32, 27), (40, 21), None), ((36, 26), (44, 24), (49, 22), None))
-        legs = (((28, 52), (27, 68), (25, 84), (30, 87)), ((34, 52), (36, 68), (38, 84), (44, 87)))
-
-        def flute(r):
-            # Mouthpiece at the lips, the tube running sideways and a little down.
-            # It stops short of the card's border so the end reads as the end.
-            r.part().capsule(34, 18.5, 55, 21.7, 1.5).paint(YELLOW, None, outline=BROWN)
-            for x in (44, 52, 54):
-                r.put(x, 18.5 + (x - 34) * 3.2 / 21, BROWN)
-            # The hands hold the tube from below, fingers curled over its near
-            # side: drawn under it, they were all but hidden.
-            F.draw_hand(r, 39.5, 21.5, grip=True, toward=(32, 27))
-            F.draw_hand(r, 48.5, 23, grip=True, toward=(44, 24))
-
-        # Collected and upright: a narrower skirt, weight shifted a little back.
-        # Head and arms stay put so the flute still meets the lips.
-        _standing(c, suit, True, look, arms, legs, front_props=flute, pose=dict(flare=7, lean=-1))
-        draw_suit(c, 1, 11, 56, 'v')
-
-    elif suit == 2:  # Bell: hand on hip, the other resting on a sword planted point-down
-        look = dict(
-            # Full-length narrow cape down the back, clear of the left bell pip.
-            cape=BLUE,
-            swing=-3,
-            cape_len=60,
-            sleeve_b=YELLOW,
-            sleeve_f=YELLOW,
-            puff=BLUE,
-            cuff=RED,
-            hose=LIGHT_BLUE,
-            boot=RED,
-            tunic=LIGHT_BLUE,
-            skirt=YELLOW,
-            belt=RED,
-            buttons=YELLOW,
-            pattern=_stripes(YELLOW, 4),
-            face='moustache',
-            hair=BROWN,
-            hat=('cap', BLUE, YELLOW, RED),
-        )
-        arms = (((23, 26), (16, 36), (23, 44), 'open'), ((36, 26), (42, 37), (48, 46), 'grip'))
-        legs = (((26, 52), (23, 68), (20, 84), (25, 87)), ((34, 52), (38, 68), (40, 84), (46, 87)))
-
-        def planted(r):
-            # Plumb upright, so the long narrow blade keeps straight edges, its
-            # point on the cobbles beside the boot; the fist closes over the grip.
-            F.sword(r, (48, 46), (48, 87))
-            # Steel down the blade's core, leaving a glint under the guard, so
-            # it doesn't read as a hollow tube.
-            r.line(48, 55, 48, 85, LIGHT_CYAN)
-
-        _standing(
-            c,
-            suit,
-            False,
-            look,
-            arms,
-            legs,
-            front_props=planted,
-            back_over=True,
-            pose=dict(head=(30, 16), neck=(30, 22), lean=1),
-        )
-        draw_suit(c, 2, 11, 56)
+        draw_suit(c, 2, 10, 56)
 
     else:  # Heart: halberd over the shoulder, walking left
         look = dict(
@@ -472,10 +499,10 @@ def draw_ober(c, suit):
     """Svršek: bearded men in broad plumed hats, the suit sign high in a corner."""
     draw_pedestal(c, suit)
     # The suit sign sits top left, where it still shows when the hand fans the cards.
-    if suit == 0:  # Acorn: raising a sword forward, fist on hip, facing right
+    if suit == 0:  # Acorn: twin blades — one angled across the chest, one level at the hip
         look = dict(
             cape=GREEN,
-            swing=-9,
+            swing=-8,
             lining=LIGHT_GREEN,
             sleeve_b=LIGHT_RED,
             sleeve_f=LIGHT_RED,
@@ -494,15 +521,15 @@ def draw_ober(c, suit):
             # An oak-green plume: a white one vanishes against the card.
             hat=('brim', LIGHT_RED, GREEN, YELLOW),
         )
-        arms = (((22, 26), (17, 35), (24, 43), 'grip'), ((37, 26), (43, 22), (49, 14), 'grip'))
+        arms = (((22, 26), (16, 37), (21, 46), 'grip'), ((37, 26), (45, 25), (47, 17), 'grip'))
         legs = (((26, 52), (22, 68), (19, 84), (24, 87)), ((34, 52), (40, 67), (42, 84), (48, 87)))
 
-        def blade(r):
-            # The point stops short of the frame.
-            F.sword(r, (49, 14), (40, 4))
+        def twin_blades(r):
+            F.sword(r, (21, 46), (53, 47))
+            r.line(25, 46, 50, 47, LIGHT_CYAN)
+            F.sword(r, (47, 17), (23, 35))
+            r.line(44, 19, 25, 33, LIGHT_CYAN)
 
-        # Drawn behind the figure so the fist closes over the grip.
-        # Head and neck shift together into the raised sword.
         _standing(
             c,
             suit,
@@ -510,7 +537,7 @@ def draw_ober(c, suit):
             look,
             arms,
             legs,
-            back_props=blade,
+            front_props=twin_blades,
             pose=dict(OBER_COAT, lean=1, head=(31, 15), neck=(31, 21)),
             back_over=True,
         )

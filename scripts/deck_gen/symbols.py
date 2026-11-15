@@ -18,45 +18,44 @@ from scripts.deck_gen.palette import (
 )
 from scripts.deck_gen.rig import Rig
 
-# Vertical Acorn (13x19): pointed nut at top, diamond-scaled cupule + oak leaflets below
+# Vertical Acorn (13x19): cylindrical tri-banded Bohemian nut (lit yellow left,
+# vermilion middle, deep crimson right), scalloped green cupule and oak leaflets.
 ACORN_V = [
-    '......6......',
-    '.....6e6.....',
-    '....6efe6....',
-    '...6eefee6...',
-    '...6eeeee6...',
-    '...6eceee6...',
-    '...4cc6ee4...',
-    '...44c6644...',
+    '.....644.....',
+    '....6ec44....',
+    '...6eecc44...',
+    '...6eecc44...',
+    '...6eecc44...',
+    '...6eecc44...',
+    '...6eecc44...',
+    '...6eecc44...',
+    '...44ccc44...',
     '..884444488..',
-    '.82a82a28a28.',
-    '82a28a2a82a28',
+    '.8a28a2a82a8.',
+    '8a2a82a28a2a8',
     '88282a2a28288',
     '.82a82828a28.',
     '..882868288..',
     '..2a86e68a2..',
     '.2a2.6e6.2a2.',
     '.....6e6.....',
-    '.....4c4.....',
-    '......4......',
+    '......6......',
 ]
 
-# Horizontal Acorn pointing LEFT (19x11): `ACORN_V` turned on its side so the
-# pips match, nut on the left, then the red cupule rim, the scaled cup with
-# its leaflets and the stem on the right. The highlight is moved to the top
-# of the nut, and the cup's outermost tips are trimmed to fit 11 rows.
+# Horizontal Acorn pointing LEFT (19x11): cylindrical tri-banded nut (yellow top,
+# vermilion middle, crimson bottom), green scalloped cupule, leaflets and stem.
 ACORN_H_LEFT = [
-    '.........8288..2...',
-    '........82a2282a...',
-    '...666448a28a8a2...',
-    '..6effe44882828....',
-    '.6efeccc42aa286664.',
-    '6eeeee664a2286eeec4',
-    '.6eeeee642aa286664.',
-    '..6eeee44882828....',
-    '...666448a28a8a2...',
-    '........82a2282a...',
-    '.........8288..2...',
+    '..........888..2...',
+    '.........8a2282a...',
+    '..666666682aa8a2...',
+    '.6eeeeeee48a228....',
+    '6eeeeeeee482a28666.',
+    '4cccccccc48a228eee4',
+    '4cccccccc482828444.',
+    '.44444444482828....',
+    '..444444488282a2...',
+    '.........828282a...',
+    '..........888..2...',
 ]
 
 # Vertical linden leaf (15x17). Tip at the top, yellow midrib, light-green
@@ -103,43 +102,108 @@ LEAF_H_LEFT = [
     '.........88888.....',
 ]
 
-# Bell (15x13): golden hawk-bell. Compact suspension loop, dome lit from the
-# upper left, crimson-and-gold band, and one short sound slot with wider ends
-# low in the bowl. 13 rows keep a gap between the bells on an eight and a ten;
-# a second mark under the slot would read as a face.
+# Bell (15x13): Prague half-red hawk-bell (Kule). Ribbed crimson upper dome,
+# curved crimson equatorial girdle, and a golden lower hemisphere divided by
+# three converging ribs down to the bottom slot.
 BELL_SYM = [
-    '......6e6......',
-    '.....68.86.....',
-    '....6efeee6....',
-    '...6effeeee6...',
-    '..6eeffeeee66..',
-    '.6eefeeeeeee66.',
-    '.4ce4ce4ce4ce4.',
-    '4ec4ec4ec4ec4e4',
-    '.6eeeeeeeeee66.',
-    '..6e88eee88e6..',
-    '..6e8888888e6..',
-    '...6eeeeeee6...',
-    '....6666666....',
+    '.....48884.....',
+    '...44cc4cc44...',
+    '..4c4cc4cc4c4..',
+    '.4cc4ccccc4cc4.',
+    '.4ccc44444ccc4.',
+    '444444444444444',
+    '444eeeeeeeee444',
+    '6eee8ee8ee8eee6',
+    '.6ee8ee8ee8ee6.',
+    '.6eee8e8e8eee6.',
+    '..6eee888eee6..',
+    '...66ee8ee66...',
+    '.....66866.....',
 ]
 
-# Heart (15x13): Bohemian heart. Red rim all the way round both lobes, golden
-# pearl in the cleft, white and yellow glint on the upper left, crimson shade
-# along the right. 13 rows leave a white gap in the columns on an eight and a ten.
+# Heart (15x13): Bohemian heart with clean V-cleft and horizontal woodcut
+# hatching down the left lobe against a glowing vermilion right lobe.
 HEART_SYM = [
-    '..444.6e6.444..',
-    '.4ffe46e64cc44.',
-    '4feccc464cccc44',
-    '4cecccc4ccccc44',
-    '4cccccc4ccccc44',
-    '44ccccc4cccc444',
-    '.44cccc4ccc444.',
-    '..44ccc4ccc44..',
-    '...44cc4c444...',
-    '....44c4444....',
-    '.....44444.....',
-    '......444......',
+    '..4444...4444..',
+    '.4cccc4.4cccc4.',
+    '44444cc4cccccc4',
+    '4ccccccccccccc4',
+    '444444cccccccc4',
+    '.4ccccccccccc4.',
+    '.44444ccccccc4.',
+    '..4ccccccccc4..',
+    '...4444cccc4...',
+    '....4ccccc4....',
+    '.....44cc4.....',
+    '......4c4......',
     '.......4.......',
+]
+
+# Monumental corner emblems for the Aces (Esa), matching the oversized suit
+# signs of printed Prague decks and 1992 FLEK!.
+ACE_ACORN_LEFT = [
+    '..66444..........',
+    '.6eecc444........',
+    '6eeeeccc44.......',
+    '6eeeeccc444......',
+    '.6eeeccc444......',
+    '.6eeeeccc444.....',
+    '..6eeeccc444.....',
+    '..6eeeeccc4488...',
+    '...44eeccc48a28..',
+    '....444cc48a2a28.',
+    '...88844482a82a8.',
+    '..8a2a8882a28288.',
+    '..82a2a828a2828..',
+    '...88282a28288...',
+    '....82a8286882a..',
+    '.....88868ee62a2.',
+    '.....2a2.6ee6.2..',
+    '....2a2...6ee6...',
+    '...........6e6...',
+]
+
+ACE_BELL = [
+    '......4488844......',
+    '....44cc888cc44....',
+    '...44c4c888c4c44...',
+    '..4cc4c4c4c4c4cc4..',
+    '.4c4cc4c4c4c4cc4c4.',
+    '.44c4ccccccccc4c44.',
+    '4ccccc4444444ccccc4',
+    '4cc4444444444444cc4',
+    '444444eeeeeee444444',
+    '444eeeeee8eeeeee444',
+    '6eeeee8ee8ee8eeeee6',
+    '.6e8ee88e8e88ee8e6.',
+    '.6ee8ee8e8e8ee8ee6.',
+    '..6ee8eee8eee8ee6..',
+    '...6ee88e8e88ee6...',
+    '....66eee8eee66....',
+    '......6648466......',
+    '........313........',
+    '........333........',
+]
+
+ACE_HEART = [
+    '..444444.....444444..',
+    '.4cccccc4...4cccccc4.',
+    '4444444cc4.4cccccccc4',
+    '4ccccccccc4ccccccccc4',
+    '444444444ccccccccccc4',
+    '4ccccccccccccccccccc4',
+    '444444444ccccccccccc4',
+    '.4ccccccccccccccccc4.',
+    '.44444444cccccccccc4.',
+    '..4ccccccccccccccc4..',
+    '...444444cccccccc4...',
+    '....4ccccccccccc4....',
+    '.....44444ccccc4.....',
+    '......4ccccccc4......',
+    '.......4444cc4.......',
+    '........4ccc4........',
+    '.........4c4.........',
+    '..........4..........',
 ]
 
 # Roman numeral X (11x9) for the 10 cards: black, a thick stroke falling to the
@@ -243,11 +307,35 @@ def draw_suit_leaning(c, suit, sx, sy, angle, size=1.0, width=1.0):
         inner = collar.interior()
         for v in (-1.5, 1.5):
             line((7.5, v), (9.5, v), DARK_GRAY, inner)
-        r.part().ellipse(*at(11.3, 0), 3.8, 1.8, angle=angle + 90).paint(LIGHT_RED, RED, outline=RED)
-        nut = r.part().poly([at(*p) for p in ((11.5, 3.4), (14.5, 3.6), (17.5, 1.8), (19.5, 0), (17.5, -1.8), (14.5, -3.6), (11.5, -3.4))])
-        nut.paint(YELLOW, outline=BROWN)
-        c.put(*at(16, -1.2), WHITE)
-        c.put(*at(15, -1.6), WHITE)
+        r.part().ellipse(*at(11.3, 0), 3.8, 1.8, angle=angle + 90).paint(RED, RED, outline=DARK_GRAY)
+        nut = r.part().poly([at(*p) for p in ((10.8, 3.5), (14.5, 3.7), (17.5, 2.0), (19.5, 0), (17.5, -2.0), (14.5, -3.7), (10.8, -3.5))])
+        tx, ty = (-nx, -ny) if (nx + ny > 0) else (nx, ny)
+
+        def nut_band(x, y):
+            v_coord = ((x - sx) * tx + (y - sy) * ty) / (size * width)
+            if v_coord > 0.9:
+                return YELLOW
+            if v_coord > -0.9:
+                return LIGHT_RED
+            return RED
+
+        nut.paint(LIGHT_RED, shade=None, outline=RED, pattern=nut_band)
+
+
+def draw_ace_corner_pips(c, suit):
+    """Draws the oversized corner suit emblems on an Ace card."""
+    if suit == 0:
+        c.blit_sprite(ACE_ACORN_LEFT, 3, 4, flip_x=False)
+        c.blit_sprite(ACE_ACORN_LEFT, 41, 4, flip_x=True)
+    elif suit == 1:
+        draw_suit_leaning(c, 1, 14.5, 23, -35, size=1.14, width=1.2)
+        draw_suit_leaning(c, 1, 45.5, 23, 35, size=1.14, width=1.2)
+    elif suit == 2:
+        c.blit_centered(ACE_BELL, 11, 12)
+        c.blit_centered(ACE_BELL, 49, 12)
+    else:
+        c.blit_centered(ACE_HEART, 13, 12)
+        c.blit_centered(ACE_HEART, 47, 12)
 
 
 def draw_roman_x(c, cx=30, y0=3):

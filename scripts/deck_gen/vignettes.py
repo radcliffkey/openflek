@@ -37,9 +37,9 @@ from scripts.deck_gen.symbols import (
 # lit from the left; it stays below the lowest left pip.
 SPRITE_OBELISK = [
     '...44.44...',
-    '..4fc4cc4..',
+    '..44c4cc4..',
     '..4ccccc4..',
-    '...4ccc4...',
+    '...44cc4...',
     '....4c4....',
     '.....4.....',
     '.....6.....',
@@ -68,11 +68,11 @@ SPRITE_OBELISK = [
 # Heart 10 left: Heart target on a post for Cupid to aim at (9x18)
 SPRITE_HEART_POST = [
     '.44...44.',
-    '4cc4.4cc4',
-    '4fcccccc4',
+    '44c4.4cc4',
     '4ccccccc4',
+    '444ccccc4',
     '.4ccccc4.',
-    '..4ccc4..',
+    '..44cc4..',
     '...4c4...',
     '....4....',
     '...6e6...',
@@ -88,100 +88,43 @@ SPRITE_HEART_POST = [
 ]
 
 
-def _speckle(x, y):
-    """A fixed pseudo-random value in 0..96 per pixel, for clumping turf, leaves and pebbles.
-
-    A mixed integer hash: a plain linear formula repeats down some columns
-    and draws stripes across the ground.
-    """
-    h = (int(x) * 73856093 ^ int(y) * 19349663) & 0xFFFFFFFF
-    h = ((h ^ (h >> 13)) * 1274126177) & 0xFFFFFFFF
-    return (h ^ (h >> 16)) % 97
-
-
 def _vignette_ground(suit, rank, x, y, crest):
-    """Painterly turf and path for one suit, in clumps rather than a one-pixel chequer.
+    """Clean colour-blocked turf and sunlit diagonal paths, as on printed Prague cards.
 
-    The chequer shimmers on a flat screen. Acorns get moss and a sandy trail,
-    Leaves a flowering meadow, Bells a gravel lane with a grass verge, and
-    Hearts a lawn around a raked parterre.
+    Random speckle or 1x1 chequer dithering reads as noisy static under the
+    small vignette scenes. Instead, each mound is solid green with a crisp
+    light-green sunlit rim along the crest and a smooth golden path band
+    angled across the foreground, edged by a clean 1px transition line.
     """
     d = y - crest
-    # Shift the hash by rank so the four cards of a suit are not copies.
-    h = _speckle(x, y + rank * 13)
-    clump = _speckle(x // 2, y // 2 + rank * 5)
+    if d == 1:
+        return LIGHT_GREEN
 
-    if suit == 0:
-        # A beaten sandy trail winding down through mossy forest turf.
-        trail = abs(x - (29 + (y - 86)))
-        if y >= 88 and trail <= 10:
-            if trail >= 9:
-                return BROWN if h < 55 else GREEN
-            pebble = _speckle(x // 2, y // 2 + 9)
-            if pebble < 5:
-                return BROWN
-            if pebble < 8:
-                return LIGHT_GRAY if h < 40 else BROWN
-            return YELLOW if _speckle(x // 3, y // 2) < 68 else BROWN
-        # Moss on the crest, then clumped ferns and a few fallen leaves.
-        if d <= 2:
-            return LIGHT_GREEN if clump < 58 else GREEN
-        if clump < 10:
-            return LIGHT_GREEN
-        leaf = _speckle(x // 2, y + 40)
-        if d > 4 and leaf < 4:
+    # Each suit gets a clean diagonal or flared golden ribbon low on the mound,
+    # shifted subtly by rank so the four number cards are not identical copies.
+    shift = (rank - 1) * 2
+    if suit == 0:  # Acorns: diagonal woodland path sweeping down to the right
+        centre = 27 + shift + (y - 88) * 1.4
+        dist = abs(x - centre)
+        if y >= 88 and dist <= 9.5:
+            return BROWN if dist > 8.3 or y == 88 else YELLOW
+    elif suit == 1:  # Leaves: sunlit diagonal meadow ribbon sweeping left to right
+        centre = 31 - shift + (y - 87) * 1.6
+        dist = abs(x - centre)
+        if y >= 88 and dist <= 11.5:
+            return LIGHT_GREEN if dist > 10.2 or y == 88 else YELLOW
+    elif suit == 2:  # Bells: flared golden country lane widening toward the viewer
+        half = 10.5 + (y - 88) * 0.8
+        dist = abs(x - (30 + shift // 2))
+        if y >= 88 and dist <= half:
+            return BROWN if dist > half - 1.2 or y == 88 else YELLOW
+    else:  # Hearts: smooth golden garden parterre framed by clipped green lawn
+        if y >= 90 and abs(x - 30) <= 17:
+            if y == 90 or abs(x - 30) == 17:
+                return LIGHT_GREEN
             return YELLOW
-        if d > 4 and leaf < 7:
-            return BROWN
-        return GREEN
 
-    if suit == 1:
-        # Sunlit meadow: soft blades in patches, tiny flowers low in the grass.
-        # A hit and the pixel beside it, so a blossom is a pair and not one speck.
-        if d >= 5 and (h == 0 or _speckle(x - 1, y + rank * 13) == 0):
-            return YELLOW
-        if d >= 6 and h == 1:
-            return WHITE
-        tuft = _speckle(x, y // 2 + rank + 3)
-        if d <= 1:
-            return LIGHT_GREEN if tuft < 62 else GREEN
-        if tuft < 16 or clump > 86:
-            return GREEN
-        return LIGHT_GREEN if clump < 48 else GREEN
-
-    if suit == 2:
-        # A gravel lane with soft ruts, and a grassy verge at either side.
-        road = abs(x - 30)
-        if y >= 88 and road <= 16:
-            if road >= 15:
-                return BROWN if h < 48 else (GREEN if h < 72 else YELLOW)
-            if road in (6, 7, 11, 12) and h < 32:
-                return BROWN
-            pebble = _speckle(x // 2, y // 2 + 4)
-            if pebble < 5:
-                return BROWN
-            if pebble < 8:
-                return LIGHT_GRAY
-            return YELLOW if h < 78 else BROWN
-        if d <= 2:
-            return LIGHT_GREEN if clump < 42 else GREEN
-        return LIGHT_GREEN if clump < 12 else GREEN
-
-    # Hearts: a clipped lawn around a raked gravel parterre.
-    half = 17
-    if y >= 89 and abs(x - 30) <= half + 1:
-        if y <= 90 or abs(x - 30) >= half:
-            return GREEN
-        if y % 3 == 1 and h < 30:
-            return BROWN
-        if h < 7:
-            return BROWN
-        if h < 12:
-            return WHITE
-        return YELLOW
-    if d <= 2:
-        return LIGHT_GREEN if clump < 60 else GREEN
-    return LIGHT_GREEN if clump < 22 or h < 48 else GREEN
+    return GREEN
 
 
 def draw_ground(c, suit, rank):
