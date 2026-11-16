@@ -155,36 +155,38 @@ fn touches8(x: i32, y: i32, pred: impl Fn(i32, i32) -> bool) -> bool {
     false
 }
 
-/// A pixel of `inside` with an orthogonal neighbour outside it: a one-pixel rim.
-fn on_shape_edge(x: i32, y: i32, inside: impl Fn(i32, i32) -> bool) -> bool {
-    if !inside(x, y) {
-        return false;
-    }
+/// True when an orthogonal neighbour of `(x, y)` satisfies `pred`.
+fn touches4(x: i32, y: i32, pred: impl Fn(i32, i32) -> bool) -> bool {
     [(-1, 0), (1, 0), (0, -1), (0, 1)]
         .into_iter()
-        .any(|(dx, dy)| !inside(x + dx, y + dy))
+        .any(|(dx, dy)| pred(x + dx, y + dy))
 }
 
-/// Corner fan, in quadrant pixels measured toward the middle of the card.
-/// `None` when `(x, y)` is outside the fan's disc.
-fn fan_offset(x: i32, y: i32) -> Option<(i32, i32)> {
+/// A pixel of `inside` with an orthogonal neighbour outside it: a one-pixel rim.
+fn on_shape_edge(x: i32, y: i32, inside: impl Fn(i32, i32) -> bool) -> bool {
+    inside(x, y) && touches4(x, y, |px, py| !inside(px, py))
+}
+
+/// The corner of each quadrant a fan opens from, in quadrant pixels, and
+/// the square of the fan's radius.
+const FAN_CORNER: (i32, i32) = (23, 42);
+const FAN_RADIUS_SQ: i32 = 81;
+
+/// Offset of face pixel `(x, y)` from the corner of its quadrant's fan,
+/// measured toward the middle of the card.
+fn fan_offset(x: i32, y: i32) -> (i32, i32) {
     let (qx, qy) = back_quadrant(x, y);
-    let fx = 23 - qx;
-    let fy = 42 - qy;
-    if fx >= 0 && fy >= 0 && fx * fx + fy * fy <= 81 {
-        Some((fx, fy))
-    } else {
-        None
-    }
+    (FAN_CORNER.0 - qx, FAN_CORNER.1 - qy)
 }
 
+/// True when the fan offset `(fx, fy)` lies on the fan's quarter disc.
+fn in_fan_disc(fx: i32, fy: i32) -> bool {
+    fx >= 0 && fy >= 0 && fx * fx + fy * fy <= FAN_RADIUS_SQ
+}
+
+/// For an offset on the fan's disc: true on its curved rim.
 fn on_disc_edge(fx: i32, fy: i32) -> bool {
-    if fx < 0 || fy < 0 || fx * fx + fy * fy > 81 {
-        return false;
-    }
-    [(1, 0), (0, 1)]
-        .into_iter()
-        .any(|(dx, dy)| (fx + dx) * (fx + dx) + (fy + dy) * (fy + dy) > 81)
+    !in_fan_disc(fx + 1, fy) || !in_fan_disc(fx, fy + 1)
 }
 
 /// Interior of the three-lobed corner palmette inside `(fx, fy)`.
@@ -209,9 +211,6 @@ fn fan_lobe_fill(fx: i32, fy: i32) -> bool {
 /// keeps all eight petals attached to the hub with an unbroken outline.
 fn petal_interior(x: i32, y: i32) -> bool {
     let (qx, qy) = back_quadrant(x, y);
-    if qx + qy <= 1 || (qx == 1 && qy == 1) {
-        return false;
-    }
     if (2..=12).contains(&qy) && qx <= i32::from(!(qy == 2 || qy == 12)) {
         return true;
     }
@@ -232,11 +231,7 @@ fn rosette_pixel(x: i32, y: i32, dark: u8, light: u8) -> u8 {
     if petal_interior(x, y) {
         return light;
     }
-    if (qx == 1 && qy == 1)
-        || [(-1, 0), (1, 0), (0, -1), (0, 1)]
-            .into_iter()
-            .any(|(dx, dy)| petal_interior(x + dx, y + dy))
-    {
+    if (qx == 1 && qy == 1) || touches4(x, y, petal_interior) {
         return dark;
     }
     color::WHITE
@@ -292,23 +287,27 @@ fn back_pixel(line_color: u8, x: i32, y: i32) -> u8 {
         _ => {}
     }
 
-    if let Some((fx, fy)) = fan_offset(x, y) {
+    let (fx, fy) = fan_offset(x, y);
+    if in_fan_disc(fx, fy) {
         if on_disc_edge(fx, fy) || fx + fy <= 1 {
             return dark;
         }
         if fan_lobe_fill(fx, fy) {
             return light;
         }
-        if [(-1, 0), (1, 0), (0, -1), (0, 1)]
-            .into_iter()
-            .any(|(dx, dy)| fan_lobe_fill(fx + dx, fy + dy))
-        {
+        if touches4(fx, fy, fan_lobe_fill) {
             return dark;
         }
         return color::WHITE;
     }
-    let (fx, fy) = (23 - qx, 42 - qy);
-    if fx >= -1 && fy >= -1 && touches8(x, y, |px, py| fan_offset(px, py).is_some()) {
+    // Only a pixel within one of the disc's straight sides can touch it.
+    if fx >= -1
+        && fy >= -1
+        && touches8(x, y, |px, py| {
+            let (nx, ny) = fan_offset(px, py);
+            in_fan_disc(nx, ny)
+        })
+    {
         return color::WHITE;
     }
 
