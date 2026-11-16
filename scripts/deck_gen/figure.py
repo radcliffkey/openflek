@@ -5,7 +5,8 @@ mirrors them. A figure is about seven heads tall: the face is 11 pixels from
 brow to chin, arms reach mid-thigh, and every limb bends at a real joint.
 
 Heads and hats are hand-pixelled templates with placeholder letters:
-H/h hair and its shade, J/j beard, C/c hat cloth, T/t trim (feather or
+H/h hair and its shade, e the hair's edge against the skin, L a gloss on
+the crown, w eyebrows, J/j beard, C/c hat cloth, T/t trim (feather or
 jewel), B/b hat band.
 """
 
@@ -24,89 +25,105 @@ from scripts.deck_gen.rig import darker
 
 SKIN = WHITE
 
-# Skin is white, the same index as the card, so the cheek and jaw on the open
-# side of a 3/4 face are closed with dark grey. A missing pixel there lets the
-# mouth or the chin bleed into the paper.
+# Skin is white, the same index as the card, so the far cheek and the chin of
+# a 3/4 face are closed with dark grey. A missing pixel there lets the mouth
+# or the chin bleed into the paper. Where the jaw lies against the neck a
+# light grey line is enough.
+#
+# Every head is anchored at column 8, row 7, which lands on the figure's
+# head joint. Unters and Obers are turned three quarters to the right: the
+# near cheek is broad and ends in an ear, each eye sits under its own brow,
+# the nose is a shaded bridge towards the far eye with a dark underside, and
+# the face narrows from the cheekbone to the chin. Hair is glossed on the
+# crown and meets the skin without a dark seam, which made it a hood.
 FACE_YOUNG = [
-    '.....hHHHh.....',
-    '...hHHHHHHHh...',
-    '..hHHHHHHHHHh..',
-    '..hHHHffffff8..',
-    '.hHHHff8fff88..',
-    '.hHHHff0ff0f8..',
-    '.hHHHfffffff88.',
-    '.hHHHcfffffff8.',
-    '.hHHHHfffff878.',
-    '.hHHHHffff448..',
-    '..hHHH8ffff8...',
-    '..hHHHh8888....',
-    '...hHh.........',
+    '......hhhhhh.....',
+    '....hHHHHHHHHh...',
+    '...hHHLLHHHHHHh..',
+    '..hHHLHHHHHHHHh..',
+    '..hHHHeHfHffffh..',
+    '.hHHHefwwwffwwf8.',
+    '.hHHHeff0ffff0f8.',
+    '.hHHHcfffff7fff8.',
+    '.hHHHcfffff7ffc8.',
+    '..hHHefffff88f8..',
+    '..hHHe7fffffff8..',
+    '..hHHHe7ff44f8...',
+    '...hHHh.7ffff8...',
+    '....hh...7778....',
 ]
 
 FACE_BEARD = [
-    '.....hHHHh.....',
-    '...hHHHHHHHh...',
-    '..hHHHHHHHHHh..',
-    '..hHHHffffff8..',
-    '.hHHHff8fff88..',
-    '.hHHHff0ff0f8..',
-    '.hHHHfffffff88.',
-    '.hHHHJfffffff8.',
-    '.hHHHJffJJJ878.',
-    '.hHHHJJJJ44Jj..',
-    '..hHHJJJJJJj...',
-    '..hHHjJJJJj....',
-    '...hh.jJJj.....',
+    '......hhhhhh.....',
+    '....hHHHHHHHHh...',
+    '...hHHLLHHHHHHh..',
+    '..hHHLHHHHHHHHh..',
+    '..hHHHefffffffh..',
+    '.hHHHefwwwffwwf8.',
+    '.hHHHeff0ffff0f8.',
+    '.hHHHcfffff7fff8.',
+    '..hHHcfffff7ffc8.',
+    '..hHJJfffff88fJ..',
+    '...jJJJfJJJJJJj..',
+    '...jJJJJJ44JJj...',
+    '....jJJJJJJJj....',
+    '.....jJJJJJj.....',
+    '.......jjj.......',
 ]
 
+# The wild man on the Acorn Ace; his first row lies under the oak wreath.
 FACE_OLD = [
+    '.......hh......',
     '.....hHHHh.....',
     '...hHHHHHHHh...',
     '..hHHHHHHHHHh..',
-    '..hHHHf7ffff8..',
-    '.hHHHf88ff888..',
+    '..hHHHf7fff78..',
+    '.hHHHfwwfwwf8..',
     '.hHHHff0ff0f8..',
-    '.hHHHff7ffff88.',
-    '.hHHHJfffffff8.',
-    '.hHHJJJJJJJJ78.',
-    '.hHHJJJJJ44Jj..',
-    '..hHJJJJJJJJj..',
-    '..hHJJJJJJJj...',
-    '...hjJJJJJj....',
+    '.hHHHcfff7ff8..',
+    '.hHHJJfff88f8..',
+    '.hHJJJJJJJJJj..',
+    '.hHJJJJJ44JJj..',
+    '..hJJJJJJJJJj..',
+    '..hjJJJJJJJj...',
+    '...jjJJJJJj....',
     '.....jJJJj.....',
     '.......jj......',
 ]
 
 FACE_MOUSTACHE = [
-    '.....hHHHh.....',
-    '...hHHHHHHHh...',
-    '..hHHHHHHHHHh..',
-    '..hHHHffffff8..',
-    '.hHHHff8fff88..',
-    '.hHHHff0ff0f8..',
-    '.hHHHfffffff88.',
-    '.hHHHcJffffff8.',
-    '.hHHHHfJJJJ8J8.',
-    '.hHHHHffff448..',
-    '..hHHH8ffff8...',
-    '..hHHHh8888....',
-    '...hHh.........',
+    '......hhhhhh.....',
+    '....hHHHHHHHHh...',
+    '...hHHLLHHHHHHh..',
+    '..hHHLHHHHHHHHh..',
+    '..hHHHefffffffh..',
+    '.hHHHefwwwffwwf8.',
+    '.hHHHeff0ffff0f8.',
+    '.hHHHcfffff7fff8.',
+    '..hHHcfffff7ffc8.',
+    '..hHHefffff88f8..',
+    '...hh77fJJJJJJ8..',
+    '......7Jff44fJ...',
+    '........7ffff8...',
+    '.........7778....',
 ]
 
 FACE_GOATEE = [
-    '.....hHHHh.....',
-    '...hHHHHHHHh...',
-    '..hHHHHHHHHHh..',
-    '..hHHHffffff8..',
-    '.hHHHff8fff88..',
-    '.hHHHff0ff0f8..',
-    '.hHHHfffffff88.',
-    '.hHHHcfffffff8.',
-    '.hHHHHffJJJ878.',
-    '.hHHHHfff448...',
-    '..hHHH8fJJJ8...',
-    '..hHHHh8JJj....',
-    '...hHh...j.....',
+    '......hhhhhh.....',
+    '....hHHHHHHHHh...',
+    '...hHHLLHHHHHHh..',
+    '..hHHLHHHHHHHHh..',
+    '..hHHHefffffffh..',
+    '.hHHHefwwwffwwf8.',
+    '.hHHHeff0ffff0f8.',
+    '.hHHHcfffff7fff8.',
+    '.hHHHcfffff7ffc8.',
+    '..hHHefffff88f8..',
+    '..hHHe7fJJJJJJ8..',
+    '..hHHHe7ff44f8...',
+    '...hHHh.7fJJf8...',
+    '....hh...7JJj....',
+    '..........jj.....',
 ]
 
 # Kings sit facing the viewer, so their heads are turned only a little to the
@@ -114,33 +131,35 @@ FACE_GOATEE = [
 # sits just right of the middle. A full beard gets a moustache drooping past
 # the mouth and a few strands in the shade colour: in flat yellow it reads
 # as a clean-shaven chin. The forked beard is long enough for its notch to
-# show against the ermine below.
-FACE_KING = [
+# show against the ermine below. The crown hides the top of the head.
+KING_CROWN_OF_HEAD = [
+    '......hHHHh....',
     '....hHHHHHh....',
     '..hHHHHHHHHHh..',
     '.hHHHHHHHHHHHh.',
+]
+
+FACE_KING = KING_CROWN_OF_HEAD + [
     '.hHHffffffffHh.',
-    '.hHf88ff888fHh.',
-    '.hH8f0ff7f0fHh.',
-    '.hHfffff7fffHh.',
-    '.hHcfff878fcHh.',
-    '.hHJffffffJJHh.',
-    '.hHJJJ444JJJHh.',
+    '.hHfwwwffwwwHh.',
+    '.hHff0ffff0fHh.',
+    '.hHcffff7ffcHh.',
+    '.hHfffff88ffHh.',
+    '.hHJfJJJJJJJHh.',
+    '.hHJJJJ444JJHh.',
     '.hHhJJJJJJJjHh.',
     '..hHhJJJJJjHh..',
     '...hh.jJJj.hh..',
 ]
 
-FACE_KING_OLD = [
-    '....hHHHHHh....',
-    '..hHHHHHHHHHh..',
-    '.hHHHHHHHHHHHh.',
-    '.hHHf7fffff8Hh.',
-    '.hHf88ff888fHh.',
-    '.hH8f0ff7f0fHh.',
-    '.hHff7ff7fffHh.',
-    '.hHJfff878fJHh.',
-    '.hJJjjjfjjjJJh.',
+# The two older kings share a lined brow; one has pouches under his eyes.
+FACE_KING_OLD = KING_CROWN_OF_HEAD + [
+    '.hHHf77fff7fHh.',
+    '.hHfwwwffwwwHh.',
+    '.hHff0ffff0fHh.',
+    '.hHc7fff7f7cHh.',
+    '.hHJffff88fJHh.',
+    '.hJJjjjjfjjjJh.',
     '.hJjJJ444JJjJh.',
     '.hJjJJJJJJJjJh.',
     '..jJJJjJJJjJj..',
@@ -149,16 +168,13 @@ FACE_KING_OLD = [
     '.....jJJjj.....',
 ]
 
-FACE_KING_FORKED = [
-    '....hHHHHHh....',
-    '..hHHHHHHHHHh..',
-    '.hHHHHHHHHHHHh.',
-    '.hHHf7fffff8Hh.',
-    '.hHf88ff888fHh.',
-    '.hH8f0ff7f0fHh.',
-    '.hHfffff7fffHh.',
-    '.hHJfff878fJHh.',
-    '.hJJjjjfjjjJJh.',
+FACE_KING_FORKED = KING_CROWN_OF_HEAD + [
+    '.hHHf77fff7fHh.',
+    '.hHfwwwffwwwHh.',
+    '.hHff0ffff0fHh.',
+    '.hHcffff7ffcHh.',
+    '.hHJffff88fJHh.',
+    '.hJJjjjjfjjjJh.',
     '.hJjJJ444JJjJh.',
     '.hJjJJJJJJJjJh.',
     '..jJJJJjJJJjj..',
@@ -180,58 +196,47 @@ FACES = {
     'king_forked': FACE_KING_FORKED,
 }
 
-# Hats share the face template's columns; the first row sits `top` rows above it.
+# Hats share the face template's columns; the first row sits `top` rows above
+# the face's first row. A hat comes down over the crown of the head to the
+# fringe, so the brow still shows under it.
 HATS = {
     'cap': (
-        -4,
+        -2,
         [
-            '.TT............',
-            '..TTt..........',
-            '...TtcCCCCc....',
-            '..cCCCCCCCCCc..',
-            '.cCCCCCCCCCCCc.',
-            '.cCCCCCCCCCCCc.',
-            '.bBBBBBBBBBBBb.',
-            '..bbbbbbbbbbb..',
+            '..TT...cCCCCc....',
+            '...TTtcCCCCCCCc..',
+            '....tcCCCCCCCCCc.',
+            '...cCCCCCCCCCCCc.',
+            '..cCCCCCCCCCCCCc.',
+            '..bBBBBBBBBBBBBb.',
         ],
     ),
     'brim': (
-        -5,
+        -4,
         [
-            '....cCCCCc.....',
-            '...cCCCCCCc....',
-            'TTtcCCCCCCCc...',
-            'TTTTtCCCCCCc...',
-            '.tTTBBBBBBBBb..',
-            'cCCCCCCCCCCCCCc',
-            '.ccCCCCCCCCCCcc',
-            '...............',
-        ],
-    ),
-    'beret': (
-        -3,
-        [
-            '.......TT......',
-            '...cCCCCTt.....',
-            '.cCCCCCCCCCc...',
-            'cCCCCCCCCCCCCc.',
-            '.ccCCCCCCCCcc..',
-            '..bBBBBBBBBBb..',
+            '......cCCCCc.....',
+            '.....cCCCCCCc....',
+            'TTt..cCCCCCCCc...',
+            'TTTTtcCCCCCCCc...',
+            '.tTTTBBBBBBBBb...',
+            '.....cCCCCCCCc...',
+            'cCCCCCCCCCCCCCCCc',
+            '.ccCCCCCCCCCCCcc.',
         ],
     ),
     'wide_beret': (
-        -4,
+        -2,
         [
-            '..ccccccccccc..',
-            '.cCCCCCCCCCCCc.',
-            'cCCCCCCCCCCCCcc',
-            'cCCCccccccCCCcT',
-            '.cCCcBBBBBBBBtT',
-            '..cc.bbbbbbbbb.',
+            '....ccCCCCCCcc...',
+            '..cCCCCCCCCCCCCc.',
+            '.cCCCCCCCCCCCCCCc',
+            'cCCCCCCCCCCCCCCCc',
+            '.ccCCCCccccCCCCcT',
+            '...ccbBBBBBBBBbtT',
         ],
     ),
     'wreath': (  # oak leaves with acorns, for the wild man
-        -3,
+        -2,
         [
             '..cC.T.cC.T....',
             '.cCCcCcCCcCc...',
@@ -240,7 +245,7 @@ HATS = {
         ],
     ),
     'crown': (
-        -4,
+        -3,
         [
             '..T....T....T..',
             '.bBb..bBb..bBb.',
@@ -297,10 +302,8 @@ OPEN_HANDS = {
 }
 
 
-# Heads for figures drawn at vignette size (rig scale below SMALL_SCALE), on
-# the same placeholders; the face centre is column 3, row 3.
-SMALL_SCALE = 0.6
-
+# Heads for figures pixelled by hand at vignette size, on the same
+# placeholders; the face centre is column 3, row 3.
 SMALL_FACES = {
     'young': [
         '.hHHHh.',
@@ -327,19 +330,25 @@ SMALL_HATS = {
 }
 
 
-def draw_head(rig, hx, hy, face='young', hair=BROWN, beard=None, hat=None, small=None):
+def draw_head(rig, hx, hy, face='young', hair=BROWN, beard=None, hat=None, small=False):
     """Draws a head in 3/4 view facing right with its face centred near (hx, hy).
 
-    `hat` is (kind, cloth, trim, band) with kind from `HATS`. On a rig scaled
-    below `SMALL_SCALE` the small templates are used instead; `small=True`
-    asks for them on an unscaled rig, for figures pixelled by hand at
-    vignette size.
+    `hat` is (kind, cloth, trim, band) with kind from `HATS`. `small` picks
+    the small templates, for figures pixelled by hand at vignette size.
     """
-    if small is None:
-        small = rig.s < SMALL_SCALE
-    faces, hats, anchor = (SMALL_FACES, SMALL_HATS, (3, 3)) if small else (FACES, HATS, (8, 6))
+    faces, hats, anchor = (SMALL_FACES, SMALL_HATS, (3, 3)) if small else (FACES, HATS, (8, 7))
     beard = beard if beard is not None else hair
-    subst = {'H': hair, 'h': darker(hair), 'J': beard, 'j': darker(beard)}
+    shade = darker(hair)
+    subst = {
+        'H': hair,
+        'h': shade,
+        # Dark hair lies straight against the skin; fair hair needs its shade there to show at all.
+        'e': hair if shade == DARK_GRAY else shade,
+        'L': YELLOW,
+        'w': DARK_GRAY if hair in (LIGHT_GRAY, WHITE) else BROWN,
+        'J': beard,
+        'j': darker(beard),
+    }
     rig.sprite(faces[face], hx, hy, subst, anchor=anchor)
     if hat is not None:
         kind, cloth, trim, band = hat
@@ -520,7 +529,7 @@ def pole(rig, a, b, col=BROWN, outline=None):
         rig.part().capsule(*a, *b, 1.4).paint(col, None, outline=outline)
 
 
-# Standing pose shared by Unters, Obers and the vignette people; each figure
+# Standing pose shared by Unters, Obers and the wild man; each figure
 # overrides arms and legs, and may override these joints through `pose`.
 BASE = dict(head=(30, 15), neck=(30, 21), sh_b=(23, 26), sh_f=(36, 26), waist=(30, 44), hem=56)
 
@@ -578,9 +587,12 @@ def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose
     )
     if back_over:
         back_arm()
-    hx, hy = j['head']
+
+    def head():
+        draw_head(rig, *j['head'], face=look.get('face', 'young'), hair=look['hair'], beard=look.get('beard'), hat=look['hat'])
+
     if not head_over:
-        draw_head(rig, hx, hy, face=look.get('face', 'young'), hair=look['hair'], beard=look.get('beard'), hat=look['hat'])
+        head()
     arm(rig, fsh, fel, fwr, look['sleeve_f'], cuff=look.get('cuff'), puff=look.get('puff'))
     # Props before the hand, so a fist closes over the grip of whatever it holds.
     if front_props:
@@ -588,6 +600,6 @@ def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose
     if fhand:
         draw_hand(rig, *fwr, grip=fhand == 'grip', toward=fel)
     if head_over:
-        draw_head(rig, hx, hy, face=look.get('face', 'young'), hair=look['hair'], beard=look.get('beard'), hat=look['hat'])
+        head()
     return rig
 

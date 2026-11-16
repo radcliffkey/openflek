@@ -1,8 +1,7 @@
 """Number cards (7, 8, 9, 10) and their 16 large, high-detail EGA pixel-art vignettes."""
 
-import math
-
 from scripts.deck_gen import animals, people
+from scripts.deck_gen.grounds import STAND_ROW, draw_suit_ground
 from scripts.deck_gen.palette import (
     BROWN,
     CYAN,
@@ -15,7 +14,6 @@ from scripts.deck_gen.palette import (
     RED,
     WHITE,
     YELLOW,
-    fill_terrain,
 )
 from scripts.deck_gen.rig import Rig
 from scripts.deck_gen.symbols import (
@@ -88,59 +86,22 @@ SPRITE_HEART_POST = [
 ]
 
 
-def _vignette_ground(suit, rank, x, y, crest):
-    """Clean colour-blocked turf and sunlit diagonal paths, as on printed Prague cards.
+def draw_bush_or_flowers(c, cx, base_y, col, potted=False):
+    """Draws a flowering bush rooted into the turf at base_y..base_y+1.
 
-    Random speckle or 1x1 chequer dithering reads as noisy static under the
-    small vignette scenes. Instead, each mound is solid green with a crisp
-    light-green sunlit rim along the crest and a smooth golden path band
-    angled across the foreground, edged by a clean 1px transition line.
+    A `potted` one stands in a terracotta tub instead, for paved ground.
     """
-    d = y - crest
-    if d == 1:
-        return LIGHT_GREEN
-
-    # Each suit gets a clean diagonal or flared golden ribbon low on the mound,
-    # shifted subtly by rank so the four number cards are not identical copies.
-    shift = (rank - 1) * 2
-    if suit == 0:  # Acorns: diagonal woodland path sweeping down to the right
-        centre = 27 + shift + (y - 88) * 1.4
-        dist = abs(x - centre)
-        if y >= 88 and dist <= 9.5:
-            return BROWN if dist > 8.3 or y == 88 else YELLOW
-    elif suit == 1:  # Leaves: sunlit diagonal meadow ribbon sweeping left to right
-        centre = 31 - shift + (y - 87) * 1.6
-        dist = abs(x - centre)
-        if y >= 88 and dist <= 11.5:
-            return LIGHT_GREEN if dist > 10.2 or y == 88 else YELLOW
-    elif suit == 2:  # Bells: flared golden country lane widening toward the viewer
-        half = 10.5 + (y - 88) * 0.8
-        dist = abs(x - (30 + shift // 2))
-        if y >= 88 and dist <= half:
-            return BROWN if dist > half - 1.2 or y == 88 else YELLOW
-    else:  # Hearts: smooth golden garden parterre framed by clipped green lawn
-        if y >= 90 and abs(x - 30) <= 17:
-            if y == 90 or abs(x - 30) == 17:
-                return LIGHT_GREEN
-            return YELLOW
-
-    return GREEN
-
-
-def draw_ground(c, suit, rank):
-    """Draws rolling turf at the bottom (y=80..97) with a path or clearing for each suit."""
-    fill_terrain(
-        c,
-        80,
-        lambda x: 84 + int(round(math.sin((x + suit * 7 + rank * 5) * 0.22) * 2.0)),
-        lambda x, y, crest: _vignette_ground(suit, rank, x, y, crest),
-    )
-
-
-def draw_bush_or_flowers(c, cx, base_y, col):
-    """Draws a flowering bush rooted into the turf at base_y..base_y+1."""
     blooms = [(dx, dy, col) for dx, dy in [(-3, -3), (0, -5), (3, -3), (-1, -2), (2, -4)]]
-    draw_shrub(c, cx, base_y + 1, 6, 4, blooms + [(0, -3, YELLOW)])
+    draw_shrub(c, cx, base_y - 2 if potted else base_y + 1, 6, 4, blooms + [(0, -3, YELLOW)])
+    if not potted:
+        return
+    # The tub: a lipped rim, then sides narrowing to the foot, lit on the left.
+    c.line(cx - 5, base_y - 1, cx + 5, base_y - 1, DARK_GRAY)
+    for row, half in ((0, 4), (1, 4), (2, 3)):
+        for x in range(cx - half, cx + half + 1):
+            edge = abs(x - cx) == half
+            c.put(x, base_y + row, DARK_GRAY if edge else (LIGHT_RED if x <= cx else RED))
+    c.line(cx - 3, base_y + 3, cx + 3, base_y + 3, DARK_GRAY)
 
 
 def _draw_obelisk(c, cx, base_y):
@@ -369,8 +330,8 @@ def draw_vignette_scene(c, suit, rank):
 
     Animals are scaled so they stay below the lowest pips of their card.
     """
-    draw_ground(c, suit, rank)
-    gy = 88
+    draw_suit_ground(c, suit, rank)
+    gy = STAND_ROW
 
     if (suit, rank) == (0, 0):  # Acorn 7: Forester smoking a pipe beside a timbered cottage
         _draw_cottage(c, 46, gy - 1)
@@ -403,13 +364,13 @@ def draw_vignette_scene(c, suit, rank):
     elif (suit, rank) == (1, 3):  # Leaf 10: Lion couchant facing right
         animals.draw_lion(c)
 
-    elif (suit, rank) == (2, 0):  # Bell 7: Large ornate potted rose bush on mound
-        draw_bush_or_flowers(c, 10, gy, YELLOW)
-        draw_bush_or_flowers(c, 50, gy, YELLOW)
+    elif (suit, rank) == (2, 0):  # Bell 7: Ornate urn between two potted rose bushes
+        draw_bush_or_flowers(c, 10, gy, YELLOW, potted=True)
+        draw_bush_or_flowers(c, 50, gy, YELLOW, potted=True)
         _draw_urn(c, 30, gy)
     elif (suit, rank) == (2, 1):  # Bell 8: Coursing hound with red collar
-        draw_bush_or_flowers(c, 9, gy, LIGHT_RED)
-        draw_bush_or_flowers(c, 52, gy, YELLOW)
+        draw_bush_or_flowers(c, 9, gy, LIGHT_RED, potted=True)
+        draw_bush_or_flowers(c, 52, gy, YELLOW, potted=True)
         animals.draw_hound(c, scale=0.85)
     elif (suit, rank) == (2, 2):  # Bell 9: Saddled dapple-grey horse tethered to a post
         c.fill_rect(6, 66, 8, gy - 1, BROWN, YELLOW, mode='vstripe')

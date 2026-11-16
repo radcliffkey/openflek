@@ -1,14 +1,15 @@
 """Court cards (Spodek/Unter, Svršek/Ober, Král/King) for all 4 suits.
 
 Each figure is a jointed pose from `figure`, written facing right and
-mirrored for the cards whose figure faces left. Unters are huntsmen and
-musicians in caps, Obers wear broad plumed hats and beards, Kings sit
-crowned on carved thrones.
+mirrored for the cards whose figure faces left. Unters are young huntsmen
+and musicians, bare-headed or in a cap or beret, Obers wear broad plumed
+hats and beards, Kings sit crowned on carved thrones.
 """
 
 import math
 
 from scripts.deck_gen import figure as F
+from scripts.deck_gen.grounds import draw_footing, draw_suit_ground
 from scripts.deck_gen.palette import (
     BLUE,
     BROWN,
@@ -24,90 +25,20 @@ from scripts.deck_gen.palette import (
     RED,
     WHITE,
     YELLOW,
-    fill_terrain,
 )
 from scripts.deck_gen.rig import Rig, darker
 from scripts.deck_gen.symbols import draw_suit
 
 
 def _speckle(x, y):
-    """A fixed pseudo-random value in 0..96 per pixel for scattering leaves, flowers and pebbles.
+    """A fixed pseudo-random value in 0..96 per pixel, for scattering knots in wood and flecks in a hedge.
 
     A mixed integer hash: a plain linear formula repeats down some columns
-    and draws stripes across the ground.
+    and draws stripes.
     """
     h = (x * 73856093 ^ y * 19349663) & 0xFFFFFFFF
     h = ((h ^ (h >> 13)) * 1274126177) & 0xFFFFFFFF
     return (h ^ (h >> 16)) % 97
-
-
-def _ground_colour(suit, x, y, hill_y):
-    """The ground under a standing figure, one kind per suit.
-
-    Acorns stand on a forest floor strewn with fallen leaves, Leaves in a
-    flowering meadow, Bells on the cobbles of a town square and Hearts on a
-    garden lawn with a gravel path between rose beds.
-    """
-    d = y - hill_y
-    h = _speckle(x, y)
-    dither = (x + y) & 1
-    if suit == 0:
-        # A mossy edge over bare earth. Fallen leaves are two pixels wide so
-        # they read as leaves, not noise; dark clods are scattered singly
-        # rather than dithered, which would turn the earth to grey mud.
-        if d == 1:
-            return LIGHT_GREEN if dither else GREEN
-        if d == 2:
-            return GREEN if dither or h < 60 else BROWN
-        leaf = _speckle(x // 2, y)
-        if leaf < 5:
-            return YELLOW
-        if leaf < 8:
-            return LIGHT_RED
-        if leaf < 10:
-            return RED
-        return DARK_GRAY if h < 14 else BROWN
-    if suit == 1:
-        if h < 4 and d > 1:
-            return YELLOW
-        if h < 7 and d > 1:
-            return WHITE
-        if h < 9 and d > 1:
-            return LIGHT_RED
-        return LIGHT_GREEN if dither else GREEN
-    if suit == 2:
-        # Rows of cobbles, each row offset by half a stone.
-        row, ry = divmod(d - 1, 3)
-        sx = (x + (3 if row & 1 else 0)) % 6
-        if ry == 2 or sx == 5:
-            return DARK_GRAY
-        if ry == 0 and sx == 0:
-            return WHITE
-        return LIGHT_GRAY if (row + (x + (3 if row & 1 else 0)) // 6) % 3 else BROWN
-    if d <= 2:
-        return GREEN if dither else LIGHT_GREEN
-    # A gravel path widening towards the viewer, edged with clipped box.
-    half = _heart_path_half(y)
-    if abs(x - 30) <= half:
-        if h < 4:
-            return LIGHT_GRAY
-        return BROWN if h < 22 else YELLOW
-    if abs(x - 30) == half + 1:
-        return GREEN
-    # Roses in the beds: at most one per 5x4 cell, two by two pixels, lit on
-    # the upper left, and only where the whole bloom fits inside the bed.
-    cx, cy = x // 5, y // 4
-    k = _speckle(cx, cy + 300)
-    rx, ry = cx * 5 + k % 3, cy * 4 + (k // 3) % 2
-    if k < 50 and 0 <= x - rx <= 1 and 0 <= y - ry <= 1 and ry - hill_y >= 4:
-        if all(abs(px - 30) > _heart_path_half(py) + 2 for px in (rx, rx + 1) for py in (ry, ry + 1)):
-            return RED if (x, y) == (rx + 1, ry + 1) else LIGHT_RED
-    return GREEN if dither else LIGHT_GREEN
-
-
-def _heart_path_half(y):
-    """Half the width of the Hearts' gravel path at row y."""
-    return 13 + max(y - 84, 0) // 3
 
 
 def _floor_colour(suit, x, y):
@@ -159,29 +90,27 @@ def _draw_throne_floor(c, suit):
             c.put(x, y, col)
 
 
-def draw_pedestal(c, suit, is_king=False):
-    """Draws the ground under a standing figure, or a dais and floor under a throne."""
-    if is_king:
-        _draw_throne_floor(c, suit)
-        return
-    # The town square is level; the other grounds roll.
-    amp = 0.6 if suit == 2 else 2.0
-    fill_terrain(
-        c,
-        80,
-        lambda x: 82 + int(round(math.sin((x + suit * 9) * 0.22) * amp)),
-        lambda x, y, crest: _ground_colour(suit, x, y, crest),
-    )
-    _ground_details(c, suit)
+# The skyline under a standing figure lies a little higher than on the number
+# cards, so the boots, their soles on SOLE_ROW, stand well inside the ground.
+COURT_GROUND = 82
+SOLE_ROW = 87
+
+# The ground variants of the two standing ranks, following the number cards' 0..3.
+UNTER, OBER = 4, 5
 
 
-def _ground_details(c, suit):
-    """Small things growing or lying at the edges of each suit's ground."""
+def _draw_ground(c, suit, variant):
+    """Draws the ground under a standing figure: its suit's, the same as on the number cards.
+
+    `variant` tells the Unter's from the Ober's. A few small things grow or
+    lie at its edges.
+    """
+    skyline = draw_suit_ground(c, suit, variant, COURT_GROUND)
     if suit == 0:  # a toadstool at the right edge, clear of the Unter's suit sign
         c.blit_sprite(['.8888.', '84c4c48', '8f4f4f8', '8888888', '..8f8..', '..8f8..', '.8fff8.'], 51, 77)
     elif suit == 1:  # tall grass blades along the meadow's edge
         for x in range(3, 58, 3):
-            y = 82 + int(round(math.sin((x + 9) * 0.22) * 2.0))
+            y = skyline(x)
             c.line(x, y, x + (1 if x % 2 else -1), y - 3 - x % 2, GREEN if x % 2 else LIGHT_GREEN)
     elif suit == 3:  # clipped box hedges at the corners of the rose beds
         r = Rig(c)
@@ -193,18 +122,6 @@ def _ground_details(c, suit):
                 outline=DARK_GRAY,
                 pattern=lambda x, y, hx=hx: LIGHT_GREEN if (x - hx + 1.5) ** 2 + (y - 79.8) ** 2 <= 3 or _speckle(x, y) < 10 else None,
             )
-
-
-def _tufts(c, suit, xs, y=87):
-    """Grass over the boot soles so the feet stand in the turf; on cobbles a shadow instead."""
-    for bx in xs:
-        for dx in range(-4, 5, 2):
-            if suit == 2:
-                c.put(bx + dx, y + 1, DARK_GRAY)
-                c.put(bx + dx + 1, y + 1, DARK_GRAY)
-            else:
-                c.put(bx + dx, y, GREEN)
-                c.put(bx + dx + 1, y - 1, LIGHT_GREEN if suit != 0 else GREEN)
 
 
 def _ermine(x, y):
@@ -271,45 +188,25 @@ HEART_CHALICE = [
 OBER_COAT = dict(hem=61, flare=10, sh_b=(22, 26), sh_f=(37, 26))
 
 
-def _standing(
-    c,
-    suit,
-    flip,
-    look,
-    arms,
-    legs,
-    back_props=None,
-    front_props=None,
-    pose=None,
-    back_over=False,
-    head_over=False,
-    dx=0,
-):
-    """Draws a standing court figure and grounds it: grass (or a shadow on cobbles) under each boot sole."""
+def _standing(c, suit, flip, look, arms, legs, dx=0, **options):
+    """Draws a standing court figure and sets its boots into the suit's ground.
+
+    `options` go to `figure.draw_standing`.
+    """
     r = Rig(c, flip=flip, dx=dx)
-    F.draw_standing(
-        r,
-        look,
-        arms,
-        legs,
-        back_props=back_props,
-        front_props=front_props,
-        pose=pose,
-        back_over=back_over,
-        head_over=head_over,
-    )
+    F.draw_standing(r, look, arms, legs, **options)
     # The middle of each sole, halfway from ankle to toe, wherever mirroring put it.
-    _tufts(c, suit, [round(r.tx((ankle[0] + toe[0]) / 2, 0)[0]) for _, _, ankle, toe in legs])
+    draw_footing(c, suit, [round(r.tx((ankle[0] + toe[0]) / 2, 0)[0]) for _, _, ankle, toe in legs], SOLE_ROW)
     return r
 
 
 def draw_unter(c, suit):
-    """Spodek: young huntsmen and musicians in caps, the suit sign low on the left.
+    """Spodek: young huntsmen and musicians, the suit sign low on the left.
 
     The sign sits in the white mid-left margin, around y=56: clearly in the
     lower half, well under an Ober's corner pip at y=12, and clear of the turf.
     """
-    draw_pedestal(c, suit)
+    _draw_ground(c, suit, UNTER)
     # The suit sign sits on the left, where it still shows when the hand fans the cards.
     if suit == 0:  # Acorn: forward fencing lunge facing right, matching blue sleeves & twin blades
         look = dict(
@@ -329,7 +226,8 @@ def draw_unter(c, suit):
             hair=BROWN,
             hat=None,
         )
-        arms = (((22, 27), (16, 35), (22, 43), 'grip'), ((35, 24), (43, 14), (50, 9), 'grip'))
+        # The back fist is drawn with the parrying blade, so the arm ends bare.
+        arms = (((22, 27), (16, 35), (22, 43), None), ((35, 24), (43, 14), (50, 9), 'grip'))
         legs = (((26, 52), (21, 68), (17, 84), (22, 87)), ((35, 52), (43, 66), (43, 84), (49, 87)))
 
         def high_blade(r):
@@ -347,7 +245,7 @@ def draw_unter(c, suit):
             suit,
             False,
             look,
-            (((22, 27), (16, 35), (22, 43), None), arms[1]),
+            arms,
             legs,
             back_props=high_blade,
             front_props=parrying_blade,
@@ -497,7 +395,7 @@ def draw_unter(c, suit):
 
 def draw_ober(c, suit):
     """Svršek: bearded men in broad plumed hats, the suit sign high in a corner."""
-    draw_pedestal(c, suit)
+    _draw_ground(c, suit, OBER)
     # The suit sign sits top left, where it still shows when the hand fans the cards.
     if suit == 0:  # Acorn: twin blades — one angled across the chest, one level at the hip
         look = dict(
@@ -704,15 +602,9 @@ def _throne(r, wood, velvet, style, cloth=None):
     def grain(x, y):
         return darker(wood) if (x + y) % 7 == 0 else None
 
-    def nap(x, y):
-        if cloth is not None:
-            return cloth(x, y)
-        return darker(velvet) if x % 4 == 0 and y % 4 == 0 else None
-
-    def hanging(x, y):
-        if cloth is not None:
-            return cloth(x, y)
-        return darker(velvet) if x % 3 == 0 else None
+    # The weave, when there is one, replaces the plain nap wherever the velvet shows.
+    nap = cloth or (lambda x, y: darker(velvet) if x % 4 == 0 and y % 4 == 0 else None)
+    hanging = cloth or (lambda x, y: darker(velvet) if x % 3 == 0 else None)
 
     if style == 'gothic':
         r.part().poly([(12, 66), (12, 34), (30, 15), (48, 34), (48, 66)]).paint(wood, pattern=grain)
@@ -740,15 +632,7 @@ def _throne(r, wood, velvet, style, cloth=None):
             valance.ellipse(sx + 1.5, 27, 2.6, 2)
         # Gold braid and tassels, in brown on gold hangings so they still show.
         trim = BROWN if velvet == YELLOW else YELLOW
-
-        def pelmet(x, y, _trim=trim):
-            if y == 24:
-                return _trim
-            if cloth is not None:
-                return cloth(x, y)
-            return None
-
-        valance.paint(velvet, pattern=pelmet)
+        valance.paint(velvet, pattern=lambda x, y: trim if y == 24 else (cloth(x, y) if cloth else None))
         for sx in range(11, 51, 5):
             r.put(sx + 1.5, 30, trim)
     elif style == 'baroque':
@@ -835,7 +719,7 @@ def _seated(c, flip, look, front_arm, back_arm, props_front=None):
 
 def draw_king(c, suit):
     """Král: crowned and seated, the suit sign in both top corners."""
-    draw_pedestal(c, suit, is_king=True)
+    _draw_throne_floor(c, suit)
     draw_suit(c, suit, 11, 12, 'v')
     draw_suit(c, suit, 49, 12, 'v')
 

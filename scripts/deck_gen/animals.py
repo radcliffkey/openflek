@@ -101,7 +101,8 @@ def draw_horse(c, flip=False, dx=0, scale=1.0, coat=LIGHT_GRAY, mane=DARK_GRAY, 
 
     The horse is painted on a thin rig and outlined once as a silhouette: an
     outline per part turns its slim legs and belly into solid dark grey.
-    The tack goes on afterwards with its own outlines.
+    The tack goes on afterwards with its own outlines. It stands on the
+    Bells' paving, so no grass grows over its hooves.
     """
     r = _rig(c, flip, dx, scale, shadow=(29, 14), thin=True)
     far = darker(coat)
@@ -114,7 +115,7 @@ def draw_horse(c, flip=False, dx=0, scale=1.0, coat=LIGHT_GRAY, mane=DARK_GRAY, 
     r.part().chain([(40, 55), (37, 60), (36, 65)], [1.3, 1.6, 1.0]).paint(mane)
     r.part().poly([(42, 52), (44, 56), (41, 56)]).paint(coat)
     _legs(r, [[(39, 72), (40, 79), (40, 85)], [(21, 71), (22, 77), (18, 80), (19, 85)]], coat, hoof=DARK_GRAY)
-    _done(r, feet=[(36, 86), (25, 86), (40, 86), (19, 86)])
+    _done(r)
     # Bridle, then the eye just in front of the cheek strap, saddle cloth and saddle.
     tack = Rig(c, flip=flip, dx=dx, scale=scale)
     tack.put(49, 62, DARK_GRAY)
