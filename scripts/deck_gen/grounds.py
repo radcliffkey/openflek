@@ -29,9 +29,13 @@ from scripts.deck_gen.palette import (
 # whatever the height of the skyline.
 STAND_ROW = 88
 
-# Half the width of the Hearts' gravel parterre, and the row it starts on.
-PARTERRE_HALF = 17
+# The row the Hearts' gravel parterre starts on, and its half-width as it
+# widens towards the viewer.
 PARTERRE_TOP = STAND_ROW + 2
+
+
+def _parterre_half(y):
+    return 13 + max(y - PARTERRE_TOP, 0) * 2 // 3
 
 
 def _lattice_mark(x, y, cell_w, cell_h, salt):
@@ -89,12 +93,14 @@ def _meadow(variant, x, y, crest):
 
 
 def _town_square(variant, x, y, crest):
-    """Bells: a town square paved in a chequer of pale and grey flagstones, courses deepening towards the viewer."""
+    """Bells: a town square paved in courses of bevelled limestone and grey flagstones."""
     d = y - crest
     # Each course is a row deeper and two pixels wider than the one behind
-    # it, closed by a joint and offset from its neighbours by half a stone.
+    # it, closed by a horizontal mortar joint (`d == top + depth`) and offset
+    # from its neighbours by half a stone. Every stone has a light-grey body
+    # so none merges with the white card background.
     top, depth, width, course = 1, 3, 8, 0
-    while d >= top + depth:
+    while d > top + depth:
         top += depth + 1
         depth += 1
         width += 2
@@ -102,30 +108,41 @@ def _town_square(variant, x, y, crest):
     if d == top + depth:
         return DARK_GRAY
     sx = x - 30 + variant * 3 + (width // 2 if course % 2 else 0)
-    if sx % width == 0:
+    u = sx % width
+    if u == 0:
         return DARK_GRAY
     if (sx // width + course) % 2:
-        # A grey stone, lit along its top edge.
-        return WHITE if d == top else LIGHT_GRAY
-    # A pale stone, shaded along its foot.
-    return LIGHT_GRAY if d == top + depth - 1 else WHITE
+        return LIGHT_GRAY
+    # Alternate stones carry a chiselled white top-and-left bevel, kept inside
+    # the mortar and off the card border so the edge stays framed.
+    if 3 <= x <= 57 and ((d == top and u < width - 1) or (u == 1 and d < top + depth - 1)):
+        return WHITE
+    return LIGHT_GRAY
 
 
 def _garden(variant, x, y, crest):
-    """Hearts: a formal garden, a gravel parterre in a clipped lawn between two rose borders."""
+    """Hearts: a formal garden, a flared gravel parterre in a clipped lawn between staggered rose beds."""
     d = y - crest
     if d == 1:
         return LIGHT_GREEN
     off = abs(x - 30)
-    if y >= PARTERRE_TOP and off <= PARTERRE_HALF:
-        if y == PARTERRE_TOP or off == PARTERRE_HALF:
+    half = _parterre_half(y)
+    if y >= PARTERRE_TOP and off <= half + 1:
+        if y == PARTERRE_TOP or off == half + 1:
             return LIGHT_GREEN
+        if y == PARTERRE_TOP + 1 and off < half:
+            return BROWN
         return YELLOW
-    # Roses two pixels square in even rows down each border, lit on the upper left.
-    if off >= PARTERRE_HALF + 3 and d >= 3:
-        rx = (off - PARTERRE_HALF - 3 + variant) % 5
-        ry = (y - STAND_ROW) % 5
-        if rx <= 1 and ry <= 1:
+    # Staggered 2x2 roses with a lit leaf beside each bloom, placed only where
+    # the whole cluster clears the crest, the card border and the boxwood kerb.
+    band = (y - STAND_ROW + 4) // 4
+    ry = (y - STAND_ROW + 4) % 4
+    rx = (x + variant * 2 + (3 if band % 2 else 0)) % 6
+    x0, y0 = x - rx, y - ry
+    if rx <= 2 and ry <= 1 and y0 >= crest + 3 and y0 + 1 <= 97:
+        if all(2 < px < 58 and abs(px - 30) >= _parterre_half(py) + 3 for px in (x0, x0 + 2) for py in (y0, y0 + 1)):
+            if rx == 2:
+                return LIGHT_GREEN if ry == 1 else GREEN
             return RED if (rx, ry) == (1, 1) else LIGHT_RED
     return GREEN
 

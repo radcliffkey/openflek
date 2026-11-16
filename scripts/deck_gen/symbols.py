@@ -340,10 +340,16 @@ def draw_tree_trunk(c, top_y, bottom_y, branch_ys, suit):
         c.put(cx - 1, y, BROWN)
         c.put(cx, y, YELLOW if (y % 3) != 0 else BROWN)
         c.put(cx + 1, y, BROWN if (y % 2) == 0 else RED)
-    # Roots flaring at bottom
+    # Roots flaring into the foreground turf, dark-edged against the grass
+    c.line(cx - 2, bottom_y - 3, cx - 5, bottom_y, DARK_GRAY)
+    c.line(cx + 2, bottom_y - 3, cx + 5, bottom_y, DARK_GRAY)
     c.line(cx - 1, bottom_y - 3, cx - 4, bottom_y, BROWN)
     c.line(cx + 1, bottom_y - 3, cx + 4, bottom_y, BROWN)
+    c.line(cx - 2, bottom_y, cx + 2, bottom_y, BROWN)
     c.put(cx, bottom_y - 1, YELLOW)
+    for gx in (cx - 4, cx - 2, cx + 1, cx + 4):
+        c.put(gx, bottom_y, GREEN)
+        c.put(gx + 1, bottom_y, LIGHT_GREEN if suit == 1 else GREEN)
 
     # Curved twigs & small shoots to each branch pair
     for by in branch_ys:

@@ -191,8 +191,27 @@ def draw_ace_acorn(c):
     # The trunk stops behind his girdle: showing between his legs, it read
     # as a third leg.
     c.fill_rect(27, 60, 33, 66, BROWN, DARK_GRAY, mode='vstripe')
-    c.fill_ellipse(30, 55, 25, 19, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='sparse')
-    acorn = ['.6.', '666', 'eee', 'eee', '.e.']
+    # The crown is a flat green mass with a lobed edge of leaves, every
+    # other one lit, and a looser ring of lit leaves inside it: foliage as on
+    # the Leaf and Heart Aces' wreaths, where a dotted fill read as a net.
+    r = Rig(c)
+    edge_leaves = [
+        (30 + 21.5 * math.cos(math.radians(k * 12)), 55 + 15.5 * math.sin(math.radians(k * 12)), k * 12 + 90 + (24 if k % 2 else -24))
+        for k in range(30)
+    ]
+    crown = r.part().ellipse(30, 55, 21, 15)
+    for lx, ly, ang in edge_leaves:
+        crown.ellipse(lx, ly, 4.2, 2.4, angle=ang)
+    crown.paint(GREEN, shade=None, outline=DARK_GRAY)
+    rim = crown.edge()
+    inner_leaves = [
+        (30 + 13 * math.cos(math.radians(k * 30 + 15)), 55 + 9 * math.sin(math.radians(k * 30 + 15)), k * 30 + (130 if k % 2 else 80))
+        for k in range(12)
+    ]
+    for lx, ly, ang in edge_leaves[::2] + inner_leaves:
+        for x, y in r.part().ellipse(lx, ly, 3.0, 1.3, angle=ang).mask - rim:
+            c.put(x, y, LIGHT_GREEN)
+    acorn =['.6.', '666', 'eee', 'eee', '.e.']
     for ax, ay in ((11, 48), (19, 40), (41, 40), (49, 48), (8, 60), (52, 60), (15, 67), (45, 67)):
         c.blit_centered(acorn, ax, ay)
 
@@ -220,14 +239,34 @@ def draw_ace_leaf(c):
     # Monumental top-left and top-right linden leaves leaning behind the shield
     draw_ace_corner_pips(c, 1)
 
-    # Lush linden & oak wreath wrapping around the shield (center=(30, 50), rx=27, ry=29)
-    c.fill_ellipse(30, 50, 27, 29, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='checker')
-    for angle_deg in range(0, 360, 22):
-        rad = math.radians(angle_deg)
-        bx = int(round(30 + 24.5 * math.cos(rad)))
-        by = int(round(50 + 26.5 * math.sin(rad)))
-        c.put(bx, by, YELLOW)
-        c.put(bx + 1, by, LIGHT_RED)
+    # Lush sculpted linden wreath wrapping around the shield, built from
+    # overlapping angled leaves (matching the Heart Ace wreath) instead of a
+    # 1x1 chequer ellipse, studded with golden linden blossoms.
+    r = Rig(c)
+    leaves = [
+        (
+            30 + 25.8 * math.cos(math.radians(k * 10)),
+            50 + 27.8 * math.sin(math.radians(k * 10)),
+            k * 10 + 90 + (24 if k % 2 else -24),
+        )
+        for k in range(36)
+    ]
+    wreath = r.part().ellipse(30, 50, 25.0, 27.0)
+    for lx, ly, ang in leaves:
+        wreath.ellipse(lx, ly, 4.4, 2.4, angle=ang)
+    wreath.paint(GREEN, shade=None, outline=DARK_GRAY)
+    rim = wreath.edge()
+    for k, (lx, ly, ang) in enumerate(leaves):
+        if k % 2 == 0:
+            for x, y in r.part().ellipse(lx, ly, 3.0, 1.3, angle=ang).mask - rim:
+                c.put(x, y, LIGHT_GREEN)
+    for k in range(12):
+        a = math.radians(k * 30 + 15)
+        bx = round(30 + 26.0 * math.cos(a))
+        by = round(50 + 28.0 * math.sin(a))
+        for px, py, col in ((bx, by, YELLOW), (bx + 1, by, YELLOW), (bx, by + 1, LIGHT_RED)):
+            if (px, py) not in rim and 2 < px < 58:
+                c.put(px, py, col)
 
     # Grand Gothic/Baroque Heraldic Shield (x=6..54, y=21..85)
     shield_outer = [(6, 21), (54, 21), (53, 58), (45, 74), (30, 85), (15, 74), (7, 58)]

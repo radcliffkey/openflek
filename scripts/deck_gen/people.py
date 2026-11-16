@@ -292,6 +292,9 @@ def draw_musicians(c):
     r3.sprite(FIDDLE_BODY, 52, 75)
     r3.silhouette()
     c.line(44, 73, 47, 79, LIGHT_GRAY)
+    # Footing shadows on the town square paving under all three pairs of boots.
+    for x0, x1 in ((9, 17), (27, 35), (45, 53)):
+        c.line(x0, 88, x1, 88, DARK_GRAY)
 
 
 def draw_wild_man(c, x=28, scale=0.66):

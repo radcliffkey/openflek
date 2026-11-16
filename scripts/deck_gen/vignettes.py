@@ -89,19 +89,22 @@ SPRITE_HEART_POST = [
 def draw_bush_or_flowers(c, cx, base_y, col, potted=False):
     """Draws a flowering bush rooted into the turf at base_y..base_y+1.
 
-    A `potted` one stands in a terracotta tub instead, for paved ground.
+    A `potted` one stands in a terracotta tub resting on `base_y`, for paved ground.
     """
-    blooms = [(dx, dy, col) for dx, dy in [(-3, -3), (0, -5), (3, -3), (-1, -2), (2, -4)]]
-    draw_shrub(c, cx, base_y - 2 if potted else base_y + 1, 6, 4, blooms + [(0, -3, YELLOW)])
     if not potted:
+        blooms = [(dx, dy, col) for dx, dy in [(-3, -3), (0, -5), (3, -3), (-1, -2), (2, -4)]]
+        draw_shrub(c, cx, base_y + 1, 6, 4, blooms + [(0, -3, YELLOW)])
         return
-    # The tub: a lipped rim, then sides narrowing to the foot, lit on the left.
-    c.line(cx - 5, base_y - 1, cx + 5, base_y - 1, DARK_GRAY)
-    for row, half in ((0, 4), (1, 4), (2, 3)):
+    blooms = [(dx, dy, col) for dx, dy in [(-3, -2), (0, -4), (3, -2), (-1, -1)]]
+    draw_shrub(c, cx, base_y - 4, 5, 3.5, blooms + [(0, -2, YELLOW)])
+    # Terracotta tub resting on `base_y` with a contact shadow on the paving below.
+    c.line(cx - 5, base_y - 4, cx + 5, base_y - 4, DARK_GRAY)
+    for dy, half in ((-3, 4), (-2, 4), (-1, 3)):
         for x in range(cx - half, cx + half + 1):
             edge = abs(x - cx) == half
-            c.put(x, base_y + row, DARK_GRAY if edge else (LIGHT_RED if x <= cx else RED))
-    c.line(cx - 3, base_y + 3, cx + 3, base_y + 3, DARK_GRAY)
+            c.put(x, base_y + dy, DARK_GRAY if edge else (LIGHT_RED if x <= cx else RED))
+    c.line(cx - 3, base_y, cx + 3, base_y, DARK_GRAY)
+    c.line(cx - 4, base_y + 1, cx + 4, base_y + 1, DARK_GRAY)
 
 
 def _draw_obelisk(c, cx, base_y):
@@ -326,11 +329,10 @@ def _draw_heart_tub(c, cx, base_y):
 
 
 def draw_vignette_scene(c, suit, rank):
-    """Draws one of the 16 large, grounded bottom scenes (y=60..91).
+    """Draws one of the 16 large, grounded bottom scenes (y=60..91) over the suit's ground.
 
     Animals are scaled so they stay below the lowest pips of their card.
     """
-    draw_suit_ground(c, suit, rank)
     gy = STAND_ROW
 
     if (suit, rank) == (0, 0):  # Acorn 7: Forester smoking a pipe beside a timbered cottage
@@ -365,16 +367,17 @@ def draw_vignette_scene(c, suit, rank):
         animals.draw_lion(c)
 
     elif (suit, rank) == (2, 0):  # Bell 7: Ornate urn between two potted rose bushes
-        draw_bush_or_flowers(c, 10, gy, YELLOW, potted=True)
-        draw_bush_or_flowers(c, 50, gy, YELLOW, potted=True)
+        draw_bush_or_flowers(c, 9, gy, YELLOW, potted=True)
+        draw_bush_or_flowers(c, 51, gy, YELLOW, potted=True)
         _draw_urn(c, 30, gy)
     elif (suit, rank) == (2, 1):  # Bell 8: Coursing hound with red collar
-        draw_bush_or_flowers(c, 9, gy, LIGHT_RED, potted=True)
-        draw_bush_or_flowers(c, 52, gy, YELLOW, potted=True)
+        draw_bush_or_flowers(c, 8, gy, LIGHT_RED, potted=True)
+        draw_bush_or_flowers(c, 53, gy, YELLOW, potted=True)
         animals.draw_hound(c, scale=0.85)
     elif (suit, rank) == (2, 2):  # Bell 9: Saddled dapple-grey horse tethered to a post
         c.fill_rect(6, 66, 8, gy - 1, BROWN, YELLOW, mode='vstripe')
         c.rect(5, 66, 9, gy - 1, DARK_GRAY)
+        c.line(4, gy, 10, gy, DARK_GRAY)
         c.fill_rect(4, 64, 10, 65, YELLOW)
         c.rect(4, 64, 10, 65, BROWN)
         c.line(10, 67, 19, 68, BROWN)
@@ -400,18 +403,21 @@ def draw_vignette_scene(c, suit, rank):
 
 def draw_number_card(c, suit, rank):
     """Draws a complete number card (rank 0=Seven, 1=Eight, 2=Nine, 3=Ten)."""
+    # Ground goes down first so tree trunks root ON the foreground turf rather
+    # than having their roots cut off behind the hill's dark-grey crest line.
+    draw_suit_ground(c, suit, rank)
     is_tree = suit in (0, 1)
     if is_tree:
         if rank == 0:  # Seven: 1 vertical top + 3 pairs
             bys = [24, 38, 52]
-            draw_tree_trunk(c, 17, 88, bys, suit)
+            draw_tree_trunk(c, 17, 87, bys, suit)
             draw_suit(c, suit, 30, 11, 'v')
             for y in bys:
                 draw_suit(c, suit, 13, y, 'left')
                 draw_suit(c, suit, 47, y, 'right')
         elif rank == 1:  # Eight: 4 pairs + top crown shoot
             bys = [15, 29, 43, 56]
-            draw_tree_trunk(c, 10, 88, bys, suit)
+            draw_tree_trunk(c, 10, 87, bys, suit)
             c.line(30, 10, 27, 6, GREEN)
             c.line(30, 10, 30, 5, LIGHT_GREEN)
             c.line(30, 10, 33, 6, GREEN)
@@ -423,14 +429,14 @@ def draw_number_card(c, suit, rank):
                 draw_suit(c, suit, 47, y, 'right')
         elif rank == 2:  # Nine: 1 vertical top + 4 pairs
             bys = [23, 36, 49, 61]
-            draw_tree_trunk(c, 16, 88, bys, suit)
+            draw_tree_trunk(c, 16, 87, bys, suit)
             draw_suit(c, suit, 30, 10, 'v')
             for y in bys:
                 draw_suit(c, suit, 13, y, 'left')
                 draw_suit(c, suit, 47, y, 'right')
         else:  # Ten: Roman X + 5 pairs
             bys = [16, 28, 40, 52, 64]
-            draw_tree_trunk(c, 13, 88, bys, suit)
+            draw_tree_trunk(c, 13, 87, bys, suit)
             draw_roman_x(c, 30, 3)
             for y in bys:
                 draw_suit(c, suit, 13, y, 'left')

@@ -21,7 +21,7 @@ from scripts.deck_gen.palette import (
     YELLOW,
     bresenham,
 )
-from scripts.deck_gen.rig import darker
+from scripts.deck_gen.rig import AUTO, darker
 
 SKIN = WHITE
 
@@ -41,8 +41,8 @@ FACE_YOUNG = [
     '....hHHHHHHHHh...',
     '...hHHLLHHHHHHh..',
     '..hHHLHHHHHHHHh..',
-    '..hHHHeHfHffffh..',
-    '.hHHHefwwwffwwf8.',
+    '..hHHHeHfHffff8..',
+    '.hHHHeffwwffwwf8.',
     '.hHHHeff0ffff0f8.',
     '.hHHHcfffff7fff8.',
     '.hHHHcfffff7ffc8.',
@@ -58,12 +58,12 @@ FACE_BEARD = [
     '....hHHHHHHHHh...',
     '...hHHLLHHHHHHh..',
     '..hHHLHHHHHHHHh..',
-    '..hHHHefffffffh..',
+    '..hHHHefffffff8..',
     '.hHHHefwwwffwwf8.',
     '.hHHHeff0ffff0f8.',
     '.hHHHcfffff7fff8.',
     '..hHHcfffff7ffc8.',
-    '..hHJJfffff88fJ..',
+    '..hHJJfffff88fJ8.',
     '...jJJJfJJJJJJj..',
     '...jJJJJJ44JJj...',
     '....jJJJJJJJj....',
@@ -96,16 +96,16 @@ FACE_MOUSTACHE = [
     '....hHHHHHHHHh...',
     '...hHHLLHHHHHHh..',
     '..hHHLHHHHHHHHh..',
-    '..hHHHefffffffh..',
+    '..hHHHefffffff8..',
     '.hHHHefwwwffwwf8.',
     '.hHHHeff0ffff0f8.',
     '.hHHHcfffff7fff8.',
-    '..hHHcfffff7ffc8.',
+    '.hHHHcfffff7ffc8.',
     '..hHHefffff88f8..',
-    '...hh77fJJJJJJ8..',
-    '......7Jff44fJ...',
-    '........7ffff8...',
-    '.........7778....',
+    '..hHHe7fJJJJJJ8..',
+    '..hHHHe7jJ44Jj8..',
+    '...hHHh.7ffff8...',
+    '....hh...7778....',
 ]
 
 FACE_GOATEE = [
@@ -113,16 +113,16 @@ FACE_GOATEE = [
     '....hHHHHHHHHh...',
     '...hHHLLHHHHHHh..',
     '..hHHLHHHHHHHHh..',
-    '..hHHHefffffffh..',
+    '..hHHHefffffff8..',
     '.hHHHefwwwffwwf8.',
     '.hHHHeff0ffff0f8.',
     '.hHHHcfffff7fff8.',
     '.hHHHcfffff7ffc8.',
     '..hHHefffff88f8..',
     '..hHHe7fJJJJJJ8..',
-    '..hHHHe7ff44f8...',
-    '...hHHh.7fJJf8...',
-    '....hh...7JJj....',
+    '..hHHHe7jj44jj8..',
+    '...hHHh.7jJJj8...',
+    '....hh...7jj8....',
     '..........jj.....',
 ]
 
@@ -224,15 +224,17 @@ HATS = {
             '.ccCCCCCCCCCCCcc.',
         ],
     ),
-    'wide_beret': (
-        -2,
+    'wide_beret': (  # a feather pinned at the brow curls back over the crown
+        -4,
         [
-            '....ccCCCCCCcc...',
-            '..cCCCCCCCCCCCCc.',
-            '.cCCCCCCCCCCCCCCc',
-            'cCCCCCCCCCCCCCCCc',
-            '.ccCCCCccccCCCCcT',
-            '...ccbBBBBBBBBbtT',
+            '...TTt...........',
+            '....tTTTt........',
+            '....ccCCtTTtcc...',
+            '..cCCCCCCCCtTtCc.',
+            '.cCCCCCCCCCCtTCCc',
+            'cCCCCCCCCCCCCtCCc',
+            '.ccCCCCccccCCCCc.',
+            '...ccbBBBBBBBBb..',
         ],
     ),
     'wreath': (  # oak leaves with acorns, for the wild man
@@ -395,13 +397,13 @@ def draw_hand(rig, x, y, grip=False, toward=None):
     rig.sprite(rows, x, y, anchor=anchor)
 
 
-def arm(rig, sh, el, wr, sleeve, cuff=None, upper_r=3.1, puff=None):
+def arm(rig, sh, el, wr, sleeve, cuff=None, upper_r=3.1, puff=None, outline=AUTO):
     """A sleeved arm through shoulder, elbow and wrist.
 
     `cuff` adds a turned-back cuff at the wrist, `puff` a slashed puffed
     upper sleeve in that colour.
     """
-    rig.part().chain([sh, el, wr], [upper_r, 2.5, 2.0]).paint(sleeve)
+    rig.part().chain([sh, el, wr], [upper_r, 2.5, 2.0]).paint(sleeve, outline=outline)
     ex, ey = el
     wx, wy = wr
     if puff is not None:
@@ -555,8 +557,10 @@ def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose
         back_props(rig)
     (bsh, bel, bwr, bhand), (fsh, fel, fwr, fhand) = arms
 
+    sleeve_outline = look.get('sleeve_outline', AUTO)
+
     def back_arm():
-        arm(rig, bsh, bel, bwr, look['sleeve_b'], cuff=look.get('cuff'), puff=look.get('puff'))
+        arm(rig, bsh, bel, bwr, look['sleeve_b'], cuff=look.get('cuff'), puff=look.get('puff'), outline=sleeve_outline)
         if bhand:
             draw_hand(rig, *bwr, grip=bhand == 'grip', toward=bel)
 
@@ -593,7 +597,7 @@ def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose
 
     if not head_over:
         head()
-    arm(rig, fsh, fel, fwr, look['sleeve_f'], cuff=look.get('cuff'), puff=look.get('puff'))
+    arm(rig, fsh, fel, fwr, look['sleeve_f'], cuff=look.get('cuff'), puff=look.get('puff'), outline=sleeve_outline)
     # Props before the hand, so a fist closes over the grip of whatever it holds.
     if front_props:
         front_props(rig)

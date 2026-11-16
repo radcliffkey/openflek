@@ -62,7 +62,7 @@ def _done(r, feet=()):
 
 
 def _ground_shadow(r, cx, half, gy=87):
-    """A flat dithered shadow on the ground under an animal so it doesn't float on the turf.
+    """A flat shadow on the ground under an animal so it doesn't float on the turf.
 
     Drawn straight on the card, outside the rig, so a thin rig's silhouette
     doesn't outline it. It stays on the ground when the animal is raised
@@ -74,9 +74,12 @@ def _ground_shadow(r, cx, half, gy=87):
     for y in range(int(y0 - ry), int(y0 + ry) + 2):
         for x in range(int(x0 - rx), int(x0 + rx) + 2):
             d = ((x - x0) / rx) ** 2 + ((y - y0) / ry) ** 2
-            # A solid core fading to a dithered rim.
-            if d <= 0.45 or (d <= 1 and (x + y) % 2):
+            # A dark core. Around it sunlit grass falls into shade; a
+            # dithered rim turned to static on the flat grounds.
+            if d <= 0.45:
                 r.c.put(x, y, DARK_GRAY)
+            elif d <= 1 and r.c.get(x, y) == LIGHT_GREEN:
+                r.c.put(x, y, GREEN)
 
 
 def _legs(r, legs, col, upper=2.2, lower=1.2, hoof=None, outline=None):

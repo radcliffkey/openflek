@@ -106,8 +106,13 @@ def _draw_ground(c, suit, variant):
     lie at its edges.
     """
     skyline = draw_suit_ground(c, suit, variant, COURT_GROUND)
-    if suit == 0:  # a toadstool at the right edge, clear of the Unter's suit sign
-        c.blit_sprite(['.8888.', '84c4c48', '8f4f4f8', '8888888', '..8f8..', '..8f8..', '.8fff8.'], 51, 77)
+    if suit == 0:
+        if variant == UNTER:  # a toadstool at the right edge, clear of the Unter's front boot
+            c.blit_sprite(['.8888.', '84c4c48', '8f4f4f8', '8888888', '..878..', '..878..', '.8f7f8.'], 52, 77)
+        else:  # a pair of oak shoots at the edges of the Ober's forest bank
+            for sx in (5, 53):
+                sy = skyline(sx)
+                c.blit_sprite(['.8a8.', '8a2a8', '.828.', '..6..'], sx - 2, sy - 3)
     elif suit == 1:  # tall grass blades along the meadow's edge
         for x in range(3, 58, 3):
             y = skyline(x)
@@ -260,10 +265,12 @@ def draw_unter(c, suit):
             cape=RED,
             lining=YELLOW,
             swing=-6,
-            sleeve_b=GREEN,
-            sleeve_f=GREEN,
+            # Light-green full sleeves outlined in dark grey so both bent arms
+            # stay crisp where the near forearm crosses the green doublet.
+            sleeve_b=LIGHT_GREEN,
+            sleeve_f=LIGHT_GREEN,
+            sleeve_outline=DARK_GRAY,
             cuff=LIGHT_RED,
-            puff=LIGHT_RED,
             hose=LIGHT_GREEN,
             boot=LIGHT_BLUE,
             boot_cuff=CYAN,
@@ -275,23 +282,39 @@ def draw_unter(c, suit):
             hair=BROWN,
             hat=('wide_beret', LIGHT_RED, LIGHT_GREEN, YELLOW),
         )
-        arms = (((23, 26), (32, 27), (40, 21), None), ((36, 26), (44, 24), (49, 22), None))
+        # Mirrored (`flip=True`): `arms[0]` is his far (right) arm emerging from
+        # behind the left side of the chest and bending down to an elbow before
+        # rising to the outer flute; `arms[1]` is his near (left) arm attached
+        # to the right shoulder, bending down and reaching across the chest.
+        arms = (((35, 26), (46, 33.5), (50.5, 23.2), None), ((24.5, 26.5), (28.5, 35), (39.5, 22.2), None))
         legs = (((28, 52), (27, 68), (25, 84), (30, 87)), ((34, 52), (36, 68), (38, 84), (44, 87)))
 
         def hanger(r):
             # Curved hunting-sword hilt and chape peeking behind the coat, as on Prague cards.
-            r.part().capsule(22, 43, 14, 35, 1.3).paint(BROWN, None, outline=DARK_GRAY)
-            r.part().capsule(16, 37, 13, 39, 0.9).fill(YELLOW)
-            r.part().ellipse(13.5, 34.5, 1.4, 1.4).paint(YELLOW, None, outline=BROWN)
+            r.part().capsule(22, 43, 13, 36, 1.3).paint(BROWN, None, outline=DARK_GRAY)
+            r.part().capsule(15, 38, 12, 40, 0.9).fill(YELLOW)
+            r.part().ellipse(12.5, 35.5, 1.4, 1.4).paint(YELLOW, None, outline=BROWN)
 
         def flute(r):
-            r.part().capsule(34, 18.5, 55, 21.7, 1.5).paint(YELLOW, None, outline=BROWN)
-            for x in (44, 52, 54):
-                r.put(x, 18.5 + (x - 34) * 3.2 / 21, BROWN)
-            F.draw_hand(r, 39.5, 21.5, grip=True, toward=(32, 27))
-            F.draw_hand(r, 48.5, 23, grip=True, toward=(44, 24))
+            # Mouthpiece meets both lip pixels at row 19 without touching the nose above.
+            r.part().capsule(35.2, 19.8, 55.5, 22.5, 1.4).paint(YELLOW, None, outline=BROWN)
+            for x in (45, 52, 54):
+                r.put(x, 19.8 + (x - 35.2) * 2.7 / 20.3, BROWN)
+            F.draw_hand(r, 39.8, 21.6, grip=True, toward=(28.5, 35))
+            F.draw_hand(r, 50.2, 22.8, grip=True, toward=(46, 33.5))
 
-        _standing(c, suit, True, look, arms, legs, back_props=hanger, front_props=flute, pose=dict(flare=7, lean=-1))
+        _standing(
+            c,
+            suit,
+            True,
+            look,
+            arms,
+            legs,
+            dx=2,
+            back_props=hanger,
+            front_props=flute,
+            pose=dict(sh_b=(24, 26), sh_f=(35, 26), flare=7, lean=-1),
+        )
         draw_suit(c, 1, 11, 56, 'v')
 
     elif suit == 2:  # Bell: bare-headed wide lunge, swinging a two-handed greatsword overhead
@@ -313,15 +336,15 @@ def draw_unter(c, suit):
             hair=BROWN,
             hat=None,
         )
-        # Elbows frame the head on either side and hands meet above the crown,
+        # Wide overhead arc so both elbows clear the 15-wide 3/4 head,
         # with `head_over=True` so no sleeve ever obscures the face.
-        arms = (((23, 26), (15, 15), (21, 7), 'grip'), ((35, 26), (43, 15), (26, 7), 'grip'))
+        arms = (((23, 26), (13, 15), (20, 6), 'grip'), ((36, 26), (45, 15), (26, 6), 'grip'))
         legs = (((26, 52), (18, 67), (13, 84), (18, 87)), ((34, 52), (42, 66), (45, 84), (51, 87)))
 
         def greatsword(r):
-            F.sword(r, (23, 7), (4, 25))
+            F.sword(r, (23, 6), (4, 24))
+            r.line(20, 9, 6, 22, LIGHT_CYAN)
             r.line(20, 10, 6, 23, LIGHT_CYAN)
-            r.line(20, 11, 6, 24, LIGHT_CYAN)
 
         _standing(
             c,
@@ -332,7 +355,7 @@ def draw_unter(c, suit):
             legs,
             back_props=greatsword,
             head_over=True,
-            pose=dict(head=(31, 18), neck=(30, 23), sh_b=(23, 26), sh_f=(35, 26), waist=(30, 45), flare=7, lean=1),
+            pose=dict(head=(30, 17), neck=(30, 23), sh_b=(23, 26), sh_f=(36, 26), waist=(30, 45), flare=7, lean=1),
         )
         draw_suit(c, 2, 10, 56)
 
@@ -351,7 +374,7 @@ def draw_unter(c, suit):
             belt=YELLOW,
             pattern=_stripes(YELLOW, 4),
             hair=YELLOW,
-            hat=('cap', LIGHT_RED, WHITE, YELLOW),
+            hat=('cap', LIGHT_RED, LIGHT_CYAN, YELLOW),
         )
         # The free hand rests on the hip, over the coat, where the body can't hide it.
         arms = (((23, 26), (16, 36), (23, 44), 'open'), ((36, 26), (41, 33), (40, 23), 'grip'))
