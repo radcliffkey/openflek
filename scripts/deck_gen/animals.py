@@ -131,7 +131,7 @@ def draw_horse(c, flip=False, dx=0, scale=1.0, coat=LIGHT_GRAY, mane=DARK_GRAY, 
     return r
 
 
-def draw_hound(c, flip=False, dx=0, scale=1.0, coat=WHITE, spots=LIGHT_GRAY, collar=RED):
+def draw_hound(c, flip=False, dx=0, dy=0, scale=1.0, coat=WHITE, spots=LIGHT_GRAY, collar=RED):
     """A lean coursing hound in full gallop: forelegs reaching, hind legs driving.
 
     A white coat on the white card needs an unbroken outline, so the tail,
@@ -139,7 +139,7 @@ def draw_hound(c, flip=False, dx=0, scale=1.0, coat=WHITE, spots=LIGHT_GRAY, col
     silhouette; the near legs then go on top with their own outline, which
     parts them from the belly.
     """
-    r = _rig(c, flip, dx, scale, shadow=(30, 15), thin=True)
+    r = _rig(c, flip, dx, scale, shadow=(30, 15), dy=dy, thin=True)
     _legs(r, [[(36, 73), (43, 77), (49, 78)], [(20, 72), (14, 76), (8, 79)]], darker(coat), upper=2.2, lower=1.2)
     r.part().chain([(17, 70), (12, 67), (7, 67)], [1.2, 0.9, 0.6]).paint(coat, None)
     # Deep chest, tucked waist and a long narrow head.
@@ -158,7 +158,7 @@ def draw_hound(c, flip=False, dx=0, scale=1.0, coat=WHITE, spots=LIGHT_GRAY, col
     r.put(52, 65.5, BLACK)
     r.part().capsule(39, 65, 41, 68.5, 1.1).fill(collar)
     _done(r)
-    near = Rig(c, flip=flip, dx=dx, scale=scale)
+    near = Rig(c, flip=flip, dx=dx, dy=dy, scale=scale)
     _legs(near, [[(39, 74), (46, 76), (53, 74)], [(19, 73), (13, 78), (8, 82)]], coat, upper=2.4, lower=1.4, outline=DARK_GRAY)
     return r
 
@@ -202,7 +202,7 @@ def draw_boar(c, flip=False, dx=0, scale=1.0):
     r = _rig(c, flip, dx, scale)
     hide = BROWN
     # Far legs in shadow, then the tail with its tuft.
-    _legs(r, [[(36, 80), (36, 86)], [(25, 80), (25, 86)]], RED, upper=1.5, lower=1.5, outline=DARK_GRAY, hoof=BLACK)
+    _legs(r, [[(36, 80), (36, 86)], [(25, 80), (25, 86)]], RED, upper=1.4, lower=1.1, outline=DARK_GRAY, hoof=BLACK)
     r.line(17, 76, 14, 78, DARK_GRAY)
     r.line(14, 78, 14, 80, DARK_GRAY)
     r.put(13, 81, DARK_GRAY)
@@ -236,7 +236,7 @@ def draw_boar(c, flip=False, dx=0, scale=1.0):
         71,
     )
     # Near legs, black hooves.
-    _legs(r, [[(40, 80), (40, 86)], [(20, 80), (20, 86)]], hide, upper=1.5, lower=1.5, outline=DARK_GRAY, hoof=BLACK)
+    _legs(r, [[(40, 80), (40, 86)], [(20, 80), (20, 86)]], hide, upper=1.5, lower=1.1, outline=DARK_GRAY, hoof=BLACK)
     return _done(r, feet=[(36, 87), (26, 87), (41, 87), (20, 87)])
 
 

@@ -371,9 +371,9 @@ def draw_vignette_scene(c, suit, rank):
         draw_bush_or_flowers(c, 51, gy, YELLOW, potted=True)
         _draw_urn(c, 30, gy)
     elif (suit, rank) == (2, 1):  # Bell 8: Coursing hound with red collar
-        draw_bush_or_flowers(c, 8, gy, LIGHT_RED, potted=True)
+        draw_bush_or_flowers(c, 7, gy, LIGHT_RED, potted=True)
         draw_bush_or_flowers(c, 53, gy, YELLOW, potted=True)
-        animals.draw_hound(c, scale=0.85)
+        animals.draw_hound(c, scale=0.80, dy=-2)
     elif (suit, rank) == (2, 2):  # Bell 9: Saddled dapple-grey horse tethered to a post
         c.fill_rect(6, 66, 8, gy - 1, BROWN, YELLOW, mode='vstripe')
         c.rect(5, 66, 9, gy - 1, DARK_GRAY)

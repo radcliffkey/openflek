@@ -291,13 +291,13 @@ def draw_musicians(c):
     F.draw_head(r3, 50, 74, 'young', YELLOW, hat=('beret', BLUE, LIGHT_RED, YELLOW), small=True)
     r3.sprite(FIDDLE_BODY, 52, 75)
     r3.silhouette()
-    c.line(44, 73, 47, 79, LIGHT_GRAY)
+    c.line(44, 73, 47, 79, BROWN)
     # Footing shadows on the town square paving under all three pairs of boots.
     for x0, x1 in ((9, 17), (27, 35), (45, 53)):
         c.line(x0, 88, x1, 88, DARK_GRAY)
 
 
-def draw_wild_man(c, x=28, scale=0.66):
+def draw_wild_man(c, x=28, scale=0.72):
     """The wild man of Czech heraldry: tawny pelt, oak-leaf girdle, club on his shoulder.
 
     Consistent brown-and-tawny fur across chest, arms and legs so he stands out
@@ -306,7 +306,7 @@ def draw_wild_man(c, x=28, scale=0.66):
     r = Rig(c, dx=x - 30, scale=scale)
 
     def fur(px, py):
-        if (px + py * 2) % 5 == 0 or (px * 3 + py) % 11 == 0:
+        if (px + py * 2) % 7 == 0 and (px + py) % 2 == 0:
             return YELLOW
         return None
 
@@ -337,15 +337,22 @@ def draw_wild_man(c, x=28, scale=0.66):
         beard=BROWN,
         hat=('wreath', LIGHT_GREEN, YELLOW, GREEN),
     )
-    arms = (((23, 26), (15, 36), (18, 46), 'open'), ((36, 26), (45, 34), (50, 27), 'grip'))
+    arms = (((23, 28), (15, 38), (18, 48), 'open'), ((36, 28), (45, 36), (50, 29), 'grip'))
     legs = (((26, 52), (22, 68), (19, 84), (14, 87)), ((34, 52), (39, 68), (41, 84), (46, 87)))
 
     def club(rr):
-        rr.part().chain([(49, 32), (53, 19), (56, 8)], [1.4, 2.4, 3.4]).paint(BROWN, outline=DARK_GRAY)
-        for kx, ky in ((52, 21), (54, 16), (55, 12), (56, 7), (57, 9)):
+        rr.part().chain([(49, 34), (52, 23), (55, 13)], [1.6, 2.5, 3.5]).paint(BROWN, outline=DARK_GRAY)
+        for kx, ky in ((51, 24), (53, 19), (54, 15), (55, 12), (56, 14)):
             rr.put(kx, ky, YELLOW)
 
-    F.draw_standing(r, look, arms, legs, back_props=club, pose=dict(hem=60, flare=7))
+    F.draw_standing(
+        r,
+        look,
+        arms,
+        legs,
+        back_props=club,
+        pose=dict(head=(30, 18), neck=(30, 24), sh_b=(23, 28), sh_f=(36, 28), hem=60, flare=7),
+    )
 
 
 # Cupid facing left: golden curls, cyan-shaded white wings, outstretched bow
@@ -355,8 +362,8 @@ def draw_wild_man(c, x=28, scale=0.66):
 CUPID_BODY = [
     '.......eee6e.......',
     '......e6eeee6......',
-    '......ee0efec......',
-    '.......eefff..bbb..',
+    '......ef0efee......',
+    '.......fcfff..bbb..',
     '......fffffffbfffb.',
     '.fffffffffffbfff3b.',
     '......fff7fffbff3b.',
@@ -376,7 +383,7 @@ def draw_cupid(c, x=44):
     """A winged cupid facing left, drawing his bow at the heart on the post."""
     r = Rig(c, thin=True)
     eye = CUPID_BODY[2].index('0')
-    top = 70
+    top = 72
     r.sprite(CUPID_BODY, x - eye, top)
     r.silhouette()
 

@@ -25,6 +25,7 @@ from scripts.deck_gen.palette import (
     RED,
     WHITE,
     YELLOW,
+    bresenham,
 )
 from scripts.deck_gen.rig import Rig, darker
 from scripts.deck_gen.symbols import draw_suit
@@ -113,10 +114,17 @@ def _draw_ground(c, suit, variant):
             for sx in (5, 53):
                 sy = skyline(sx)
                 c.blit_sprite(['.8a8.', '8a2a8', '.828.', '..6..'], sx - 2, sy - 3)
-    elif suit == 1:  # tall grass blades along the meadow's edge
-        for x in range(3, 58, 3):
-            y = skyline(x)
-            c.line(x, y, x + (1 if x % 2 else -1), y - 3 - x % 2, GREEN if x % 2 else LIGHT_GREEN)
+    elif suit == 1:  # small meadow grass tufts and wildflowers along the edges
+        tufts = (6, 15, 45, 54) if variant == UNTER else (5, 13, 47, 55)
+        for tx in tufts:
+            ty = skyline(tx)
+            c.line(tx - 1, ty, tx - 2, ty - 2, GREEN)
+            c.line(tx, ty, tx, ty - 3, LIGHT_GREEN)
+            c.line(tx + 1, ty, tx + 2, ty - 2, GREEN)
+        for fx, fcol in (((8, YELLOW), (52, LIGHT_RED)) if variant == UNTER else ((9, LIGHT_RED), (51, YELLOW))):
+            fy = skyline(fx)
+            c.put(fx, fy - 1, GREEN)
+            c.put(fx, fy - 2, fcol)
     elif suit == 3:  # clipped box hedges at the corners of the rose beds
         r = Rig(c)
         for hx in (6, 54):
@@ -237,12 +245,10 @@ def draw_unter(c, suit):
 
         def high_blade(r):
             F.sword(r, (50, 9), (55, 36))
-            r.line(51, 13, 55, 34, LIGHT_CYAN)
 
         def parrying_blade(r):
             # Drawn before the back fist so the hand closes over the hilt.
             F.sword(r, (22, 43), (44, 37))
-            r.line(25, 42, 42, 38, LIGHT_CYAN)
             F.draw_hand(r, 22, 43, grip=True, toward=(16, 35))
 
         _standing(
@@ -292,7 +298,10 @@ def draw_unter(c, suit):
         def hanger(r):
             # Curved hunting-sword hilt and chape peeking behind the coat, as on Prague cards.
             r.part().capsule(22, 43, 13, 36, 1.3).paint(BROWN, None, outline=DARK_GRAY)
-            r.part().capsule(15, 38, 12, 40, 0.9).fill(YELLOW)
+            guard = r.part().capsule(15, 38, 12, 40, 0.8)
+            for x, y in guard.halo():
+                r.plot(x, y, BROWN)
+            guard.fill(YELLOW)
             r.part().ellipse(12.5, 35.5, 1.4, 1.4).paint(YELLOW, None, outline=BROWN)
 
         def flute(r):
@@ -337,14 +346,16 @@ def draw_unter(c, suit):
             hat=None,
         )
         # Wide overhead arc so both elbows clear the 15-wide 3/4 head,
-        # with `head_over=True` so no sleeve ever obscures the face.
-        arms = (((23, 26), (13, 15), (20, 6), 'grip'), ((36, 26), (45, 15), (26, 6), 'grip'))
+        # with `head_over=True` so no sleeve ever obscures the face. Both fists
+        # close over the greatsword hilt in `front_props` so the full blade
+        # sweeps cleanly in front of the raised right arm.
+        arms = (((23, 26), (13, 15), (20, 6), None), ((36, 26), (45, 15), (26, 6), None))
         legs = (((26, 52), (18, 67), (13, 84), (18, 87)), ((34, 52), (42, 66), (45, 84), (51, 87)))
 
         def greatsword(r):
-            F.sword(r, (23, 6), (4, 24))
-            r.line(20, 9, 6, 22, LIGHT_CYAN)
-            r.line(20, 10, 6, 23, LIGHT_CYAN)
+            F.sword(r, (23, 6), (4, 22))
+            F.draw_hand(r, 20, 6, grip=True, toward=(13, 15))
+            F.draw_hand(r, 26, 6, grip=True, toward=(45, 15))
 
         _standing(
             c,
@@ -353,7 +364,7 @@ def draw_unter(c, suit):
             look,
             arms,
             legs,
-            back_props=greatsword,
+            front_props=greatsword,
             head_over=True,
             pose=dict(head=(30, 17), neck=(30, 23), sh_b=(23, 26), sh_f=(36, 26), waist=(30, 45), flare=7, lean=1),
         )
@@ -374,7 +385,7 @@ def draw_unter(c, suit):
             belt=YELLOW,
             pattern=_stripes(YELLOW, 4),
             hair=YELLOW,
-            hat=('cap', LIGHT_RED, LIGHT_CYAN, YELLOW),
+            hat=('cap', LIGHT_RED, CYAN, YELLOW),
         )
         # The free hand rests on the hip, over the coat, where the body can't hide it.
         arms = (((23, 26), (16, 36), (23, 44), 'open'), ((36, 26), (41, 33), (40, 23), 'grip'))
@@ -396,7 +407,11 @@ def draw_unter(c, suit):
             r.part().capsule(*at(-1, 0), *at(7, 0), 1.6, 0.6).paint(LIGHT_CYAN, None, outline=BLUE)
             blade = r.part().poly([at(0, 1), at(1, 7), at(-3, 8.5), at(-7, 7), at(-6, 1)])
             blade.paint(LIGHT_CYAN, None, outline=BLUE)
-            r.line(*at(0, 6.5), *at(-6, 6.5), WHITE)
+            # Keep the gleaming edge highlight strictly inside the dark-blue border.
+            inside = blade.interior()
+            for x, y in bresenham(*r.tx(*at(0, 5.5)), *r.tx(*at(-6, 5.5))):
+                if (x, y) in inside:
+                    r.plot(x, y, WHITE)
             r.part().poly([at(-1.5, -1), at(-3, -5), at(-4.5, -1)]).paint(LIGHT_CYAN, None, outline=BLUE)
             r.part().ellipse(*at(-9, 0), 1.6, 1.6).paint(LIGHT_RED)
 
@@ -447,9 +462,7 @@ def draw_ober(c, suit):
 
         def twin_blades(r):
             F.sword(r, (21, 46), (53, 47))
-            r.line(25, 46, 50, 47, LIGHT_CYAN)
             F.sword(r, (47, 17), (23, 35))
-            r.line(44, 19, 25, 33, LIGHT_CYAN)
 
         _standing(
             c,
@@ -468,8 +481,11 @@ def draw_ober(c, suit):
         look = dict(
             cape=LIGHT_RED,
             swing=-8,
-            sleeve_b=GREEN,
-            sleeve_f=GREEN,
+            # Light-green sleeves outlined in dark grey so the lower drumming
+            # arm stands out clearly across his dark-green tunic.
+            sleeve_b=LIGHT_GREEN,
+            sleeve_f=LIGHT_GREEN,
+            sleeve_outline=DARK_GRAY,
             cuff=YELLOW,
             hose=YELLOW,
             boot=CYAN,
@@ -547,7 +563,10 @@ def draw_ober(c, suit):
 
         def hilt(r):
             # Crossguard and pommel in front of the coat, the fist closed on the grip between them.
-            r.part().capsule(18.5, 47.5, 23.5, 50.5, 0.9).fill(YELLOW)
+            guard = r.part().capsule(18.5, 47.5, 23.5, 50.5, 0.8)
+            for x, y in guard.halo():
+                r.plot(x, y, BROWN)
+            guard.fill(YELLOW)
             r.part().ellipse(23.5, 44, 1.5, 1.5).paint(YELLOW, None, outline=BROWN)
             F.draw_hand(r, 22, 47, grip=True)
 
@@ -708,12 +727,14 @@ def _seated(c, flip, look, front_arm, back_arm, props_front=None):
             return RED if y == hem_y + 1 and x % 4 == 0 else YELLOW
         if pattern is not None and pattern(x, y) is not None:
             return pattern(x, y)
-        if y == knee_y or (y == knee_y + 1 and x % 2):
+        # Gently arched shadow under the knees rather than a rigid horizontal bar.
+        fx, _ = r.tx(34, 0)
+        knee_arc = knee_y + (abs(x - fx) // 9)
+        if abs(x - fx) <= 13 and (y == knee_arc or (y == knee_arc + 1 and (x + y) % 2 == 0)):
             return robe_shade
         # Folds fall from the knees and fan out towards the hem.
-        fx, _ = r.tx(34, 0)
         spread = 1 + (y - knee_y) / 22
-        if y > knee_y + 2 and round((x - fx) / spread) % 5 == 0:
+        if y > knee_arc + 2 and round((x - fx) / spread) % 5 == 0:
             return robe_shade
         return None
 
@@ -766,9 +787,10 @@ def draw_king(c, suit):
         )
 
         def sceptre(r):
-            # Angled across the gilded throne post so the two don't merge.
-            F.pole(r, (43, 53), (53, 29), YELLOW, outline=BROWN)
-            r.part().ellipse(54, 27, 2.2, 2.2).paint(LIGHT_GREEN)
+            # Angled across the gilded throne post and outlined in dark grey so
+            # the shaft separates cleanly from the gold wood behind it.
+            F.pole(r, (43, 53), (53, 29), YELLOW, outline=DARK_GRAY)
+            r.part().ellipse(54, 27, 2.3, 2.3).paint(LIGHT_GREEN, outline=DARK_GRAY)
 
         def orb(r):
             # Resting on the open hand: a gold ball girdled in red, a cross on top.
@@ -846,7 +868,6 @@ def draw_king(c, suit):
         def blade(r):
             # Plumb, and short enough that the point stays under the corner bell.
             F.sword(r, (46, 45), (46, 23))
-            r.line(46, 31, 46, 25, LIGHT_CYAN)
 
         _seated(
             c,

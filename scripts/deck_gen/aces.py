@@ -145,12 +145,19 @@ def draw_ace_acorn(c):
     # Monumental top-left & top-right acorns, stems tucked under the ribbon
     draw_ace_corner_pips(c, 0)
 
-    # Top central floral jewel & oak sprigs (x=24..36, y=4..19)
-    c.fill_ellipse(30, 9, 3.5, 3.5, LIGHT_RED, RED, outline=DARK_GRAY)
-    c.fill_ellipse(30, 9, 1.8, 1.8, YELLOW, BROWN)
-    c.line(24, 7, 27, 9, GREEN)
-    c.line(36, 7, 33, 9, GREEN)
-    c.line(30, 13, 30, 19, DARK_GRAY)
+    # Top central floral rosette & splayed oak leaves resting on the arch apex
+    oak_leaf = [
+        '.88...',
+        '8a28..',
+        '82a28.',
+        '.82288',
+        '..88..',
+    ]
+    c.blit_sprite(oak_leaf, 21, 11, flip_x=False)
+    c.blit_sprite(oak_leaf, 34, 11, flip_x=True)
+    c.fill_ellipse(30, 12, 3.6, 3.6, LIGHT_RED, RED, outline=DARK_GRAY)
+    c.fill_ellipse(30, 12, 1.7, 1.7, YELLOW, BROWN)
+    c.line(30, 16, 30, 19, DARK_GRAY)
 
     # Arched golden ribbon (x=3..57, y=19..37) with OPENFLEK lettering. It is
     # eight rows deep so a letter spanning a step of the arch still clears
@@ -177,15 +184,20 @@ def draw_ace_acorn(c):
         'L': ['8..', '8..', '8..', '8..', '888'],
         'K': ['8.8', '88.', '8..', '88.', '8.8'],
     }
-    # Each letter sits a row under the lowest point of the ribbon's top edge
-    # above it, so it never touches either outline.
-    for idx, ch in enumerate('OPENFLEK'):
-        lx0 = 8 + idx * 6
-        ly0 = max(arch(lx0 + gx) for gx in range(len(glyphs[ch][0]))) + 1
+    # Proportionally spaced and centred on x=30 so every gap is even and the
+    # outer letters stay on the flatter middle of the arch.
+    title = 'OPENFLEK'
+    gap = 2
+    total_w = sum(len(glyphs[ch][0]) for ch in title) + gap * (len(title) - 1)
+    lx0 = 30 - total_w // 2
+    for ch in title:
+        gw = len(glyphs[ch][0])
+        ly0 = max(arch(lx0 + gx) for gx in range(gw)) + 1
         for gy, row in enumerate(glyphs[ch]):
             for gx, p in enumerate(row):
                 if p == '8':
                     c.put(lx0 + gx, ly0 + gy, DARK_GRAY)
+        lx0 += gw + gap
 
     # An oak behind him: trunk and a round crown of leaves dotted with acorns.
     # The trunk stops behind his girdle: showing between his legs, it read
@@ -211,8 +223,8 @@ def draw_ace_acorn(c):
     for lx, ly, ang in edge_leaves[::2] + inner_leaves:
         for x, y in r.part().ellipse(lx, ly, 3.0, 1.3, angle=ang).mask - rim:
             c.put(x, y, LIGHT_GREEN)
-    acorn =['.6.', '666', 'eee', 'eee', '.e.']
-    for ax, ay in ((11, 48), (19, 40), (41, 40), (49, 48), (8, 60), (52, 60), (15, 67), (45, 67)):
+    acorn = ['..8..', '.868.', '.6ee.', '.6ee.', '..6..']
+    for ax, ay in ((11, 48), (19, 41), (41, 41), (49, 48), (9, 60), (51, 60), (15, 67), (45, 67)):
         c.blit_centered(acorn, ax, ay)
 
     # The wild man of Czech heraldry standing before the oak.
@@ -260,12 +272,14 @@ def draw_ace_leaf(c):
         if k % 2 == 0:
             for x, y in r.part().ellipse(lx, ly, 3.0, 1.3, angle=ang).mask - rim:
                 c.put(x, y, LIGHT_GREEN)
-    for k in range(12):
-        a = math.radians(k * 30 + 15)
-        bx = round(30 + 26.0 * math.cos(a))
-        by = round(50 + 28.0 * math.sin(a))
+    # Golden linden blossoms set on the visible lower-left and lower-right
+    # curves of the wreath, clear of the card edge and the shield's sides.
+    for deg in (42, 62, 118, 138, 165, 195, 345, 15):
+        a = math.radians(deg)
+        bx = round(30 + 24.5 * math.cos(a))
+        by = round(50 + 26.5 * math.sin(a))
         for px, py, col in ((bx, by, YELLOW), (bx + 1, by, YELLOW), (bx, by + 1, LIGHT_RED)):
-            if (px, py) not in rim and 2 < px < 58:
+            if (px, py) not in rim and 3 < px < 57:
                 c.put(px, py, col)
 
     # Grand Gothic/Baroque Heraldic Shield (x=6..54, y=21..85)
@@ -368,6 +382,22 @@ def draw_ace_bell(c):
         c.put(px, 15, col)
 
     _overlap_foreground_turf(c, base_y=82, water=False)
+    # A bright foreground meadow swell and scattered wildflowers so the lower
+    # hillock feels finished without copying the other Aces' pond.
+    for x in range(2, 59):
+        swell = 91 + (x - 30) ** 2 // 110
+        if swell <= 97:
+            c.put(x, swell, LIGHT_GREEN)
+    for fx, fy, col in (
+        (10, 90, YELLOW),
+        (18, 94, WHITE),
+        (24, 92, LIGHT_RED),
+        (30, 95, YELLOW),
+        (37, 92, LIGHT_RED),
+        (43, 94, WHITE),
+        (50, 90, YELLOW),
+    ):
+        c.put(fx, fy, col)
 
 
 def draw_ace_heart(c):
@@ -386,7 +416,7 @@ def draw_ace_heart(c):
     # A solid brown line along the underside shades it without a dotted dither.
     arch_rim = arch.edge()
     arch.paint(YELLOW, shade=None, outline=DARK_GRAY, pattern=lambda x, y: BROWN if (x, y + 1) in arch_rim and y > 25 else None)
-    for x in range(8, 54, 6):
+    for x in range(6, 55, 6):
         dx = abs(x - 30)
         c.put(x, 25 + (dx * dx) // 65, RED)
 

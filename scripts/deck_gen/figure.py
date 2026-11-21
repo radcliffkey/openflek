@@ -44,9 +44,9 @@ FACE_YOUNG = [
     '..hHHHeHfHffff8..',
     '.hHHHeffwwffwwf8.',
     '.hHHHeff0ffff0f8.',
-    '.hHHHcfffff7fff8.',
-    '.hHHHcfffff7ffc8.',
-    '..hHHefffff88f8..',
+    '.hHHHf7ffff7fff8.',
+    '.hHHH7fffff7ffc8.',
+    '..hHHefffff78f8..',
     '..hHHe7fffffff8..',
     '..hHHHe7ff44f8...',
     '...hHHh.7ffff8...',
@@ -61,34 +61,32 @@ FACE_BEARD = [
     '..hHHHefffffff8..',
     '.hHHHefwwwffwwf8.',
     '.hHHHeff0ffff0f8.',
-    '.hHHHcfffff7fff8.',
-    '..hHHcfffff7ffc8.',
-    '..hHJJfffff88fJ8.',
-    '...jJJJfJJJJJJj..',
-    '...jJJJJJ44JJj...',
-    '....jJJJJJJJj....',
-    '.....jJJJJJj.....',
-    '.......jjj.......',
+    '.hHHHf7ffff7fff8.',
+    '..hHH7fffff7ffc8.',
+    '..hHJJfffff78fJ8.',
+    '...jJJJfJJJJJJJj.',
+    '...jJJJJJJ44JJj..',
+    '....jJJJJJJJJJj..',
+    '.....jJJJJJJJj...',
+    '.......jjjjj.....',
 ]
 
-# The wild man on the Acorn Ace; his first row lies under the oak wreath.
+# The wild man on the Acorn Ace: compact 11x11 head proportioned to his
+# 0.72-scale body, anchored at (8, 7) like the court heads.
 FACE_OLD = [
-    '.......hh......',
-    '.....hHHHh.....',
-    '...hHHHHHHHh...',
-    '..hHHHHHHHHHh..',
-    '..hHHHf7fff78..',
-    '.hHHHfwwfwwf8..',
-    '.hHHHff0ff0f8..',
-    '.hHHHcfff7ff8..',
-    '.hHHJJfff88f8..',
-    '.hHJJJJJJJJJj..',
-    '.hHJJJJJ44JJj..',
-    '..hJJJJJJJJJj..',
-    '..hjJJJJJJJj...',
-    '...jjJJJJJj....',
-    '.....jJJJj.....',
-    '.......jj......',
+    '.................',
+    '.................',
+    '.....hhhhhhh.....',
+    '....hHHHHHHHh....',
+    '...hHHfffffHh....',
+    '...hHfwwfwwf8....',
+    '...hHff0ff0f8....',
+    '...hHfffffff8....',
+    '...hHJJff78Jj....',
+    '....jJJJJ44Jj....',
+    '....jJJJJJJJj....',
+    '.....jJJJJJj.....',
+    '......jjjjj......',
 ]
 
 FACE_MOUSTACHE = [
@@ -99,9 +97,9 @@ FACE_MOUSTACHE = [
     '..hHHHefffffff8..',
     '.hHHHefwwwffwwf8.',
     '.hHHHeff0ffff0f8.',
-    '.hHHHcfffff7fff8.',
-    '.hHHHcfffff7ffc8.',
-    '..hHHefffff88f8..',
+    '.hHHHf7ffff7fff8.',
+    '.hHHH7fffff7ffc8.',
+    '..hHHefffff78f8..',
     '..hHHe7fJJJJJJ8..',
     '..hHHHe7jJ44Jj8..',
     '...hHHh.7ffff8...',
@@ -116,9 +114,9 @@ FACE_GOATEE = [
     '..hHHHefffffff8..',
     '.hHHHefwwwffwwf8.',
     '.hHHHeff0ffff0f8.',
-    '.hHHHcfffff7fff8.',
-    '.hHHHcfffff7ffc8.',
-    '..hHHefffff88f8..',
+    '.hHHHf7ffff7fff8.',
+    '.hHHH7fffff7ffc8.',
+    '..hHHefffff78f8..',
     '..hHHe7fJJJJJJ8..',
     '..hHHHe7jj44jj8..',
     '...hHHh.7jJJj8...',
@@ -144,21 +142,21 @@ FACE_KING = KING_CROWN_OF_HEAD + [
     '.hHfwwwffwwwHh.',
     '.hHff0ffff0fHh.',
     '.hHcffff7ffcHh.',
-    '.hHfffff88ffHh.',
+    '.hHfffff78ffHh.',
     '.hHJfJJJJJJJHh.',
     '.hHJJJJ444JJHh.',
-    '.hHhJJJJJJJjHh.',
-    '..hHhJJJJJjHh..',
-    '...hh.jJJj.hh..',
+    '.hHJJJJJJJJJHh.',
+    '..hHJJJJJJJHh..',
+    '...hhjjJJjjhh..',
 ]
 
-# The two older kings share a lined brow; one has pouches under his eyes.
+# Older kings: clean brow and cheeks, distinguished by fuller sculpted beards.
 FACE_KING_OLD = KING_CROWN_OF_HEAD + [
-    '.hHHf77fff7fHh.',
+    '.hHHffffffffHh.',
     '.hHfwwwffwwwHh.',
     '.hHff0ffff0fHh.',
-    '.hHc7fff7f7cHh.',
-    '.hHJffff88fJHh.',
+    '.hHcffff7ffcHh.',
+    '.hHJffff78fJHh.',
     '.hJJjjjjfjjjJh.',
     '.hJjJJ444JJjJh.',
     '.hJjJJJJJJJjJh.',
@@ -169,20 +167,19 @@ FACE_KING_OLD = KING_CROWN_OF_HEAD + [
 ]
 
 FACE_KING_FORKED = KING_CROWN_OF_HEAD + [
-    '.hHHf77fff7fHh.',
+    '.hHHffffffffHh.',
     '.hHfwwwffwwwHh.',
     '.hHff0ffff0fHh.',
     '.hHcffff7ffcHh.',
-    '.hHJffff88fJHh.',
+    '.hHJffff78fJHh.',
     '.hJJjjjjfjjjJh.',
     '.hJjJJ444JJjJh.',
     '.hJjJJJJJJJjJh.',
     '..jJJJJjJJJjj..',
     '..jJJjJJJjJjj..',
-    '...jJJJ..JJj...',
-    '...jJJj..jJj...',
-    '....jJj..jj....',
-    '.....j....j....',
+    '...jJJj.jJJj...',
+    '...jJj...jJj...',
+    '....jj...jj....',
 ]
 
 FACES = {
@@ -237,13 +234,13 @@ HATS = {
             '...ccbBBBBBBBBb..',
         ],
     ),
-    'wreath': (  # oak leaves with acorns, for the wild man
-        -2,
+    'wreath': (  # oak leaves with acorns, sitting high on the wild man's brow
+        0,
         [
-            '..cC.T.cC.T....',
-            '.cCCcCcCCcCc...',
-            'cCCcCCcCCcCCc..',
-            '.cc.cc.cc.cc...',
+            '....cC.T.Cc......',
+            '...cCCcCcCCc.....',
+            '..cCCcCCcCCc.....',
+            '...cc.cc.cc......',
         ],
     ),
     'crown': (
@@ -346,7 +343,8 @@ def draw_head(rig, hx, hy, face='young', hair=BROWN, beard=None, hat=None, small
         'h': shade,
         # Dark hair lies straight against the skin; fair hair needs its shade there to show at all.
         'e': hair if shade == DARK_GRAY else shade,
-        'L': YELLOW,
+        # A soft white sheen on silver hair; canary yellow on brown hair reads as a patch.
+        'L': WHITE if hair == LIGHT_GRAY else hair,
         'w': DARK_GRAY if hair in (LIGHT_GRAY, WHITE) else BROWN,
         'J': beard,
         'j': darker(beard),
@@ -509,13 +507,24 @@ def sword(rig, hilt, tip, blade=LIGHT_CYAN, guard=YELLOW):
     ln = max((dx * dx + dy * dy) ** 0.5, 1)
     ux, uy = dx / ln, dy / ln
     gx, gy = hx + ux * 2.5, hy + uy * 2.5
-    rig.part().capsule(gx, gy, tx, ty, 1.8, 1.0).paint(blade, None, outline=darker(darker(blade)))
-    rig.line(gx + ux, gy + uy, tx - ux * 2, ty - uy * 2, WHITE)
-    rig.part().capsule(hx - ux * 2, hy - uy * 2, gx, gy, 0.8).fill(BROWN)
-    # The crossguard and pommel are too thin for an outline: painted, they'd come out all brown.
-    rig.part().capsule(gx - uy * 3.5, gy + ux * 3.5, gx + uy * 3.5, gy - ux * 3.5, 0.9).fill(guard)
-    rig.part().ellipse(hx - ux * 3, hy - uy * 3, 1.3, 1.3).fill(guard)
-    rig.put(hx - ux * 3, hy - uy * 3, darker(guard))
+    # Keep the dark-blue border unbroken: taper cleanly to the tip and restrict
+    # any steel glint strictly to interior pixels that still leave cyan beside them.
+    steel = rig.part().capsule(gx, gy, tx, ty, 1.9, 1.15)
+    steel.paint(blade, None, outline=darker(darker(blade)))
+    inside = steel.interior()
+    for x, y in bresenham(*rig.tx(gx + ux, gy + uy), *rig.tx(tx - ux * 2, ty - uy * 2)):
+        if (x, y) in inside and ((x + 1, y) in inside or (x, y + 1) in inside):
+            rig.plot(x, y, WHITE)
+    # Grip, crossguard and pommel: outline the thin gold parts on their outer
+    # halo in brown so they stay golden yet read crisply against the white card.
+    rig.part().capsule(hx - ux * 2, hy - uy * 2, gx, gy, 0.9).fill(BROWN)
+    gilt = rig.part()
+    gilt.capsule(gx - uy * 3.5, gy + ux * 3.5, gx + uy * 3.5, gy - ux * 3.5, 0.8)
+    gilt.ellipse(hx - ux * 3, hy - uy * 3, 1.1, 1.1)
+    edge = darker(guard)
+    for x, y in gilt.halo():
+        rig.plot(x, y, edge)
+    gilt.fill(guard)
 
 
 def pole(rig, a, b, col=BROWN, outline=None):
