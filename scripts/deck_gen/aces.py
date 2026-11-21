@@ -18,58 +18,121 @@ from scripts.deck_gen.palette import (
     YELLOW,
 )
 from scripts.deck_gen import animals, people
-from scripts.deck_gen.palette import checker, fill_terrain
+from scripts.deck_gen.palette import fill_terrain
 from scripts.deck_gen.rig import Rig, darker
-from scripts.deck_gen.symbols import draw_shrub, draw_suit, draw_suit_leaning
+from scripts.deck_gen.symbols import draw_ace_corner_pips, draw_shrub
 
 
-# Small round hawk-bell (7x8) charged on the Bell Ace shield: a loop on top,
-# a red band round the middle and the slot underneath, like the suit sign.
-MINI_BELL = [
-    '...8...',
-    '..888..',
-    '.8efe8.',
-    '8eeeee8',
-    '8444448',
-    '8e888e8',
-    '.8eee8.',
-    '..888..',
+# Fly agarics for the Acorn Ace's left bank: red caps, white spots, white stems.
+AGARIC = [
+    '....4c4c4...',
+    '...4cf4fc4..',
+    '..4cff4ffc4.',
+    '.4c4ff4ff4c4',
+    '..4ccccccc4.',
+    '...44cccc44.',
+    '....8ff8....',
+    '....8ff8....',
+    '...8ffff8...',
+]
+
+AGARIC_SMALL = [
+    '..4c4c4..',
+    '.4cf4fc4.',
+    '4cff4ffc4',
+    '.4ccccc4.',
+    '..8ff8...',
+    '..8ff8...',
+    '..8fff8..',
+]
+
+# Oak-fern shoot and a fallen acorn for the right bank.
+# Frond with a dark edge, so it still shows against the green bank.
+FERN = [
+    '..8a8..',
+    '.8a2a8.',
+    '8a2a2a8',
+    '.82a28.',
+    '..828..',
+    '...6...',
+    '...6...',
+]
+
+ACORN_FALLEN = [
+    '86eee',
+    '82ccc',
+    '.844.',
+]
+
+# Crowned sacred heart for the Heart Ace (17x16): a golden coronet over the
+# cleft, shaded with horizontal woodcut bars down the left lobe to match the
+# Prague heart pips while sitting cleanly inside the sky oval.
+CROWNED_HEART = [
+    '...8e8.8e8.8e8...',
+    '...8ee8eee8ee8...',
+    '...8ee4eee4ee8...',
+    '....884484488....',
+    '.444ccc4.4ccc444.',
+    '44444cc444ccccc44',
+    '4ccccccccccccccc4',
+    '4444444ccccccccc4',
+    '4ccccccccccccccc4',
+    '.444444cccccccc4.',
+    '..4ccccccccccc4..',
+    '...44444ccccc4...',
+    '....4ccccccc4....',
+    '.....444ccc4.....',
+    '......4ccc4......',
+    '.......444.......',
 ]
 
 
-def _fill_ace_ground(c, top_y=52, water=True):
-    """Fills the lower background with rolling green hills and optional river bank.
+# Small half-red hawk-bell (7x8) charged on the Bell Ace shield: crimson upper
+# dome and ribbed golden lower half, matching the Kule suit pips.
+MINI_BELL = [
+    '...8...',
+    '.44c44.',
+    '4cc4cc4',
+    '4444444',
+    '6ee8ee6',
+    '6e888e6',
+    '.6eee6.',
+    '..686..',
+]
 
-    The hills are distant, so they're paler than the foreground turf: light
-    green with sparse darker dots rather than the turf's even chequer.
+
+def _fill_ace_ground(c, top_y):
+    """Fills the lower background with rolling hills, their skyline two rows below `top_y` at its highest.
+
+    The hills are distant, so they're paler than the foreground turf: flat
+    light green, as the far hill of the Leaves' meadow.
     """
-
-    def distant(x, y, crest):
-        return GREEN if x % 2 == 0 and y % 2 == 0 else LIGHT_GREEN
-
-    fill_terrain(c, top_y, lambda x: top_y + 2 + (x - 30) ** 2 // 120, distant)
-    if water:
-        for y in range(90, 98):
-            for x in range(2, 59):
-                if abs(x - 30) <= 12 + (y - 90) * 2:
-                    c.put(x, y, checker(x, y, CYAN, LIGHT_CYAN))
+    fill_terrain(c, lambda x: top_y + 2 + (x - 30) ** 2 // 120, lambda x, y, crest: LIGHT_GREEN)
 
 
-def _overlap_foreground_turf(c, base_y=79, water=True):
+def _water(x, y):
+    """Still water: light cyan with short ripples, staggered from row to row."""
+    return CYAN if y % 2 == 0 and (x + y * 3) % 8 < 3 else LIGHT_CYAN
+
+
+def _overlap_foreground_turf(c, base_y, water=True):
     """Draws the foreground hillock over the bottom of a crest, with a row of flowering shrubs.
 
-    `water` matches the ground's: an ace without a river gets no water here either.
+    With `water` a pond lies at its foot.
     """
 
     def colour(x, y, crest):
         dx = abs(x - 30)
-        if y <= crest + 1 and dx < 18:
-            return GREEN
-        if water and y >= 91 and dx <= 12 + (y - 91) * 2:
-            return checker(x, y, CYAN, LIGHT_CYAN)
-        return checker(x, y, GREEN, LIGHT_GREEN)
+        if y == crest + 1:
+            return LIGHT_GREEN
+        if water and y >= 91:
+            edge = 12 + (y - 91) * 2
+            if dx <= edge:
+                # A dark waterline where the pond meets the bank.
+                return CYAN if dx >= edge - 1 or y == 91 else _water(x, y)
+        return GREEN
 
-    fill_terrain(c, base_y - 3, lambda x: int(round(base_y + (x - 30) ** 2 / 140.0 + math.sin(x * 0.45) * 1.2)), colour)
+    fill_terrain(c, lambda x: int(round(base_y + (x - 30) ** 2 / 140.0 + math.sin(x * 0.45) * 1.2)), colour)
 
     for cx, cy in [(15, base_y), (23, base_y - 1), (30, base_y - 2), (37, base_y - 1), (45, base_y)]:
         draw_shrub(c, cx, cy + 1, 4, 2.5, [(0, -2, YELLOW if cx % 2 == 0 else LIGHT_RED)])
@@ -77,18 +140,24 @@ def _overlap_foreground_turf(c, base_y=79, water=True):
 
 def draw_ace_acorn(c):
     """Draws the Acorn Ace with arched OPENFLEK ribbon, top acorns & woodland crest."""
-    _fill_ace_ground(c, top_y=54, water=True)
+    _fill_ace_ground(c, top_y=54)
 
-    # Top left & right acorns with oak-leaf garlands, leaning outwards, their stems under the ribbon
-    draw_suit_leaning(c, 0, 15, 22, -30)
-    draw_suit_leaning(c, 0, 45, 22, 30)
+    # Monumental top-left & top-right acorns, stems tucked under the ribbon
+    draw_ace_corner_pips(c, 0)
 
-    # Top central floral jewel & oak sprigs (x=23..37, y=4..19)
-    c.fill_ellipse(30, 9, 4, 4, LIGHT_RED, RED, outline=DARK_GRAY)
-    c.fill_ellipse(30, 9, 2, 2, YELLOW, BROWN)
-    c.line(23, 7, 27, 9, GREEN)
-    c.line(37, 7, 33, 9, GREEN)
-    c.line(30, 13, 30, 19, DARK_GRAY)
+    # Top central floral rosette & splayed oak leaves resting on the arch apex
+    oak_leaf = [
+        '.88...',
+        '8a28..',
+        '82a28.',
+        '.82288',
+        '..88..',
+    ]
+    c.blit_sprite(oak_leaf, 21, 11, flip_x=False)
+    c.blit_sprite(oak_leaf, 34, 11, flip_x=True)
+    c.fill_ellipse(30, 12, 3.6, 3.6, LIGHT_RED, RED, outline=DARK_GRAY)
+    c.fill_ellipse(30, 12, 1.7, 1.7, YELLOW, BROWN)
+    c.line(30, 16, 30, 19, DARK_GRAY)
 
     # Arched golden ribbon (x=3..57, y=19..37) with OPENFLEK lettering. It is
     # eight rows deep so a letter spanning a step of the arch still clears
@@ -115,23 +184,47 @@ def draw_ace_acorn(c):
         'L': ['8..', '8..', '8..', '8..', '888'],
         'K': ['8.8', '88.', '8..', '88.', '8.8'],
     }
-    # Each letter sits a row under the lowest point of the ribbon's top edge
-    # above it, so it never touches either outline.
-    for idx, ch in enumerate('OPENFLEK'):
-        lx0 = 8 + idx * 6
-        ly0 = max(arch(lx0 + gx) for gx in range(len(glyphs[ch][0]))) + 1
+    # Proportionally spaced and centred on x=30 so every gap is even and the
+    # outer letters stay on the flatter middle of the arch.
+    title = 'OPENFLEK'
+    gap = 2
+    total_w = sum(len(glyphs[ch][0]) for ch in title) + gap * (len(title) - 1)
+    lx0 = 30 - total_w // 2
+    for ch in title:
+        gw = len(glyphs[ch][0])
+        ly0 = max(arch(lx0 + gx) for gx in range(gw)) + 1
         for gy, row in enumerate(glyphs[ch]):
             for gx, p in enumerate(row):
                 if p == '8':
                     c.put(lx0 + gx, ly0 + gy, DARK_GRAY)
+        lx0 += gw + gap
 
     # An oak behind him: trunk and a round crown of leaves dotted with acorns.
     # The trunk stops behind his girdle: showing between his legs, it read
     # as a third leg.
     c.fill_rect(27, 60, 33, 66, BROWN, DARK_GRAY, mode='vstripe')
-    c.fill_ellipse(30, 55, 25, 19, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='sparse')
-    acorn = ['.6.', '666', 'eee', 'eee', '.e.']
-    for ax, ay in ((11, 48), (19, 40), (41, 40), (49, 48), (8, 60), (52, 60), (15, 67), (45, 67)):
+    # The crown is a flat green mass with a lobed edge of leaves, every
+    # other one lit, and a looser ring of lit leaves inside it: foliage as on
+    # the Leaf and Heart Aces' wreaths, where a dotted fill read as a net.
+    r = Rig(c)
+    edge_leaves = [
+        (30 + 21.5 * math.cos(math.radians(k * 12)), 55 + 15.5 * math.sin(math.radians(k * 12)), k * 12 + 90 + (24 if k % 2 else -24))
+        for k in range(30)
+    ]
+    crown = r.part().ellipse(30, 55, 21, 15)
+    for lx, ly, ang in edge_leaves:
+        crown.ellipse(lx, ly, 4.2, 2.4, angle=ang)
+    crown.paint(GREEN, shade=None, outline=DARK_GRAY)
+    rim = crown.edge()
+    inner_leaves = [
+        (30 + 13 * math.cos(math.radians(k * 30 + 15)), 55 + 9 * math.sin(math.radians(k * 30 + 15)), k * 30 + (130 if k % 2 else 80))
+        for k in range(12)
+    ]
+    for lx, ly, ang in edge_leaves[::2] + inner_leaves:
+        for x, y in r.part().ellipse(lx, ly, 3.0, 1.3, angle=ang).mask - rim:
+            c.put(x, y, LIGHT_GREEN)
+    acorn = ['..8..', '.868.', '.6ee.', '.6ee.', '..6..']
+    for ax, ay in ((11, 48), (19, 41), (41, 41), (49, 48), (9, 60), (51, 60), (15, 67), (45, 67)):
         c.blit_centered(acorn, ax, ay)
 
     # The wild man of Czech heraldry standing before the oak.
@@ -139,33 +232,55 @@ def draw_ace_acorn(c):
 
     _overlap_foreground_turf(c, base_y=84)
 
-    # Twin O / F golden medallions nestled in the foreground turf (y=75..87)
-    c.fill_ellipse(11, 81, 6, 6, YELLOW, BROWN, outline=DARK_GRAY)
-    c.fill_ellipse(49, 81, 6, 6, YELLOW, BROWN, outline=DARK_GRAY)
-    # The O without its corners, so it reads as a ring and not a box.
-    for a, b in (((10, 79), (12, 79)), ((10, 83), (12, 83)), ((9, 80), (9, 82)), ((13, 80), (13, 82))):
-        c.line(*a, *b, RED)
-    c.line(47, 79, 47, 83, RED)
-    c.line(47, 79, 51, 79, RED)
-    c.line(47, 81, 50, 81, RED)
+    # Woodland floor on the banks, in place of the old O and F medallions
+    # (those repeated the ribbon's title as two yellow wheels in the bushes).
+    # Fly agarics on the left, fallen acorns and fern shoots on the right.
+    c.blit_sprite(AGARIC, 3, 77)
+    c.blit_sprite(AGARIC_SMALL, 12, 83)
+    c.blit_sprite(FERN, 46, 79)
+    c.blit_sprite(FERN, 54, 81)
+    c.blit_sprite(ACORN_FALLEN, 47, 84)
+    c.blit_sprite(ACORN_FALLEN, 53, 86)
+    c.blit_sprite(ACORN_FALLEN, 48, 88)
 
 
 def draw_ace_leaf(c):
     """Draws the Leaf Ace: Crowned Bohemian Double-Tailed Lion inside a Linden Wreath."""
-    _fill_ace_ground(c, top_y=52, water=True)
+    _fill_ace_ground(c, top_y=52)
 
-    # Top-left and top-right leaves, leaning outwards from behind the shield
-    draw_suit_leaning(c, 1, 15, 19, -32, size=0.95, width=1.2)
-    draw_suit_leaning(c, 1, 45, 19, 32, size=0.95, width=1.2)
+    # Monumental top-left and top-right linden leaves leaning behind the shield
+    draw_ace_corner_pips(c, 1)
 
-    # Lush linden & oak wreath wrapping around the shield (center=(30, 50), rx=27, ry=29)
-    c.fill_ellipse(30, 50, 27, 29, GREEN, LIGHT_GREEN, outline=DARK_GRAY, mode='checker')
-    for angle_deg in range(0, 360, 22):
-        rad = math.radians(angle_deg)
-        bx = int(round(30 + 24.5 * math.cos(rad)))
-        by = int(round(50 + 26.5 * math.sin(rad)))
-        c.put(bx, by, YELLOW)
-        c.put(bx + 1, by, LIGHT_RED)
+    # Lush sculpted linden wreath wrapping around the shield, built from
+    # overlapping angled leaves (matching the Heart Ace wreath) instead of a
+    # 1x1 chequer ellipse, studded with golden linden blossoms.
+    r = Rig(c)
+    leaves = [
+        (
+            30 + 25.8 * math.cos(math.radians(k * 10)),
+            50 + 27.8 * math.sin(math.radians(k * 10)),
+            k * 10 + 90 + (24 if k % 2 else -24),
+        )
+        for k in range(36)
+    ]
+    wreath = r.part().ellipse(30, 50, 25.0, 27.0)
+    for lx, ly, ang in leaves:
+        wreath.ellipse(lx, ly, 4.4, 2.4, angle=ang)
+    wreath.paint(GREEN, shade=None, outline=DARK_GRAY)
+    rim = wreath.edge()
+    for k, (lx, ly, ang) in enumerate(leaves):
+        if k % 2 == 0:
+            for x, y in r.part().ellipse(lx, ly, 3.0, 1.3, angle=ang).mask - rim:
+                c.put(x, y, LIGHT_GREEN)
+    # Golden linden blossoms set on the visible lower-left and lower-right
+    # curves of the wreath, clear of the card edge and the shield's sides.
+    for deg in (42, 62, 118, 138, 165, 195, 345, 15):
+        a = math.radians(deg)
+        bx = round(30 + 24.5 * math.cos(a))
+        by = round(50 + 26.5 * math.sin(a))
+        for px, py, col in ((bx, by, YELLOW), (bx + 1, by, YELLOW), (bx, by + 1, LIGHT_RED)):
+            if (px, py) not in rim and 3 < px < 57:
+                c.put(px, py, col)
 
     # Grand Gothic/Baroque Heraldic Shield (x=6..54, y=21..85)
     shield_outer = [(6, 21), (54, 21), (53, 58), (45, 74), (30, 85), (15, 74), (7, 58)]
@@ -186,14 +301,14 @@ def draw_ace_leaf(c):
     # Plain gold shaded to the lower right, not hatched, with its points kept
     # clear of the corner leaves.
     crown = Rig(c)
-    crown.part().poly([(19, 21), (18, 12), (24, 16), (30, 9), (36, 16), (42, 12), (41, 21)]).paint(YELLOW, outline=DARK_GRAY)
-    crown.part().rect(18, 18, 42, 21).paint(YELLOW, shade=None, outline=DARK_GRAY)
+    crown.part().poly([(20, 21), (20, 12), (25, 16), (30, 9), (35, 16), (40, 12), (40, 21)]).paint(YELLOW, outline=DARK_GRAY)
+    crown.part().rect(20, 18, 40, 21).paint(YELLOW, shade=None, outline=DARK_GRAY)
     # Cross on top, edged so the thin gold reads against the white card.
     cross = Rig(c, thin=True)
     cross.line(30, 4, 30, 8, YELLOW)
     cross.line(28, 6, 32, 6, YELLOW)
     cross.silhouette(where=lambda x, y: y < 9)
-    for jx, jcol in [(22, LIGHT_BLUE), (26, RED), (30, LIGHT_GREEN), (34, RED), (38, LIGHT_BLUE)]:
+    for jx, jcol in [(23, LIGHT_BLUE), (26, RED), (30, LIGHT_GREEN), (34, RED), (37, LIGHT_BLUE)]:
         c.put(jx, 19, jcol)
         c.put(jx, 20, darker(jcol))
 
@@ -207,11 +322,10 @@ def draw_ace_leaf(c):
 
 def draw_ace_bell(c):
     """Draws the Bell Ace: Tournament Helm, Acanthus Mantling & Quartered Coat of Arms."""
-    _fill_ace_ground(c, top_y=52, water=False)
+    _fill_ace_ground(c, top_y=52)
 
-    # Top-left and top-right bells
-    draw_suit(c, 2, 11, 12)
-    draw_suit(c, 2, 49, 12)
+    # Monumental top-left and top-right half-red bells
+    draw_ace_corner_pips(c, 2)
 
     # Acanthus mantling flowing from the helm down both sides of the shield:
     # cyan cloth with a gold lining, its edge cut into curling leaves.
@@ -241,10 +355,10 @@ def draw_ace_bell(c):
         c.blit_centered(MINI_BELL, qx, qy)
 
     # Barred tournament helm above the shield, crowned and plumed.
-    # The middle plume's tip stays a row inside the frame rather than being cut flat by it.
+    # Plumes stay clear of the oversized corner bells on either side.
     for tip, mid, col, end in (
-        ((19, 4), (24, 6), LIGHT_RED, 1.8),
-        ((41, 4), (36, 6), LIGHT_RED, 1.8),
+        ((23, 4), (26, 6), LIGHT_RED, 1.6),
+        ((37, 4), (34, 6), LIGHT_RED, 1.6),
         ((30, 4), (30, 7), LIGHT_CYAN, 1.5),
     ):
         plain.part().chain([(30, 12), mid, tip], [1.6, 2.8, end]).paint(col, outline=darker(col))
@@ -260,36 +374,51 @@ def draw_ace_bell(c):
     # A plain gilt neck band: the shade dither would spot a band one pixel deep.
     plain.part().rect(22, 30, 38, 32).paint(YELLOW, None, outline=BROWN)
     # The crown sits down on the dome, with no white seam under its band.
-    crown = plain.part().rect(24, 13, 36, 16)
-    for px in (24, 30, 36):
+    crown = plain.part().rect(25, 13, 35, 16)
+    for px in (25, 30, 35):
         crown.poly([(px - 2, 14), (px, 9), (px + 2, 14)])
     crown.paint(YELLOW)
     for px, col in ((27, RED), (30, LIGHT_CYAN), (33, RED)):
         c.put(px, 15, col)
 
     _overlap_foreground_turf(c, base_y=82, water=False)
+    # A bright foreground meadow swell and scattered wildflowers so the lower
+    # hillock feels finished without copying the other Aces' pond.
+    for x in range(2, 59):
+        swell = 91 + (x - 30) ** 2 // 110
+        if swell <= 97:
+            c.put(x, swell, LIGHT_GREEN)
+    for fx, fy, col in (
+        (10, 90, YELLOW),
+        (18, 94, WHITE),
+        (24, 92, LIGHT_RED),
+        (30, 95, YELLOW),
+        (37, 92, LIGHT_RED),
+        (43, 94, WHITE),
+        (50, 90, YELLOW),
+    ):
+        c.put(fx, fy, col)
 
 
 def draw_ace_heart(c):
     """Draws the Heart Ace: Golden Arch, Rose Wreath & Crowned Chalice Monument."""
-    _fill_ace_ground(c, top_y=54, water=True)
+    _fill_ace_ground(c, top_y=54)
 
-    # Top-left and top-right hearts
-    draw_suit(c, 3, 12, 12)
-    draw_suit(c, 3, 48, 12)
+    # Monumental top-left and top-right woodcut-shaded hearts
+    draw_ace_corner_pips(c, 3)
 
     r = Rig(c)
-    # Golden arch over the wreath, studded with garnets.
+    # Golden arch over the wreath, studded with garnets, clear of the big corner hearts.
     arch = r.part()
     for x in range(4, 57):
         dx = abs(x - 30)
-        arch.rect(x, 22 + (dx * dx) // 65, x, 27 + (dx * dx) // 65)
+        arch.rect(x, 23 + (dx * dx) // 65, x, 28 + (dx * dx) // 65)
     # A solid brown line along the underside shades it without a dotted dither.
     arch_rim = arch.edge()
-    arch.paint(YELLOW, shade=None, outline=DARK_GRAY, pattern=lambda x, y: BROWN if (x, y + 1) in arch_rim and (x, y + 1) not in arch.mask - arch_rim and y > 24 else None)
-    for x in range(8, 54, 6):
+    arch.paint(YELLOW, shade=None, outline=DARK_GRAY, pattern=lambda x, y: BROWN if (x, y + 1) in arch_rim and y > 25 else None)
+    for x in range(6, 55, 6):
         dx = abs(x - 30)
-        c.put(x, 24 + (dx * dx) // 65, RED)
+        c.put(x, 25 + (dx * dx) // 65, RED)
 
     # Wreath of leaves framing an oval of sky, roses set at intervals. The
     # sky goes first so the wreath overlaps its rim and no white gap shows.
@@ -323,7 +452,6 @@ def draw_ace_heart(c):
             x, y = round(30 + t * math.cos(a)), round(46 + t * math.sin(a))
             if (x, y) in inside:
                 c.put(x, y, YELLOW)
-    draw_suit(c, 3, 30, 46)
 
     # Golden chalice: wide cup, knopped stem and a broad foot.
     cup = r.part().poly([(21, 55), (39, 55), (36, 63), (31, 66), (29, 66), (24, 63)]).ellipse(30, 55, 9, 1.6)
@@ -331,6 +459,8 @@ def draw_ace_heart(c):
     r.part().ellipse(30, 55, 8, 1.2).fill(BROWN)
     r.part().rect(29, 66, 31, 71).ellipse(30, 68.5, 2.4, 1.4).paint(YELLOW, outline=BROWN)
     r.part().poly([(24, 75), (36, 75), (33, 71), (27, 71)]).ellipse(30, 75, 6.5, 1.5).paint(YELLOW, outline=BROWN)
+    # After the cup, so the heart's point rests on the rim instead of being painted over.
+    c.blit_sprite(CROWNED_HEART, 22, 39)
 
     _overlap_foreground_turf(c, base_y=80)
 

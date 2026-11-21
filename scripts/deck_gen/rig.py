@@ -245,6 +245,11 @@ class Part:
         """Mask pixels inside the outline: where details can go without breaking the rim."""
         return self.mask - self.edge()
 
+    def halo(self):
+        """Pixels just outside the mask (4-neighbours), for outlining thin shapes without eating their fill."""
+        m = self.mask
+        return {(x + dx, y + dy) for x, y in m for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)) if (x + dx, y + dy) not in m}
+
     def paint(self, base, shade=AUTO, outline=AUTO, light=None, pattern=None):
         """Fills the mask with `base`, dithers `shade` along the lower right and draws `outline` on the rim.
 

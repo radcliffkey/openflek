@@ -12,126 +12,197 @@ from scripts.deck_gen.palette import (
     LIGHT_GREEN,
     LIGHT_RED,
     RED,
-    WHITE,
     YELLOW,
     bresenham,
 )
 from scripts.deck_gen.rig import Rig
 
-# Vertical Acorn (13x19): pointed nut at top, diamond-scaled cupule + oak leaflets below
+# Vertical Acorn (13x19): cylindrical tri-banded Bohemian nut (lit yellow left,
+# vermilion middle, deep crimson right), scalloped green cupule and oak leaflets.
 ACORN_V = [
-    '......6......',
-    '.....6e6.....',
-    '....6efe6....',
-    '...6eefee6...',
-    '...6eeeee6...',
-    '...6eceee6...',
-    '...4cc6ee4...',
-    '...44c6644...',
+    '.....644.....',
+    '....6ec44....',
+    '...6eecc44...',
+    '...6eecc44...',
+    '...6eecc44...',
+    '...6eecc44...',
+    '...6eecc44...',
+    '...6eecc44...',
+    '...44ccc44...',
     '..884444488..',
-    '.82a82a28a28.',
-    '82a28a2a82a28',
+    '.8a28a2a82a8.',
+    '8a2a82a28a2a8',
     '88282a2a28288',
     '.82a82828a28.',
     '..882868288..',
     '..2a86e68a2..',
     '.2a2.6e6.2a2.',
     '.....6e6.....',
-    '.....4c4.....',
-    '......4......',
+    '......6......',
 ]
 
-# Horizontal Acorn pointing LEFT (19x11): `ACORN_V` turned on its side so the
-# pips match, nut on the left, then the red cupule rim, the scaled cup with
-# its leaflets and the stem on the right. The highlight is moved to the top
-# of the nut, and the cup's outermost tips are trimmed to fit 11 rows.
+# Horizontal Acorn pointing LEFT (19x11): cylindrical tri-banded nut (yellow top,
+# vermilion middle, crimson bottom), green scalloped cupule, leaflets and stem.
 ACORN_H_LEFT = [
-    '.........8288..2...',
-    '........82a2282a...',
-    '...666448a28a8a2...',
-    '..6effe44882828....',
-    '.6efeccc42aa286664.',
-    '6eeeee664a2286eeec4',
-    '.6eeeee642aa286664.',
-    '..6eeee44882828....',
-    '...666448a28a8a2...',
-    '........82a2282a...',
-    '.........8288..2...',
+    '..........888..2...',
+    '.........8a2282a...',
+    '..666666682aa8a2...',
+    '.6eeeeeee48a228....',
+    '6eeeeeeee482a28666.',
+    '4cccccccc48a228eee4',
+    '4cccccccc482828444.',
+    '.44444444482828....',
+    '..444444488282a2...',
+    '.........828282a...',
+    '..........888..2...',
 ]
 
-# Vertical Leaf (15x17): serrated linden leaf with yellow-green midrib & dual-tone halves
+# Vertical linden leaf (15x17). Tip at the top, yellow midrib, light-green
+# left half and green right half. Side veins slant up from the midrib toward
+# the tip; the red stem curves away at the bottom.
 LEAF_V = [
     '.......8.......',
     '......8a8......',
-    '.....8a228.....',
-    '....8aa8228....',
-    '...8aa2e8228...',
-    '..8aaa8e28228..',
-    '.8aa2a8e228228.',
-    '8aaa8a8e2822228',
-    '8aa2a8ae2288228',
-    '8aaaa8e22228228',
-    '.8aa28e2822228.',
-    '..8aa8e228228..',
-    '...8888e8888...',
+    '.....8ae28.....',
+    '....8aae228....',
+    '...8a2ae2828...',
+    '..82aa2e82288..',
+    '.8aa2aae228228.',
+    '8a2aa2ae2822828',
+    '8aa2aa2e8228228',
+    '8aaa2aae2282228',
+    '.8aaa2ae282228.',
+    '..8aaa2e82228..',
+    '...888888888...',
     '.....44c44.....',
     '......4c4......',
     '.....4c4.......',
     '....44.........',
 ]
 
-# Horizontal Leaf pointing LEFT (19x13): tip on left, stem on right
+# Horizontal linden leaf pointing left (19x13). Sharp tip at column 0, full
+# cordate lobes around a deep notch, red/coral stem in columns 15..18. The lit
+# upper half is light green with green veins; the shaded lower half is green
+# with dark-grey veins. Both sets slant toward the tip. 13 rows match the
+# vertical spacing of the eights and tens.
 LEAF_H_LEFT = [
-    '.......882288......',
-    '.....88aa2a2288....',
-    '...88aa8aaa8a228...',
-    '..8aa2a8aa28aa228..',
-    '.8aaaa2a8aa28aa28..',
-    '8eeeeeeeeeeeee44c44',
-    '.822822822822822844',
-    '..82228222822228...',
-    '...882228222288....',
-    '.....88222288......',
-    '.......8888........',
+    '.........88888.....',
+    '.......88aaaaa88...',
+    '.....88aa2aaaaaa8..',
+    '...88aa2aaaa2aaaa8.',
+    '..8aaaaaaa2aaaa8a8.',
+    '.8aaaa2aaaa2aaa88..',
+    '8eeeeeeeeeeeee84c44',
+    '.8222282222822284..',
+    '..8222222822222828.',
+    '...882282222822228.',
+    '.....882282222228..',
+    '.......882222288...',
+    '.........88888.....',
 ]
 
-# Bell (15x15): golden hawk-bell with crimson-and-gold jewelled band and one
-# short sound slot with round ends low in the plain lower half. Any more
-# marks there, or a slot as wide as the band, read as a face under it.
+# Bell (15x13): Prague half-red hawk-bell (Kule). Ribbed crimson upper dome,
+# curved crimson equatorial girdle, and a golden lower hemisphere divided by
+# three converging ribs down to the bottom slot.
 BELL_SYM = [
-    '......6e6......',
-    '.....68.86.....',
-    '....6eeeee6....',
-    '..66eefeeee66..',
-    '.6eeffeeeeeee6.',
-    '.444c4c4c4c444.',
-    '4ce4ce4ce4ce4c4',
-    '444c4c4c4c4c444',
-    '6eeeeeeeeeeeee6',
-    '6eeeeeeeeeeee66',
-    '.6ee88eee88ee6.',
-    '.6ee8888888e66.',
-    '..6e88eee8866..',
-    '....66eee66....',
-    '......666......',
+    '.....48884.....',
+    '...44cc4cc44...',
+    '..4c4cc4cc4c4..',
+    '.4cc4ccccc4cc4.',
+    '.4ccc44444ccc4.',
+    '444444444444444',
+    '444eeeeeeeee444',
+    '6eee8ee8ee8eee6',
+    '.6ee8ee8ee8ee6.',
+    '.6eee8e8e8eee6.',
+    '..6eee888eee6..',
+    '...66ee8ee66...',
+    '.....66866.....',
 ]
 
-# Heart (15x14): Bohemian heart with top golden pearl, specular highlight & ribbed left lobe
+# Heart (15x13): Bohemian heart with clean V-cleft and horizontal woodcut
+# hatching down the left lobe against a glowing vermilion right lobe.
 HEART_SYM = [
-    ' ..444.6.444.. ',
-    '.44ccc4e4ccc44.',
-    '4ccffcccccccccc',
-    '4cfeecccccccccc',
-    '4cc4c4ccccccccc',
-    '4c4cc4ccccccccc',
-    '.4cc4ccccccccc.',
-    '.44c4cccccccc4.',
-    '..4c4ccccccc4..',
-    '...4c4ccccc4...',
-    '....4c4ccc4....',
-    '.....4c4c4.....',
+    '..4444...4444..',
+    '.4cccc4.4cccc4.',
+    '44444cc4cccccc4',
+    '4ccccccccccccc4',
+    '444444cccccccc4',
+    '.4ccccccccccc4.',
+    '.44444ccccccc4.',
+    '..4ccccccccc4..',
+    '...4444cccc4...',
+    '....4ccccc4....',
+    '.....44cc4.....',
     '......4c4......',
     '.......4.......',
+]
+
+# Monumental corner emblems for the Aces (Esa), matching the oversized suit
+# signs of printed Prague decks and 1992 FLEK!.
+ACE_ACORN_LEFT = [
+    '..66444..........',
+    '.6eecc444........',
+    '6eeeeccc44.......',
+    '6eeeeccc444......',
+    '.6eeeccc444......',
+    '.6eeeeccc444.....',
+    '..6eeeccc444.....',
+    '..6eeeeccc4488...',
+    '...44eeccc48a28..',
+    '....444cc48a2a28.',
+    '...88844482a82a8.',
+    '..8a2a8882a28288.',
+    '..82a2a828a2828..',
+    '...88282a28288...',
+    '....82a8286882a..',
+    '.....88868ee62a2.',
+    '.....2a2.6ee6.2..',
+    '....2a2...6ee6...',
+    '...........6e6...',
+]
+
+ACE_BELL = [
+    '......4488844......',
+    '....44cc888cc44....',
+    '...44c4c888c4c44...',
+    '..4cc4c4c4c4c4cc4..',
+    '.4c4cc4c4c4c4cc4c4.',
+    '.44c4ccccccccc4c44.',
+    '4ccccc4444444ccccc4',
+    '4cc4444444444444cc4',
+    '444444eeeeeee444444',
+    '444eeeeee8eeeeee444',
+    '6eeeee8ee8ee8eeeee6',
+    '.6e8ee88e8e88ee8e6.',
+    '.6ee8ee8e8e8ee8ee6.',
+    '..6ee8eee8eee8ee6..',
+    '...6ee88e8e88ee6...',
+    '....66eee8eee66....',
+    '......6648466......',
+    '.......13b31.......',
+    '........131........',
+]
+
+ACE_HEART = [
+    '..444444.....444444..',
+    '.4cccccc4...4cccccc4.',
+    '4444444cc4.4cccccccc4',
+    '4ccccccccc4ccccccccc4',
+    '444444444ccccccccccc4',
+    '4ccccccccccccccccccc4',
+    '444444444ccccccccccc4',
+    '.4ccccccccccccccccc4.',
+    '.44444444cccccccccc4.',
+    '..4ccccccccccccccc4..',
+    '...444444cccccccc4...',
+    '....4ccccccccccc4....',
+    '.....44444ccccc4.....',
+    '......4ccccccc4......',
+    '.......4444cc4.......',
+    '........4ccc4........',
+    '.........4c4.........',
+    '..........4..........',
 ]
 
 # Roman numeral X (11x9) for the 10 cards: black, a thick stroke falling to the
@@ -173,15 +244,14 @@ def draw_suit(c, suit, cx, cy, orientation='v'):
         c.blit_centered(HEART_SYM, cx, cy)
 
 
-def draw_suit_leaning(c, suit, sx, sy, angle, size=1.0, width=1.0):
-    """Draws an Acorn or Leaf sign leaning `angle` degrees from upright, the end of its stem at (sx, sy).
+def draw_leaf_leaning(c, sx, sy, angle, size=1.0, width=1.0):
+    """Draws a Leaf sign leaning `angle` degrees from upright, the end of its stem at (sx, sy).
 
     `size` scales it about the end of the stem; `width` stretches it across as well.
 
-    The Aces' corner signs lean outwards like a spray, as on printed decks.
-    Pixel sprites lose their veins and outlines when rotated, so these are
-    built from shapes on a rig: the leaf from the outline of `LEAF_V`, the
-    acorn from the nut, cupule, oak-leaf collar and stem of `ACORN_V`.
+    The Leaf Ace's corner signs lean outwards like a spray, as on printed
+    decks. A pixel sprite loses its veins and outline when rotated, so the
+    leaf is built from shapes on a rig, after the outline of `LEAF_V`.
     """
     a = math.radians(angle)
     ux, uy = math.sin(a), -math.cos(a)
@@ -191,55 +261,49 @@ def draw_suit_leaning(c, suit, sx, sy, angle, size=1.0, width=1.0):
         u, v = u * size, v * size * width
         return sx + ux * u + nx * v, sy + uy * u + ny * v
 
-    def line(p, q, col, inside):
-        for x, y in bresenham(*at(*p), *at(*q)):
-            if (x, y) in inside:
-                c.put(x, y, col)
-
     r = Rig(c)
-    if suit == 1:
-        # A linden leaf: rounded lobes either side of a notch at the stem,
-        # broadest low down, tapering gradually to a long pointed tip. The
-        # upright sign's diamond would turn into a square when leant over.
-        half = ((3.6, 2.6), (3.8, 5), (5.2, 6.6), (7.4, 7), (10, 6.2), (13, 4.4), (16, 2.4), (18.5, 0.8))
-        blade = r.part().poly(
-            [at(5, 0)] + [at(u, v) for u, v in half] + [at(20, 0)] + [at(u, -v) for u, v in reversed(half)]
-        )
+    # A linden leaf: rounded lobes either side of a notch at the stem,
+    # broadest low down, tapering gradually to a long pointed tip. The
+    # upright sign's diamond would turn into a square when leant over.
+    half = ((3.6, 2.6), (3.8, 5), (5.2, 6.6), (7.4, 7), (10, 6.2), (13, 4.4), (16, 2.4), (18.5, 0.8))
+    blade = r.part().poly([at(5, 0)] + [at(u, v) for u, v in half] + [at(20, 0)] + [at(u, -v) for u, v in reversed(half)])
 
-        # As on printed decks, the half away from the middle of the card is
-        # in shadow and the half towards it lit.
-        def outer(x, y):
-            return ((x - sx) * nx + (y - sy) * ny) * angle > 0
+    # As on printed decks, the half away from the middle of the card is
+    # in shadow and the half towards it lit.
+    def outer(x, y):
+        return ((x - sx) * nx + (y - sy) * ny) * angle > 0
 
-        blade.paint(LIGHT_GREEN, None, outline=DARK_GRAY, pattern=lambda x, y: GREEN if outer(x, y) else None)
-        inner = blade.interior()
-        # Side veins slant up towards the tip: dark on the shaded half, mid green on the lit one.
-        for u0, reach in ((6, 5.5), (9.5, 5), (13, 3.5)):
-            for side in (1, -1):
-                for x, y in bresenham(*at(u0, 0), *at(u0 + reach, side * reach)):
-                    if (x, y) in inner:
-                        c.put(x, y, DARK_GRAY if outer(x, y) else GREEN)
-        line((5, 0), (18, 0), YELLOW, inner)
-        r.line(*at(0.5, 0), *at(5, 0), RED)
-        c.put(*at(2.5, 0.7), LIGHT_RED)
+    blade.paint(LIGHT_GREEN, None, outline=DARK_GRAY, pattern=lambda x, y: GREEN if outer(x, y) else None)
+    inner = blade.interior()
+
+    def vein(p, q, colour):
+        for x, y in bresenham(*at(*p), *at(*q)):
+            if (x, y) in inner:
+                c.put(x, y, colour(x, y))
+
+    # Side veins slant up towards the tip: dark on the shaded half, mid green on the lit one.
+    for u0, reach in ((6, 5.5), (9.5, 5), (13, 3.5)):
+        for side in (1, -1):
+            vein((u0, 0), (u0 + reach, side * reach), lambda x, y: DARK_GRAY if outer(x, y) else GREEN)
+    vein((5, 0), (18, 0), lambda x, y: YELLOW)
+    r.line(*at(0.5, 0), *at(5, 0), RED)
+    c.put(*at(2.5, 0.7), LIGHT_RED)
+
+
+def draw_ace_corner_pips(c, suit):
+    """Draws the oversized corner suit emblems on an Ace card."""
+    if suit == 0:
+        c.blit_sprite(ACE_ACORN_LEFT, 3, 4, flip_x=False)
+        c.blit_sprite(ACE_ACORN_LEFT, 41, 4, flip_x=True)
+    elif suit == 1:
+        draw_leaf_leaning(c, 14.5, 23, -35, size=1.14, width=1.2)
+        draw_leaf_leaning(c, 45.5, 23, 35, size=1.14, width=1.2)
+    elif suit == 2:
+        c.blit_centered(ACE_BELL, 11, 12)
+        c.blit_centered(ACE_BELL, 49, 12)
     else:
-        r.part().capsule(*at(1, 0), *at(7, 0), 1.2).paint(YELLOW, None, outline=BROWN)
-        c.put(*at(1, 0), RED)
-        for side in (-1, 1):
-            r.part().ellipse(*at(4.5, side * 2.6), 1.8, 1.0, angle=angle + 90 - side * 35).paint(GREEN, None, outline=DARK_GRAY)
-        # The oak-leaf collar under the cupule: four lobes, a dark vein down the inner two.
-        collar = r.part()
-        for v, du in ((-4.2, 0.6), (-1.5, -0.4), (1.5, -0.4), (4.2, 0.6)):
-            collar.ellipse(*at(8.5 + du, v), 2.0, 3.0, angle=angle + v * 6)
-        collar.paint(GREEN, None, outline=DARK_GRAY, pattern=lambda x, y: LIGHT_GREEN if (x + 2 * y) % 4 == 0 else None)
-        inner = collar.interior()
-        for v in (-1.5, 1.5):
-            line((7.5, v), (9.5, v), DARK_GRAY, inner)
-        r.part().ellipse(*at(11.3, 0), 3.8, 1.8, angle=angle + 90).paint(LIGHT_RED, RED, outline=RED)
-        nut = r.part().poly([at(*p) for p in ((11.5, 3.4), (14.5, 3.6), (17.5, 1.8), (19.5, 0), (17.5, -1.8), (14.5, -3.6), (11.5, -3.4))])
-        nut.paint(YELLOW, outline=BROWN)
-        c.put(*at(16, -1.2), WHITE)
-        c.put(*at(15, -1.6), WHITE)
+        c.blit_centered(ACE_HEART, 13, 12)
+        c.blit_centered(ACE_HEART, 47, 12)
 
 
 def draw_roman_x(c, cx=30, y0=3):
@@ -276,10 +340,16 @@ def draw_tree_trunk(c, top_y, bottom_y, branch_ys, suit):
         c.put(cx - 1, y, BROWN)
         c.put(cx, y, YELLOW if (y % 3) != 0 else BROWN)
         c.put(cx + 1, y, BROWN if (y % 2) == 0 else RED)
-    # Roots flaring at bottom
+    # Roots flaring into the foreground turf, dark-edged against the grass
+    c.line(cx - 2, bottom_y - 3, cx - 5, bottom_y, DARK_GRAY)
+    c.line(cx + 2, bottom_y - 3, cx + 5, bottom_y, DARK_GRAY)
     c.line(cx - 1, bottom_y - 3, cx - 4, bottom_y, BROWN)
     c.line(cx + 1, bottom_y - 3, cx + 4, bottom_y, BROWN)
+    c.line(cx - 2, bottom_y, cx + 2, bottom_y, BROWN)
     c.put(cx, bottom_y - 1, YELLOW)
+    for gx in (cx - 4, cx - 2, cx + 1, cx + 4):
+        c.put(gx, bottom_y, GREEN)
+        c.put(gx + 1, bottom_y, LIGHT_GREEN if suit == 1 else GREEN)
 
     # Curved twigs & small shoots to each branch pair
     for by in branch_ys:

@@ -69,12 +69,12 @@ def bresenham(x0, y0, x1, y1):
 
 
 def checker(x, y, c1, c2):
-    """A one-pixel chequer of two colours, as used for turf and water."""
+    """A one-pixel chequer of two colours, for the 'checker' fill mode."""
     return c1 if ((x + y) & 1) == 0 else c2
 
 
-def fill_terrain(c, top, hill_y, colour):
-    """Fills ground from row `top` to the bottom of the face.
+def fill_terrain(c, hill_y, colour):
+    """Fills ground down to the bottom of the face.
 
     `hill_y(x)` gives the crest of the ground in each column; the crest is
     drawn dark grey, the rows above it are left alone and the rows below it
@@ -82,7 +82,7 @@ def fill_terrain(c, top, hill_y, colour):
     """
     for x in range(2, FACE_W - 2):
         crest = hill_y(x)
-        for y in range(max(top, crest), FACE_H - 2):
+        for y in range(crest, FACE_H - 2):
             c.put(x, y, DARK_GRAY if y == crest else colour(x, y, crest))
 
 
@@ -102,11 +102,10 @@ class FaceCanvas:
             self.px[y][FACE_W - 2] = DARK_GRAY
 
     def in_interior(self, x, y):
-        if x < 2 or x > 58 or y < 2 or y > 97:
-            return False
-        if (x in (2, 58)) and (y in (2, 97)):
-            return False
-        return True
+        # The whole rectangle sits inside the inner octagon. Face (2, 97) and
+        # (58, 97) are sprite (4, 99) and (60, 99); leaving them white punched
+        # bright pinholes in the turf at the bottom corners.
+        return 2 <= x <= 58 and 2 <= y <= 97
 
     def put(self, x, y, col):
         x = int(round(x))

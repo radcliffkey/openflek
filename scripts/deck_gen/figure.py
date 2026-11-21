@@ -5,7 +5,8 @@ mirrors them. A figure is about seven heads tall: the face is 11 pixels from
 brow to chin, arms reach mid-thigh, and every limb bends at a real joint.
 
 Heads and hats are hand-pixelled templates with placeholder letters:
-H/h hair and its shade, J/j beard, C/c hat cloth, T/t trim (feather or
+H/h hair and its shade, e the hair's edge against the skin, L a gloss on
+the crown, w eyebrows, J/j beard, C/c hat cloth, T/t trim (feather or
 jewel), B/b hat band.
 """
 
@@ -18,91 +19,109 @@ from scripts.deck_gen.palette import (
     LIGHT_GRAY,
     WHITE,
     YELLOW,
+    bresenham,
 )
-from scripts.deck_gen.rig import darker
+from scripts.deck_gen.rig import AUTO, darker
 
 SKIN = WHITE
 
+# Skin is white, the same index as the card, so the far cheek and the chin of
+# a 3/4 face are closed with dark grey. A missing pixel there lets the mouth
+# or the chin bleed into the paper. Where the jaw lies against the neck a
+# light grey line is enough.
+#
+# Every head is anchored at column 8, row 7, which lands on the figure's
+# head joint. Unters and Obers are turned three quarters to the right: the
+# near cheek is broad and ends in an ear, each eye sits under its own brow,
+# the nose is a shaded bridge towards the far eye with a dark underside, and
+# the face narrows from the cheekbone to the chin. Hair is glossed on the
+# crown and meets the skin without a dark seam, which made it a hood.
 FACE_YOUNG = [
-    '.....hHHHh.....',
-    '...hHHHHHHHh...',
-    '..hHHHHHHHHHh..',
-    '..hHHHffffff8..',
-    '.hHHHff8fff88..',
-    '.hHHHff0ff0f8..',
-    '.hHHHfffffff88.',
-    '.hHHHcfffffff8.',
-    '.hHHHHfffff878.',
-    '.hHHHHffff447..',
-    '..hHHH8ffff8...',
-    '..hHHHh8888....',
-    '...hHh.........',
+    '......hhhhhh.....',
+    '....hHHHHHHHHh...',
+    '...hHHLLHHHHHHh..',
+    '..hHHLHHHHHHHHh..',
+    '..hHHHeHfHffff8..',
+    '.hHHHeffwwffwwf8.',
+    '.hHHHeff0ffff0f8.',
+    '.hHHHf7ffff7fff8.',
+    '.hHHH7fffff7ffc8.',
+    '..hHHefffff78f8..',
+    '..hHHe7fffffff8..',
+    '..hHHHe7ff44f8...',
+    '...hHHh.7ffff8...',
+    '....hh...7778....',
 ]
 
 FACE_BEARD = [
-    '.....hHHHh.....',
-    '...hHHHHHHHh...',
-    '..hHHHHHHHHHh..',
-    '..hHHHffffff8..',
-    '.hHHHff8fff88..',
-    '.hHHHff0ff0f8..',
-    '.hHHHfffffff88.',
-    '.hHHHJfffffff8.',
-    '.hHHHJffJJJ878.',
-    '.hHHHJJJJ44Jj..',
-    '..hHHJJJJJJj...',
-    '..hHHjJJJJj....',
-    '...hh.jJJj.....',
+    '......hhhhhh.....',
+    '....hHHHHHHHHh...',
+    '...hHHLLHHHHHHh..',
+    '..hHHLHHHHHHHHh..',
+    '..hHHHefffffff8..',
+    '.hHHHefwwwffwwf8.',
+    '.hHHHeff0ffff0f8.',
+    '.hHHHf7ffff7fff8.',
+    '..hHH7fffff7ffc8.',
+    '..hHJJfffff78fJ8.',
+    '...jJJJfJJJJJJJj.',
+    '...jJJJJJJ44JJj..',
+    '....jJJJJJJJJJj..',
+    '.....jJJJJJJJj...',
+    '.......jjjjj.....',
 ]
 
+# The wild man on the Acorn Ace: compact 11x11 head proportioned to his
+# 0.72-scale body, anchored at (8, 7) like the court heads.
 FACE_OLD = [
-    '.....hHHHh.....',
-    '...hHHHHHHHh...',
-    '..hHHHHHHHHHh..',
-    '..hHHHf7ffff8..',
-    '.hHHHf88ff888..',
-    '.hHHHff0ff0f8..',
-    '.hHHHff7ffff88.',
-    '.hHHHJfffffff8.',
-    '.hHHJJJJJJJJ78.',
-    '.hHHJJJJJ44Jj..',
-    '..hHJJJJJJJJj..',
-    '..hHJJJJJJJj...',
-    '...hjJJJJJj....',
-    '.....jJJJj.....',
-    '.......jj......',
+    '.................',
+    '.................',
+    '.....hhhhhhh.....',
+    '....hHHHHHHHh....',
+    '...hHHfffffHh....',
+    '...hHfwwfwwf8....',
+    '...hHff0ff0f8....',
+    '...hHfffffff8....',
+    '...hHJJff78Jj....',
+    '....jJJJJ44Jj....',
+    '....jJJJJJJJj....',
+    '.....jJJJJJj.....',
+    '......jjjjj......',
 ]
 
 FACE_MOUSTACHE = [
-    '.....hHHHh.....',
-    '...hHHHHHHHh...',
-    '..hHHHHHHHHHh..',
-    '..hHHHffffff8..',
-    '.hHHHff8fff88..',
-    '.hHHHff0ff0f8..',
-    '.hHHHfffffff88.',
-    '.hHHHcJffffff8.',
-    '.hHHHHfJJJJ8J8.',
-    '.hHHHHffff44...',
-    '..hHHH8ffff8...',
-    '..hHHHh8888....',
-    '...hHh.........',
+    '......hhhhhh.....',
+    '....hHHHHHHHHh...',
+    '...hHHLLHHHHHHh..',
+    '..hHHLHHHHHHHHh..',
+    '..hHHHefffffff8..',
+    '.hHHHefwwwffwwf8.',
+    '.hHHHeff0ffff0f8.',
+    '.hHHHf7ffff7fff8.',
+    '.hHHH7fffff7ffc8.',
+    '..hHHefffff78f8..',
+    '..hHHe7fJJJJJJ8..',
+    '..hHHHe7jJ44Jj8..',
+    '...hHHh.7ffff8...',
+    '....hh...7778....',
 ]
 
 FACE_GOATEE = [
-    '.....hHHHh.....',
-    '...hHHHHHHHh...',
-    '..hHHHHHHHHHh..',
-    '..hHHHffffff8..',
-    '.hHHHff8fff88..',
-    '.hHHHff0ff0f8..',
-    '.hHHHfffffff88.',
-    '.hHHHcfffffff8.',
-    '.hHHHHffJJJ878.',
-    '.hHHHHfff447...',
-    '..hHHH8fJJJ8...',
-    '..hHHHh.JJj....',
-    '...hHh...j.....',
+    '......hhhhhh.....',
+    '....hHHHHHHHHh...',
+    '...hHHLLHHHHHHh..',
+    '..hHHLHHHHHHHHh..',
+    '..hHHHefffffff8..',
+    '.hHHHefwwwffwwf8.',
+    '.hHHHeff0ffff0f8.',
+    '.hHHHf7ffff7fff8.',
+    '.hHHH7fffff7ffc8.',
+    '..hHHefffff78f8..',
+    '..hHHe7fJJJJJJ8..',
+    '..hHHHe7jj44jj8..',
+    '...hHHh.7jJJj8...',
+    '....hh...7jj8....',
+    '..........jj.....',
 ]
 
 # Kings sit facing the viewer, so their heads are turned only a little to the
@@ -110,33 +129,35 @@ FACE_GOATEE = [
 # sits just right of the middle. A full beard gets a moustache drooping past
 # the mouth and a few strands in the shade colour: in flat yellow it reads
 # as a clean-shaven chin. The forked beard is long enough for its notch to
-# show against the ermine below.
-FACE_KING = [
+# show against the ermine below. The crown hides the top of the head.
+KING_CROWN_OF_HEAD = [
+    '......hHHHh....',
     '....hHHHHHh....',
     '..hHHHHHHHHHh..',
     '.hHHHHHHHHHHHh.',
-    '.hHHffffffffHh.',
-    '.hHf88ff888fHh.',
-    '.hH8f0ff7f0fHh.',
-    '.hHfffff7fffHh.',
-    '.hHcfff878fcHh.',
-    '.hHJffffffJJHh.',
-    '.hHJJJ444JJJHh.',
-    '.hHhJJJJJJJjHh.',
-    '..hHhJJJJJjHh..',
-    '...hh.jJJj.hh..',
 ]
 
-FACE_KING_OLD = [
-    '....hHHHHHh....',
-    '..hHHHHHHHHHh..',
-    '.hHHHHHHHHHHHh.',
-    '.hHHf7fffff8Hh.',
-    '.hHf88ff888fHh.',
-    '.hH8f0ff7f0fHh.',
-    '.hHff7ff7fffHh.',
-    '.hHJfff878fJHh.',
-    '.hJJjjjfjjjJJh.',
+FACE_KING = KING_CROWN_OF_HEAD + [
+    '.hHHffffffffHh.',
+    '.hHfwwwffwwwHh.',
+    '.hHff0ffff0fHh.',
+    '.hHcffff7ffcHh.',
+    '.hHfffff78ffHh.',
+    '.hHJfJJJJJJJHh.',
+    '.hHJJJJ444JJHh.',
+    '.hHJJJJJJJJJHh.',
+    '..hHJJJJJJJHh..',
+    '...hhjjJJjjhh..',
+]
+
+# Older kings: clean brow and cheeks, distinguished by fuller sculpted beards.
+FACE_KING_OLD = KING_CROWN_OF_HEAD + [
+    '.hHHffffffffHh.',
+    '.hHfwwwffwwwHh.',
+    '.hHff0ffff0fHh.',
+    '.hHcffff7ffcHh.',
+    '.hHJffff78fJHh.',
+    '.hJJjjjjfjjjJh.',
     '.hJjJJ444JJjJh.',
     '.hJjJJJJJJJjJh.',
     '..jJJJjJJJjJj..',
@@ -145,24 +166,20 @@ FACE_KING_OLD = [
     '.....jJJjj.....',
 ]
 
-FACE_KING_FORKED = [
-    '....hHHHHHh....',
-    '..hHHHHHHHHHh..',
-    '.hHHHHHHHHHHHh.',
-    '.hHHf7fffff8Hh.',
-    '.hHf88ff888fHh.',
-    '.hH8f0ff7f0fHh.',
-    '.hHfffff7fffHh.',
-    '.hHJfff878fJHh.',
-    '.hJJjjjfjjjJJh.',
+FACE_KING_FORKED = KING_CROWN_OF_HEAD + [
+    '.hHHffffffffHh.',
+    '.hHfwwwffwwwHh.',
+    '.hHff0ffff0fHh.',
+    '.hHcffff7ffcHh.',
+    '.hHJffff78fJHh.',
+    '.hJJjjjjfjjjJh.',
     '.hJjJJ444JJjJh.',
     '.hJjJJJJJJJjJh.',
     '..jJJJJjJJJjj..',
     '..jJJjJJJjJjj..',
-    '...jJJJ..JJj...',
-    '...jJJj..jJj...',
-    '....jJj..jj....',
-    '.....j....j....',
+    '...jJJj.jJJj...',
+    '...jJj...jJj...',
+    '....jj...jj....',
 ]
 
 FACES = {
@@ -176,56 +193,58 @@ FACES = {
     'king_forked': FACE_KING_FORKED,
 }
 
-# Hats share the face template's columns; the first row sits `top` rows above it.
+# Hats share the face template's columns; the first row sits `top` rows above
+# the face's first row. A hat comes down over the crown of the head to the
+# fringe, so the brow still shows under it.
 HATS = {
     'cap': (
-        -4,
+        -2,
         [
-            '.TT............',
-            '..TTt..........',
-            '...TtcCCCCc....',
-            '..cCCCCCCCCCc..',
-            '.cCCCCCCCCCCCc.',
-            '.cCCCCCCCCCCCc.',
-            '.bBBBBBBBBBBBb.',
-            '..bbbbbbbbbbb..',
+            '..TT...cCCCCc....',
+            '...TTtcCCCCCCCc..',
+            '....tcCCCCCCCCCc.',
+            '...cCCCCCCCCCCCc.',
+            '..cCCCCCCCCCCCCc.',
+            '..bBBBBBBBBBBBBb.',
         ],
     ),
     'brim': (
-        -5,
+        -4,
         [
-            '....cCCCCc.....',
-            '...cCCCCCCc....',
-            'TTtcCCCCCCCc...',
-            'TTTTtCCCCCCc...',
-            '.tTTBBBBBBBBb..',
-            'cCCCCCCCCCCCCCc',
-            '.ccCCCCCCCCCCcc',
-            '...............',
+            '......cCCCCc.....',
+            '.....cCCCCCCc....',
+            'TTt..cCCCCCCCc...',
+            'TTTTtcCCCCCCCc...',
+            '.tTTTBBBBBBBBb...',
+            '.....cCCCCCCCc...',
+            'cCCCCCCCCCCCCCCCc',
+            '.ccCCCCCCCCCCCcc.',
         ],
     ),
-    'beret': (
-        -3,
+    'wide_beret': (  # a feather pinned at the brow curls back over the crown
+        -4,
         [
-            '.......TT......',
-            '...cCCCCTt.....',
-            '.cCCCCCCCCCc...',
-            'cCCCCCCCCCCCCc.',
-            '.ccCCCCCCCCcc..',
-            '..bBBBBBBBBBb..',
+            '...TTt...........',
+            '....tTTTt........',
+            '....ccCCtTTtcc...',
+            '..cCCCCCCCCtTtCc.',
+            '.cCCCCCCCCCCtTCCc',
+            'cCCCCCCCCCCCCtCCc',
+            '.ccCCCCccccCCCCc.',
+            '...ccbBBBBBBBBb..',
         ],
     ),
-    'wreath': (  # oak leaves with acorns, for the wild man
-        -3,
+    'wreath': (  # oak leaves with acorns, sitting high on the wild man's brow
+        0,
         [
-            '..cC.T.cC.T....',
-            '.cCCcCcCCcCc...',
-            'cCCcCCcCCcCCc..',
-            '.cc.cc.cc.cc...',
+            '....cC.T.Cc......',
+            '...cCCcCcCCc.....',
+            '..cCCcCCcCCc.....',
+            '...cc.cc.cc......',
         ],
     ),
     'crown': (
-        -4,
+        -3,
         [
             '..T....T....T..',
             '.bBb..bBb..bBb.',
@@ -282,10 +301,8 @@ OPEN_HANDS = {
 }
 
 
-# Heads for figures drawn at vignette size (rig scale below SMALL_SCALE), on
-# the same placeholders; the face centre is column 3, row 3.
-SMALL_SCALE = 0.6
-
+# Heads for figures pixelled by hand at vignette size, on the same
+# placeholders; the face centre is column 3, row 3.
 SMALL_FACES = {
     'young': [
         '.hHHHh.',
@@ -312,19 +329,26 @@ SMALL_HATS = {
 }
 
 
-def draw_head(rig, hx, hy, face='young', hair=BROWN, beard=None, hat=None, small=None):
+def draw_head(rig, hx, hy, face='young', hair=BROWN, beard=None, hat=None, small=False):
     """Draws a head in 3/4 view facing right with its face centred near (hx, hy).
 
-    `hat` is (kind, cloth, trim, band) with kind from `HATS`. On a rig scaled
-    below `SMALL_SCALE` the small templates are used instead; `small=True`
-    asks for them on an unscaled rig, for figures pixelled by hand at
-    vignette size.
+    `hat` is (kind, cloth, trim, band) with kind from `HATS`. `small` picks
+    the small templates, for figures pixelled by hand at vignette size.
     """
-    if small is None:
-        small = rig.s < SMALL_SCALE
-    faces, hats, anchor = (SMALL_FACES, SMALL_HATS, (3, 3)) if small else (FACES, HATS, (8, 6))
+    faces, hats, anchor = (SMALL_FACES, SMALL_HATS, (3, 3)) if small else (FACES, HATS, (8, 7))
     beard = beard if beard is not None else hair
-    subst = {'H': hair, 'h': darker(hair), 'J': beard, 'j': darker(beard)}
+    shade = darker(hair)
+    subst = {
+        'H': hair,
+        'h': shade,
+        # Dark hair lies straight against the skin; fair hair needs its shade there to show at all.
+        'e': hair if shade == DARK_GRAY else shade,
+        # A soft white sheen on silver hair; canary yellow on brown hair reads as a patch.
+        'L': WHITE if hair == LIGHT_GRAY else hair,
+        'w': DARK_GRAY if hair in (LIGHT_GRAY, WHITE) else BROWN,
+        'J': beard,
+        'j': darker(beard),
+    }
     rig.sprite(faces[face], hx, hy, subst, anchor=anchor)
     if hat is not None:
         kind, cloth, trim, band = hat
@@ -371,13 +395,13 @@ def draw_hand(rig, x, y, grip=False, toward=None):
     rig.sprite(rows, x, y, anchor=anchor)
 
 
-def arm(rig, sh, el, wr, sleeve, cuff=None, upper_r=3.1, puff=None):
+def arm(rig, sh, el, wr, sleeve, cuff=None, upper_r=3.1, puff=None, outline=AUTO):
     """A sleeved arm through shoulder, elbow and wrist.
 
     `cuff` adds a turned-back cuff at the wrist, `puff` a slashed puffed
     upper sleeve in that colour.
     """
-    rig.part().chain([sh, el, wr], [upper_r, 2.5, 2.0]).paint(sleeve)
+    rig.part().chain([sh, el, wr], [upper_r, 2.5, 2.0]).paint(sleeve, outline=outline)
     ex, ey = el
     wx, wy = wr
     if puff is not None:
@@ -437,7 +461,11 @@ def torso(rig, j, tunic, skirt, belt, collar=WHITE, pattern=None, skirt_pattern=
 
 
 def cape(rig, j, col, length=62, swing=-6, lining=None):
-    """A cape hanging from the shoulders, flaring backwards by `swing` pixels."""
+    """A cape hanging from the shoulders, flaring backwards by `swing` pixels.
+
+    A fold runs from the shoulder down the flared hem, in the darker colour
+    of the cloth, kept off the outline. A wide flare gets a second seam.
+    """
     (sbx, sby), (sfx, sfy) = j['sh_b'], j['sh_f']
     p = rig.part().poly(
         [
@@ -450,6 +478,23 @@ def cape(rig, j, col, length=62, swing=-6, lining=None):
     )
     p.ellipse(sbx + swing + 3.5, length - 1.5, 4.5, 2.0)
     p.paint(col)
+    fold = darker(col)
+    # Interior only: the outline stays a clean rim, and the lines sit on cloth.
+    inset = p.interior()
+    # The body covers the middle of the cape, so the seams run down the
+    # flared back edge, the cloth that actually shows. A wide flare gets
+    # a second seam further out; a narrow one would merge the two.
+    outer = sbx + swing
+    span = abs(swing)
+    seams = ((sbx + 1.5, sby + 3, outer + span * 0.62, length - 6),)
+    if span >= 8:
+        seams = seams + ((sbx - 0.5, sby + 6, outer + 3.0, length - 9),)
+    for x0, y0, x1, y1 in seams:
+        ax, ay = rig.tx(x0, y0)
+        bx, by = rig.tx(x1, y1)
+        for x, y in bresenham(ax, ay, bx, by):
+            if (x, y) in inset:
+                rig.plot(x, y, fold)
     if lining is not None:
         rig.part().poly([(sbx + swing, length - 2), (sbx + swing + 1, length - 10), (sbx + swing + 7, length)]).paint(lining)
 
@@ -462,13 +507,24 @@ def sword(rig, hilt, tip, blade=LIGHT_CYAN, guard=YELLOW):
     ln = max((dx * dx + dy * dy) ** 0.5, 1)
     ux, uy = dx / ln, dy / ln
     gx, gy = hx + ux * 2.5, hy + uy * 2.5
-    rig.part().capsule(gx, gy, tx, ty, 1.8, 1.0).paint(blade, None, outline=darker(darker(blade)))
-    rig.line(gx + ux, gy + uy, tx - ux * 2, ty - uy * 2, WHITE)
-    rig.part().capsule(hx - ux * 2, hy - uy * 2, gx, gy, 0.8).fill(BROWN)
-    # The crossguard and pommel are too thin for an outline: painted, they'd come out all brown.
-    rig.part().capsule(gx - uy * 3.5, gy + ux * 3.5, gx + uy * 3.5, gy - ux * 3.5, 0.9).fill(guard)
-    rig.part().ellipse(hx - ux * 3, hy - uy * 3, 1.3, 1.3).fill(guard)
-    rig.put(hx - ux * 3, hy - uy * 3, darker(guard))
+    # Keep the dark-blue border unbroken: taper cleanly to the tip and restrict
+    # any steel glint strictly to interior pixels that still leave cyan beside them.
+    steel = rig.part().capsule(gx, gy, tx, ty, 1.9, 1.15)
+    steel.paint(blade, None, outline=darker(darker(blade)))
+    inside = steel.interior()
+    for x, y in bresenham(*rig.tx(gx + ux, gy + uy), *rig.tx(tx - ux * 2, ty - uy * 2)):
+        if (x, y) in inside and ((x + 1, y) in inside or (x, y + 1) in inside):
+            rig.plot(x, y, WHITE)
+    # Grip, crossguard and pommel: outline the thin gold parts on their outer
+    # halo in brown so they stay golden yet read crisply against the white card.
+    rig.part().capsule(hx - ux * 2, hy - uy * 2, gx, gy, 0.9).fill(BROWN)
+    gilt = rig.part()
+    gilt.capsule(gx - uy * 3.5, gy + ux * 3.5, gx + uy * 3.5, gy - ux * 3.5, 0.8)
+    gilt.ellipse(hx - ux * 3, hy - uy * 3, 1.1, 1.1)
+    edge = darker(guard)
+    for x, y in gilt.halo():
+        rig.plot(x, y, edge)
+    gilt.fill(guard)
 
 
 def pole(rig, a, b, col=BROWN, outline=None):
@@ -484,12 +540,12 @@ def pole(rig, a, b, col=BROWN, outline=None):
         rig.part().capsule(*a, *b, 1.4).paint(col, None, outline=outline)
 
 
-# Standing pose shared by Unters, Obers and the vignette people; each figure
+# Standing pose shared by Unters, Obers and the wild man; each figure
 # overrides arms and legs, and may override these joints through `pose`.
 BASE = dict(head=(30, 15), neck=(30, 21), sh_b=(23, 26), sh_f=(36, 26), waist=(30, 44), hem=56)
 
 
-def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose=None, back_over=False):
+def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose=None, back_over=False, head_over=False):
     """Draws a standing figure back to front.
 
     `look` names the colours (sleeve_b, sleeve_f, hose, boot, tunic, skirt,
@@ -500,7 +556,8 @@ def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose
 
     `back_over` draws the back arm over the body instead of behind it, for
     a hand resting on the hip or reaching across the belly, which the body
-    would otherwise hide.
+    would otherwise hide. `head_over` draws the head after both arms, so
+    overhead two-handed swings never cover the face.
     """
     j = dict(BASE, **(pose or {}))
     if look.get('cape') is not None:
@@ -509,15 +566,27 @@ def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose
         back_props(rig)
     (bsh, bel, bwr, bhand), (fsh, fel, fwr, fhand) = arms
 
+    sleeve_outline = look.get('sleeve_outline', AUTO)
+
     def back_arm():
-        arm(rig, bsh, bel, bwr, look['sleeve_b'], cuff=look.get('cuff'), puff=look.get('puff'))
+        arm(rig, bsh, bel, bwr, look['sleeve_b'], cuff=look.get('cuff'), puff=look.get('puff'), outline=sleeve_outline)
         if bhand:
             draw_hand(rig, *bwr, grip=bhand == 'grip', toward=bel)
 
     if not back_over:
         back_arm()
     for hip, kn, an, toe in legs:
-        leg(rig, hip, kn, an, toe, look['hose'], look['boot'], cuff=look.get('boot_cuff'))
+        leg(
+            rig,
+            hip,
+            kn,
+            an,
+            toe,
+            look['hose'],
+            look['boot'],
+            boot_top=look.get('boot_top', 0.4),
+            cuff=look.get('boot_cuff'),
+        )
     torso(
         rig,
         j,
@@ -531,13 +600,19 @@ def draw_standing(rig, look, arms, legs, back_props=None, front_props=None, pose
     )
     if back_over:
         back_arm()
-    hx, hy = j['head']
-    draw_head(rig, hx, hy, face=look.get('face', 'young'), hair=look['hair'], beard=look.get('beard'), hat=look['hat'])
-    arm(rig, fsh, fel, fwr, look['sleeve_f'], cuff=look.get('cuff'), puff=look.get('puff'))
+
+    def head():
+        draw_head(rig, *j['head'], face=look.get('face', 'young'), hair=look['hair'], beard=look.get('beard'), hat=look['hat'])
+
+    if not head_over:
+        head()
+    arm(rig, fsh, fel, fwr, look['sleeve_f'], cuff=look.get('cuff'), puff=look.get('puff'), outline=sleeve_outline)
     # Props before the hand, so a fist closes over the grip of whatever it holds.
     if front_props:
         front_props(rig)
     if fhand:
         draw_hand(rig, *fwr, grip=fhand == 'grip', toward=fel)
+    if head_over:
+        head()
     return rig
 
